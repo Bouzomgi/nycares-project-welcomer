@@ -10,8 +10,8 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
-func buildScheduleRequest(internalId string) (*http.Request, error) {
-	urlStr := fmt.Sprintf("%s/%s", GetScheduleUrl, internalId)
+func buildScheduleRequest(baseUrl, internalId string) (*http.Request, error) {
+	urlStr := fmt.Sprintf("%s/%s", baseUrl+GetSchedulePath, internalId)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
@@ -34,12 +34,12 @@ func flattenScheduleList(resp models.ScheduleResponse) []models.Project {
 	return result
 }
 
-func GetSchedule(client *http.Client, internalId string) ([]models.Project, error) {
+func GetSchedule(client *http.Client, baseUrl, internalId string) ([]models.Project, error) {
 	if internalId == "" {
 		return nil, fmt.Errorf("internalId is required")
 	}
 
-	req, err := buildScheduleRequest(internalId)
+	req, err := buildScheduleRequest(baseUrl, internalId)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func GetSchedule(client *http.Client, internalId string) ([]models.Project, erro
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close() // ensure body is always closed
+	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("request failed with status %d", resp.StatusCode)

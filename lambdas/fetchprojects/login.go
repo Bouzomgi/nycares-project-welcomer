@@ -20,11 +20,12 @@ func buildPayload(username, password string) url.Values {
 }
 
 // buildRequest creates a POST request with headers
-func buildLoginRequest(baseURL string, creds Credentials) (*http.Request, error) {
+func buildLoginRequest(baseUrl string, creds Credentials) (*http.Request, error) {
 	payload := buildPayload(creds.Username, creds.Password)
 	encoded := payload.Encode()
+	loginUrl := baseUrl + LoginPath
 
-	req, err := http.NewRequest("POST", baseURL, strings.NewReader(encoded))
+	req, err := http.NewRequest("POST", loginUrl, strings.NewReader(encoded))
 	if err != nil {
 		return nil, err
 	}
@@ -33,10 +34,10 @@ func buildLoginRequest(baseURL string, creds Credentials) (*http.Request, error)
 	return req, nil
 }
 
-func validateLogin(client *http.Client) error {
-	u, _ := url.Parse(BaseUrl)
+func validateLogin(client *http.Client, baseUrl string) error {
+	u, _ := url.Parse(baseUrl)
 	if client.Jar.Cookies(u) == nil {
-		return fmt.Errorf("Login failed. No cookie set")
+		return fmt.Errorf("Login failed. No cookie set on %s", baseUrl)
 	}
 	return nil
 }
@@ -48,7 +49,7 @@ type Credentials struct {
 }
 
 // Login performs the login and returns only the cookies
-func Login(client *http.Client, baseURL string, creds Credentials) error {
+func Login(client *http.Client, baseUrl string, creds Credentials) error {
 	if creds.Username == "" {
 		return fmt.Errorf("ACCOUNT_USERNAME is required")
 	}
@@ -56,7 +57,7 @@ func Login(client *http.Client, baseURL string, creds Credentials) error {
 		return fmt.Errorf("ACCOUNT_PASSWORD is required")
 	}
 
-	req, err := buildLoginRequest(baseURL, creds)
+	req, err := buildLoginRequest(baseUrl, creds)
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func Login(client *http.Client, baseURL string, creds Credentials) error {
 		return fmt.Errorf("login attempt failed with status %d", resp.StatusCode)
 	}
 
-	err = validateLogin(client)
+	err = validateLogin(client, baseUrl)
 	if err != nil {
 		return err
 	}

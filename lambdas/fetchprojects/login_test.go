@@ -2,44 +2,93 @@ package main
 
 import (
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
-func TestLogin(t *testing.T) {
-	// Mock server to simulate login
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check that the method is POST
+// mock server for login
+func setupMockLoginServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check that method is POST
 		if r.Method != http.MethodPost {
-			t.Errorf("expected POST method, got %s", r.Method)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
 		}
 
-		// Check form values
+		// Parse form
 		if err := r.ParseForm(); err != nil {
-			t.Fatal(err)
-		}
-		if r.FormValue("username") != "testuser" {
-			t.Errorf("expected username=testuser, got %s", r.FormValue("username"))
-		}
-		if r.FormValue("password") != "testpass" {
-			t.Errorf("expected password=testpass, got %s", r.FormValue("password"))
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 
-		// Set a cookie to simulate successful login
-		http.SetCookie(w, &http.Cookie{Name: "sessionid", Value: "12345"})
-		w.WriteHeader(http.StatusOK)
+		username := r.Form.Get("name")
+		password := r.Form.Get("pass")
+
+		// Basic credential check
+		if username == "testuser" && password == "testpass" {
+			// Set a cookie to simulate successful login
+			http.SetCookie(w, &http.Cookie{Name: "sessionid", Value: "12345", Path: "/"})
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Invalid credentials
+		w.WriteHeader(http.StatusUnauthorized)
 	}))
-	defer ts.Close()
+}
 
-	client := &http.Client{}
+func TestLogin(t *testing.T) {
+	server := setupMockLoginServer()
+	defer server.Close()
+
+	// Create HTTP client with cookie jar
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar: jar,
+	}
 
 	creds := Credentials{
 		Username: "testuser",
 		Password: "testpass",
 	}
 
-	err := Login(client, ts.URL, creds)
+	// Perform login
+	err := Login(client, server.URL+LoginPath, creds)
 	if err != nil {
-		t.Fatalf("Login returned error: %v", err)
+		t.Fatalf("Login failed: %v", err)
+	}
+
+	// Check that cookie is stored in client
+	u, _ := url.Parse(server.URL)
+	cookies := client.Jar.Cookies(u)
+	if len(cookies) == 0 {
+		t.Fatal("Expected cookies to be set after login, but got none")
+	}
+
+	// Verify cookie name and value
+	if cookies[0].Name != "sessionid" || cookies[0].Value != "12345" {
+		t.Fatalf("Unexpected cookie: %+v", cookies[0])
+	}
+}
+
+func TestLoginInvalidCredentials(t *testing.T) {
+	server := setupMockLoginServer()
+	defer server.Close()
+
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar: jar,
+	}
+
+	creds := Credentials{
+		Username: "wronguser",
+		Password: "wrongpass",
+	}
+
+	err := Login(client, server.URL, creds)
+	if err == nil {
+		t.Fatal("Expected login to fail with invalid credentials, but it succeeded")
 	}
 }

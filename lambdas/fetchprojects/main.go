@@ -36,14 +36,14 @@ func handler(ctx context.Context) (LambdaOutput, error) {
 	}
 
 	log.Info("Attempting login")
-	err = Login(client, PostLoginUrl, creds)
+	err = Login(client, BaseUrl, creds)
 	if err != nil {
 		log.Errorf("Login failed: %v", err)
 		return LambdaOutput{}, err
 	}
 
 	log.Info("Fetching schedule")
-	schedule, err := GetSchedule(client, cfg.Account.InternalId)
+	schedule, err := GetSchedule(client, BaseUrl, cfg.Account.InternalId)
 	if err != nil {
 		log.Errorf("GetSchedule failed: %v", err)
 		return LambdaOutput{}, err
