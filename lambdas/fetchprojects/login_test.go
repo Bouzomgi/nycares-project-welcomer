@@ -33,17 +33,13 @@ func TestLogin(t *testing.T) {
 
 	client := &http.Client{}
 
-	creds := Credentials {
+	creds := Credentials{
 		Username: "testuser",
 		Password: "testpass",
 	}
 
-	cookies, err := Login(client, ts.URL, creds)
+	err := Login(client, ts.URL, creds)
 	if err != nil {
 		t.Fatalf("Login returned error: %v", err)
-	}
-
-	if cookies["sessionid"] != "1234j" {
-		t.Errorf("expected cookie sessionid=12345, got %v", cookies)
 	}
 }

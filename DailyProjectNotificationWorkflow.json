@@ -1,0 +1,63 @@
+{
+  "Comment": "Daily Project Notification Workflow",
+  "StartAt": "FetchProjects",
+  "States": {
+    "FetchProjects": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:fetchProjects",
+      "Next": "ProcessEachProject"
+    },
+    "ProcessEachProject": {
+      "Type": "Map",
+      "ItemsPath": "$.projects",
+      "Iterator": {
+        "StartAt": "CheckIfSeen",
+        "States": {
+          "CheckIfSeen": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:checkIfSeen",
+            "Next": "Seen?"
+          },
+          "Seen?": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.seen",
+                "BooleanEquals": true,
+                "Next": "SkipProject"
+              }
+            ],
+            "Default": "SendEmailToSelf"
+          },
+          "SkipProject": {
+            "Type": "Succeed"
+          },
+          "SendEmailToSelf": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+            "Parameters": {
+              "FunctionName": "sendEmailToSelf",
+              "Payload": {
+                "taskToken.$": "$$.Task.Token",
+                "projectId.$": "$.projectId",
+                "cookie.$": "$.cookie"
+              }
+            },
+            "Next": "SendEmailToPersonA"
+          },
+          "SendEmailToPersonA": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:sendEmailToPersonA",
+            "Next": "RecordSeen"
+          },
+          "RecordSeen": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:recordSeen",
+            "End": true
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}
