@@ -17,27 +17,17 @@ type LambdaOutput struct {
 	Auth models.Auth `json:"auth"`
 }
 
-func createAuthFromCookies(cookies []*http.Cookie) models.Auth {
-	var auth models.Auth
-	for _, c := range cookies {
-		auth.Cookies = append(auth.Cookies, models.Cookie{
-			Name:   c.Name,
-			Value:  c.Value,
-			Domain: c.Domain,
-			Path:   c.Path,
-		})
+var cfg *Config
+
+func init() {
+	var err error
+	cfg, err = confighelper.LoadConfig[Config]()
+	if err != nil {
+		log.Fatalf("Failed to load config.yaml: %v", err)
 	}
-	return auth
 }
 
 func handler(ctx context.Context) (LambdaOutput, error) {
-
-	cfg, err := confighelper.LoadConfig[Config]()
-	if err != nil {
-		log.Errorf("failed to load config: %v", err)
-		return LambdaOutput{}, err
-	}
-
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Jar: jar,
@@ -63,6 +53,19 @@ func handler(ctx context.Context) (LambdaOutput, error) {
 	return LambdaOutput{
 		Auth: auth,
 	}, nil
+}
+
+func createAuthFromCookies(cookies []*http.Cookie) models.Auth {
+	var auth models.Auth
+	for _, c := range cookies {
+		auth.Cookies = append(auth.Cookies, models.Cookie{
+			Name:   c.Name,
+			Value:  c.Value,
+			Domain: c.Domain,
+			Path:   c.Path,
+		})
+	}
+	return auth
 }
 
 func main() {

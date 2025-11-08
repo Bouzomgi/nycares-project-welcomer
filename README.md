@@ -55,7 +55,8 @@ The system is intended to run **once daily**, handle all of this automatically, 
   4. **Send Notification Step** → alert for approval via SNS or Slack.
   5. **Wait State** → pauses execution until approval is received (can resume via Lambda callback).
   6. **Send & Pin Message Step**.
-  7. **Notify Completion Step**.
+  7. **Record Message** → record message data.
+  8. **Notify Completion Step**.
 
 **Pros:**
 
@@ -172,9 +173,32 @@ The system is intended to run **once daily**, handle all of this automatically, 
 4. **Send Notification Step** → notify for approval.
 5. **Wait State** → pause workflow until approval is received.
 6. **Send & Pin Message Step** → send messages and pin them for each project.
-7. **Notify Completion Step** → send a downstream notification confirming messages were sent.
+7. **Record Message** → record message data in database.
+8. **Notify Completion Step** → send a downstream notification confirming messages were sent.
 
 This architecture balances **automation, reliability, and control**, ensuring multiple projects are managed efficiently and notifications are delivered correctly.
+
+---
+
+## Notification State Tracking in DynamoDB
+
+A **single DynamoDB table** is used to track which messages have been sent for each project. Each row represents a unique project, identified by **name and date**, allowing the system to manage message sending, prevent duplicates, and stop notifications for canceled projects.
+
+### Table Schema
+
+| Attribute            | Type    | Description                                          |
+| -------------------- | ------- | ---------------------------------------------------- |
+| **ProjectName**      | String  | Name of the project.                                 |
+| **ProjectDate**      | String  | Date of the project (ISO format).                    |
+| **HasSentWelcome**   | Boolean | Indicates if the welcome message has been sent.      |
+| **HasSentReminder**  | Boolean | Indicates if the reminder message has been sent.     |
+| **ShouldStopNotify** | Boolean | Flag to disable notifications for canceled projects. |
+| **LastUpdated**      | String  | ISO timestamp of the last update to the row.         |
+
+### Usage Notes
+
+- **Primary Key:** A composite key, such as `ProjectName#ProjectDate`, ensures uniqueness for each project instance.
+- **Upserts:** Each Lambda performs an upsert (`PutItem` or `UpdateItem`) when messages are sent or a project is canceled, ensuring atomic updates.
 
 ---
 
@@ -196,10 +220,11 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 | ------------------------- | ---------------------------------------------------------------------------------------------- |
 | **Login**                 | Returns auth cookie for subsequent requests.                                                   |
 | **FetchProjects**         | Returns list of projects with **template reference** and message type.                         |
-| **ComputeMessageToSend**  | Determines **single eligible message** to send.                                                |
+| **ComputeMessageToSend**  | Reads DynamoDB table and determines **single eligible message** to send.                       |
 | **RequestApprovalToSend** | Notifier Lambda receives project info **and template reference**; approval triggers next step. |
 | **WaitForApproval**       | Passes input unchanged until approval.                                                         |
 | **SendAndPinMessage**     | Lambda fetches template from S3, sends message, pins it. Throws error if send/pin fails.       |
+| **RecordMessage**         | Updates DynamoDB table to track that the message has been sent for the project.                |
 | **NotifyCompletion**      | Sends completion notification with **project info, message type, and template reference**.     |
 | **DLQNotifier**           | Sends failure notification for manual resolution.                                              |
 
@@ -363,52 +388,7 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 **Input:**
 
-```json
-{
-  "auth": {
-    "cookie": {
-      "name": "session_id",
-      "value": "abc123-session",
-      "domain": "example.com",
-      "path": "/"
-    }
-  },
-  "approvedToSend": "true",
-  "project": {
-    "name": "Project A",
-    "date": "2025-11-10"
-  },
-  "messageToSend": {
-    "type": "welcome",
-    "templateRef": "s3://bucket/projectA/welcome.md"
-  }
-}
-```
-
-**Output:**
-
-```json
-{
-  "auth": {
-    "cookie": {
-      "name": "session_id",
-      "value": "abc123-session",
-      "domain": "example.com",
-      "path": "/"
-    }
-  },
-  "approvedToSend": "true",
-  "project": {
-    "name": "Project A",
-    "date": "2025-11-10"
-  },
-  "messageToSend": {
-    "type": "welcome",
-    "templateRef": "s3://bucket/projectA/welcome.md"
-  },
-  "messageSent": true
-}
-```
+**Input/Output:** Unchanged from previous step.
 
 ### NotifyCompletion
 
@@ -424,7 +404,6 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
       "path": "/"
     }
   },
-  "approvedToSend": "true",
   "project": {
     "name": "Project A",
     "date": "2025-11-10"
@@ -432,8 +411,7 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
   "messageToSend": {
     "type": "welcome",
     "templateRef": "s3://bucket/projectA/welcome.md"
-  },
-  "messageSent": true
+  }
 }
 ```
 

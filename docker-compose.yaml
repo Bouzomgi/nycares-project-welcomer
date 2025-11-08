@@ -1,0 +1,17 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566" # Gateway for all AWS services
+      - "4571:4571"
+    environment:
+      - SERVICES=s3,dynamodb
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack/data
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - "./init-scripts:/etc/localstack/init/ready.d" # Run on startup
+      - "localstack_data:/var/lib/localstack"
+volumes:
+  localstack_data:

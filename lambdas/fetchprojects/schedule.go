@@ -1,5 +1,7 @@
 package main
 
+import "github.com/Bouzomgi/nycares-project-welcomer/internal/models"
+
 // CompleteProject represents a single project item
 type CompleteProject struct {
 	Role               string  `json:"Role__c"`
@@ -44,8 +46,8 @@ type ScheduleResponse struct {
 	UserSFID         string       `json:"user_sf_id"`
 }
 
-func reduceToProject(completeProject CompleteProject) Project {
-	return Project{
+func reduceToProject(completeProject CompleteProject) models.Project {
+	return models.Project{
 		Name: completeProject.WebTitleFF,
 		Date: completeProject.StartDate,
 	}

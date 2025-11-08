@@ -49,6 +49,10 @@
             "Next": "RequestApprovalToSend",
             "Catch": [
               {
+                "ErrorEquals": ["ProjectTooFar", "ProjectPassed"],
+                "Next": "EndWorkflow"
+              },
+              {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "DLQNotifier"
               }

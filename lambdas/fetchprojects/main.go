@@ -22,23 +22,21 @@ type LambdaInput struct {
 
 // LambdaOutput defines what this Lambda returns.
 type LambdaOutput struct {
-	Auth     models.Auth `json:"auth"`
-	Projects []Project   `json:"projects"`
+	Auth     models.Auth      `json:"auth"`
+	Projects []models.Project `json:"projects"`
 }
 
-type Project struct {
-	Name string `json:"name"`
-	Date string `json:"date"`
-}
+var cfg *Config
 
-// handler runs on Lambda invocation.
-func handler(ctx context.Context, input LambdaInput) (LambdaOutput, error) {
-
-	cfg, err := confighelper.LoadConfig[Config]()
+func init() {
+	var err error
+	cfg, err = confighelper.LoadConfig[Config]()
 	if err != nil {
-		log.Fatal("failed to load config:", err)
+		log.Fatalf("Failed to load config.yaml: %v", err)
 	}
+}
 
+func handler(ctx context.Context, input LambdaInput) (LambdaOutput, error) {
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Jar: jar,
@@ -58,7 +56,7 @@ func handler(ctx context.Context, input LambdaInput) (LambdaOutput, error) {
 
 	log.Infof("Fetched schedule, has %d events", len(schedule))
 
-	var projects []Project
+	var projects []models.Project
 	for _, s := range schedule {
 		projects = append(projects, reduceToProject(s))
 	}
