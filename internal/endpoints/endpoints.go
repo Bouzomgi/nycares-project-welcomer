@@ -1,4 +1,4 @@
-package main
+package endpoints
 
 const (
 	BaseUrl         = "https://www.newyorkcares.org"

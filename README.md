@@ -203,8 +203,6 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 | **NotifyCompletion**      | Sends completion notification with **project info, message type, and template reference**.     |
 | **DLQNotifier**           | Sends failure notification for manual resolution.                                              |
 
----
-
 ## Step Functions Inputs and Outputs
 
 ### Login
@@ -215,7 +213,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" }
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  }
 }
 ```
 
@@ -225,7 +230,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" }
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  }
 }
 ```
 
@@ -233,7 +245,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "projects": [
     {
       "name": "Project A",
@@ -249,7 +268,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "project": {
     "name": "Project A",
     "date": "2025-11-10"
@@ -261,7 +287,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "project": {
     "name": "Project A",
     "date": "2025-11-10"
@@ -279,7 +312,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "project": {
     "name": "Project A",
     "date": "2025-11-10"
@@ -295,7 +335,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "approvedToSend": "true",
   "project": {
     "name": "Project A",
@@ -318,7 +365,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "approvedToSend": "true",
   "project": {
     "name": "Project A",
@@ -335,7 +389,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "approvedToSend": "true",
   "project": {
     "name": "Project A",
@@ -355,7 +416,14 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 
 ```json
 {
-  "auth": { "authCookie": "abc123-session" },
+  "auth": {
+    "cookie": {
+      "name": "session_id",
+      "value": "abc123-session",
+      "domain": "example.com",
+      "path": "/"
+    }
+  },
   "approvedToSend": "true",
   "project": {
     "name": "Project A",

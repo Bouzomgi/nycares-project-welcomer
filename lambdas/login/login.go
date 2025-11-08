@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/httphelper"
 )
 
@@ -23,7 +24,7 @@ func buildPayload(username, password string) url.Values {
 func buildLoginRequest(baseUrl string, creds Credentials) (*http.Request, error) {
 	payload := buildPayload(creds.Username, creds.Password)
 	encoded := payload.Encode()
-	loginUrl := baseUrl + LoginPath
+	loginUrl := baseUrl + endpoints.LoginPath
 
 	req, err := http.NewRequest("POST", loginUrl, strings.NewReader(encoded))
 	if err != nil {
@@ -34,12 +35,18 @@ func buildLoginRequest(baseUrl string, creds Credentials) (*http.Request, error)
 	return req, nil
 }
 
-func validateLogin(client *http.Client, baseUrl string) error {
-	u, _ := url.Parse(baseUrl)
-	if client.Jar.Cookies(u) == nil {
-		return fmt.Errorf("Login failed. No cookie set on %s", baseUrl)
+func extractCookies(client *http.Client, baseUrl string) ([]*http.Cookie, error) {
+	u, err := url.Parse(baseUrl)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
-	return nil
+
+	cookies := client.Jar.Cookies(u)
+	if len(cookies) == 0 {
+		return nil, fmt.Errorf("login failed: no cookies set on %s", baseUrl)
+	}
+
+	return cookies, nil
 }
 
 // Credentials holds username/password for login
@@ -49,33 +56,33 @@ type Credentials struct {
 }
 
 // Login performs the login and returns only the cookies
-func Login(client *http.Client, baseUrl string, creds Credentials) error {
+func Login(client *http.Client, baseUrl string, creds Credentials) ([]*http.Cookie, error) {
 	if creds.Username == "" {
-		return fmt.Errorf("ACCOUNT_USERNAME is required")
+		return nil, fmt.Errorf("ACCOUNT_USERNAME is required")
 	}
 	if creds.Password == "" {
-		return fmt.Errorf("ACCOUNT_PASSWORD is required")
+		return nil, fmt.Errorf("ACCOUNT_PASSWORD is required")
 	}
 
 	req, err := buildLoginRequest(baseUrl, creds)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := httphelper.SendRequest(client, req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("login attempt failed with status %d", resp.StatusCode)
+		return nil, fmt.Errorf("login attempt failed with status %d", resp.StatusCode)
 	}
 
-	err = validateLogin(client, baseUrl)
+	cookies, err := extractCookies(client, baseUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return cookies, nil
 }

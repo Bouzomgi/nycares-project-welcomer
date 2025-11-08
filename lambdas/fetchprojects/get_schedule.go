@@ -3,15 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/httphelper"
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 func buildScheduleRequest(baseUrl, internalId string) (*http.Request, error) {
-	urlStr := fmt.Sprintf("%s/%s", baseUrl+GetSchedulePath, internalId)
+	getScheduleBaseUrl := baseUrl + endpoints.GetSchedulePath
+	urlStr := fmt.Sprintf("%s/%s", getScheduleBaseUrl, internalId)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
@@ -24,8 +24,8 @@ func buildScheduleRequest(baseUrl, internalId string) (*http.Request, error) {
 }
 
 // flattenScheduleList converts a ScheduleResponse into a slice of Projects
-func flattenScheduleList(resp models.ScheduleResponse) []models.Project {
-	var result []models.Project
+func flattenScheduleList(resp ScheduleResponse) []CompleteProject {
+	var result []CompleteProject
 
 	for _, schedule := range resp.Data.ScheduleList {
 		result = append(result, schedule)
@@ -34,7 +34,7 @@ func flattenScheduleList(resp models.ScheduleResponse) []models.Project {
 	return result
 }
 
-func GetSchedule(client *http.Client, baseUrl, internalId string) ([]models.Project, error) {
+func GetSchedule(client *http.Client, baseUrl, internalId string) ([]CompleteProject, error) {
 	if internalId == "" {
 		return nil, fmt.Errorf("internalId is required")
 	}
@@ -59,10 +59,11 @@ func GetSchedule(client *http.Client, baseUrl, internalId string) ([]models.Proj
 		return nil, err
 	}
 
-	var respArray []models.ScheduleResponse
+	var respArray []ScheduleResponse
 	if err := json.Unmarshal(body, &respArray); err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to unmarshal schedule response: %w", err)
 	}
+
 	schedule := respArray[0]
 
 	scheduleList := flattenScheduleList(schedule)

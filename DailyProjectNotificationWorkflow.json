@@ -1,62 +1,118 @@
 {
-  "Comment": "Daily Project Notification Workflow",
-  "StartAt": "FetchProjects",
+  "Comment": "Project Notifier Step Functions Workflow (Single Message, Auth Passed, DLQ Handling)",
+  "StartAt": "Login",
   "States": {
+    "Login": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:LoginLambda",
+      "ResultPath": "$.auth",
+      "Next": "FetchProjects",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "DLQNotifier"
+        }
+      ]
+    },
     "FetchProjects": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:fetchProjects",
-      "Next": "ProcessEachProject"
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:FetchProjectsLambda",
+      "InputPath": "$",
+      "ResultPath": "$.projects",
+      "Next": "ProcessEachProject",
+      "Catch": [
+        {
+          "ErrorEquals": ["AuthFailureException"],
+          "Next": "Login"
+        },
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "DLQNotifier"
+        }
+      ]
     },
     "ProcessEachProject": {
       "Type": "Map",
       "ItemsPath": "$.projects",
+      "Parameters": {
+        "project.$": "$$.Map.Item.Value",
+        "auth.$": "$.auth"
+      },
       "Iterator": {
-        "StartAt": "CheckIfSeen",
+        "StartAt": "ComputeMessageToSend",
         "States": {
-          "CheckIfSeen": {
+          "ComputeMessageToSend": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:checkIfSeen",
-            "Next": "Seen?"
-          },
-          "Seen?": {
-            "Type": "Choice",
-            "Choices": [
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:ComputeMessagesToSendLambda",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "RequestApprovalToSend",
+            "Catch": [
               {
-                "Variable": "$.seen",
-                "BooleanEquals": true,
-                "Next": "SkipProject"
+                "ErrorEquals": ["States.ALL"],
+                "Next": "DLQNotifier"
               }
-            ],
-            "Default": "SendEmailToSelf"
+            ]
           },
-          "SkipProject": {
-            "Type": "Succeed"
-          },
-          "SendEmailToSelf": {
+          "RequestApprovalToSend": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
-            "Parameters": {
-              "FunctionName": "sendEmailToSelf",
-              "Payload": {
-                "taskToken.$": "$$.Task.Token",
-                "projectId.$": "$.projectId",
-                "cookie.$": "$.cookie"
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "WaitForApproval",
+            "Catch": [
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "DLQNotifier"
               }
-            },
-            "Next": "SendEmailToPersonA"
+            ]
           },
-          "SendEmailToPersonA": {
-            "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:sendEmailToPersonA",
-            "Next": "RecordSeen"
+          "WaitForApproval": {
+            "Type": "Wait",
+            "SecondsPath": "$.approvalTimeoutSeconds",
+            "Next": "SendAndPinMessage"
           },
-          "RecordSeen": {
+          "SendAndPinMessage": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:recordSeen",
-            "End": true
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendAndPinMessageLambda",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "NotifyCompletion",
+            "Catch": [
+              {
+                "ErrorEquals": ["AuthFailureException"],
+                "Next": "Login"
+              },
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "DLQNotifier"
+              }
+            ]
+          },
+          "NotifyCompletion": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:NotifyCompletionLambda",
+            "InputPath": "$",
+            "End": true,
+            "Catch": [
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "DLQNotifier"
+              }
+            ]
           }
         }
       },
+      "Next": "EndWorkflow"
+    },
+    "EndWorkflow": {
+      "Type": "Pass",
+      "End": true
+    },
+    "DLQNotifier": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:DLQNotifierLambda",
+      "InputPath": "$",
       "End": true
     }
   }

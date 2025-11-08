@@ -1,45 +1,12 @@
 package models
 
-// Project represents a single project item
-type Project struct {
-	Role               string  `json:"Role__c"`
-	FamilyFriendlyRole *string `json:"Family_Friendly_Role__c"`
-	Id                 string  `json:"Id"`
-	Status             string  `json:"Status"`
-	WebTitleFF         string  `json:"Web_Title_FF__c"`
-	StartDate          string  `json:"StartDate"`
-	ActivityStartTime  string  `json:"Activity_Start_Time__c"`
-	EndDate            string  `json:"EndDate"`
-	ActivityEndTime    string  `json:"Activity_End_Time__c"`
-	ContactArray       []struct {
-		Id                 string `json:"Id"`
-		Name               string `json:"Name"`
-		Role               string `json:"Role__c"`
-		IsTeamLeader       bool   `json:"IsTeamLeader__tl"`
-		DisplayNameAndRole string `json:"DisplayNameAndRole__tl"`
-	} `json:"ContactArray__tl"`
-	CampaignId         string `json:"CampaignId__tl"`
-	StartDateTime      string `json:"StartDateTime__tl"`
-	EndDateTime        string `json:"EndDateTime__tl"`
-	ContactDisplayList string `json:"ContactDisplayList__tl"`
-	DayOfWeek          string `json:"DayOfWeek__tl"`
+type Cookie struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Domain string `json:"domain"`
+	Path   string `json:"path"`
 }
 
-// ScheduleData wraps the ScheduleList and other data in the "data" field
-type ScheduleData struct {
-	ScheduleList map[string]Project `json:"ScheduleList__tl"`
-	// Optional additional fields you may want to capture
-	UpcomingCount        int  `json:"UpcomingCount__tl"`
-	PlusCount            int  `json:"PlusCount__tl"`
-	ShowNewFunctionality bool `json:"ShowNewFunctionality__tl"`
-}
-
-// ScheduleResponse represents the full API response
-type ScheduleResponse struct {
-	Success          bool         `json:"success"`
-	Data             ScheduleData `json:"data"`
-	Message          string       `json:"message"`
-	Command          string       `json:"command"`
-	IsUserTeamLeader bool         `json:"is_user_team_leader"`
-	UserSFID         string       `json:"user_sf_id"`
+type Auth struct {
+	Cookies []Cookie `json:"cookies"`
 }
