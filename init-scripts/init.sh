@@ -22,33 +22,33 @@ awslocal dynamodb put-item \
   --table-name message-table \
   --item '{
     "ProjectName": {"S": "ProjectA"},
-    "ProjectDate": {"S": "2025-01-01"},
+    "ProjectDate": {"S": "2025-11-11"},
     "hasSentWelcome": {"BOOL": true},
     "hasSentReminder": {"BOOL": false},
     "shouldStopNotify": {"BOOL": false},
-    "lastUpdated": {"S": "2025-01-01"}
+    "lastUpdated": {"S": "2025-11-11"}
   }'
 
 awslocal dynamodb put-item \
   --table-name message-table \
   --item '{
     "ProjectName": {"S": "ProjectB"},
-    "ProjectDate": {"S": "2025-01-01"},
+    "ProjectDate": {"S": "2025-11-11"},
     "hasSentWelcome": {"BOOL": true},
     "hasSentReminder": {"BOOL": true},
     "shouldStopNotify": {"BOOL": false},
-    "lastUpdated": {"S": "2025-01-01"}
+    "lastUpdated": {"S": "2025-11-11"}
   }'
 
 awslocal dynamodb put-item \
   --table-name message-table \
   --item '{
     "ProjectName": {"S": "ProjectC"},
-    "ProjectDate": {"S": "2025-01-01"},
+    "ProjectDate": {"S": "2025-11-11"},
     "hasSentWelcome": {"BOOL": true},
     "hasSentReminder": {"BOOL": false},
     "shouldStopNotify": {"BOOL": true},
-    "lastUpdated": {"S": "2025-01-01"}
+    "lastUpdated": {"S": "2025-11-11"}
   }'
 
 echo "✅ Resources created!"

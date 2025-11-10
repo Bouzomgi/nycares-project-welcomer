@@ -11,8 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type DynamoDBClient interface {
+	GetItem(ctx context.Context, params *dynamodb.GetItemInput, opts ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
+}
+
 // GetProjectNotification fetches a row by project name + date
-func GetProjectNotification(dbClient *dynamodb.Client, dynamoTableName string, project models.Project) (*models.ProjectNotification, error) {
+func GetProjectNotification(dbClient DynamoDBClient, dynamoTableName string, project models.Project) (*models.ProjectNotification, error) {
 	if dynamoTableName == "" {
 		log.Errorf("Dynamo table name is empty for project %s", project.Name)
 		return nil, fmt.Errorf("dynamo table name is required")
@@ -30,6 +34,7 @@ func GetProjectNotification(dbClient *dynamodb.Client, dynamoTableName string, p
 		TableName: aws.String(dynamoTableName),
 		Key:       key,
 	})
+
 	if err != nil {
 		return nil, fmt.Errorf("dynamo get item failed: %w", err)
 	}
