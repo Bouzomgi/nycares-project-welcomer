@@ -1,0 +1,18 @@
+aws:
+  credentials:
+    accessKeyID: "${NYCARES_AWS_ACCESS_KEY_ID}"
+    secretAccessKey: "${NYCARES_AWS_SECRET_ACCESS_KEY}"
+    region: "${NYCARES_AWS_REGION}"
+  dynamo:
+    tableName: "nycares-${NYCARES_ENV}-table"
+    region: "${NYCARES_AWS_REGION}"
+    endpoint: "${NYCARES_DYNAMO_ENDPOINT}" # Optional, for local development
+  s3:
+    bucketName: "nycare-${NYCARES_ENV}-bucket"
+    endpoint: "${NYCARES_S3_ENDPOINT}"
+
+auth:
+  account:
+    username: "${NYCARES_AUTH_USERNAME}"
+    password: "${NYCARES_AUTH_PASSWORD}"
+# Environment-specific settings can be overridden in the respective environment files
