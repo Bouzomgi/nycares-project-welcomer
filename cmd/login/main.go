@@ -1,67 +1,43 @@
-package login
+package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"time"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/service/httpservice"
-
+	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
 	"github.com/aws/aws-lambda-go/lambda"
-	log "github.com/sirupsen/logrus"
 )
 
-type LambdaOutput struct {
-	Auth models.Auth `json:"auth"`
-}
-
-var cfg *config.Config
-
-func init() {
-	var err error
-	cfg, err = config.LoadConfig(os.Getenv("NYCARES_ENV"))
+func buildHandler() (*login.LoginHandler, error) {
+	cfg, err := config.LoadConfig[login.Config]()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		return nil, err
 	}
-}
 
-func handler(ctx context.Context) (LambdaOutput, error) {
-	httpService, err := httpservice.NewHttpService(endpoints.BaseUrl)
+	httpSvc, err := httpservice.NewHttpService()
 	if err != nil {
-		return LambdaOutput{}, fmt.Errorf("failed to create HTTP client: %w", err)
+		return nil, err
 	}
 
-	creds := models.Credentials{
-		Username: cfg.Account.Username,
-		Password: cfg.Account.Password,
-	}
-
-	log.WithField("env", cfg.Env).Info("Attempting login")
-
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	authResp, err := httpService.Login(ctx, creds)
-	if err != nil {
-		log.Errorf("Login failed: %v", err)
-		return LambdaOutput{}, fmt.Errorf("login handler: %w", err)
-	}
-	log.Info("Login succeeded")
-
-	return LambdaOutput{Auth: authResp}, nil
+	usecase := login.NewLoginUseCase(httpSvc)
+	return login.NewLoginHandler(usecase, cfg), nil
 }
 
 func main() {
+	handler, err := buildHandler()
+	if err != nil {
+		panic(err)
+	}
+
 	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
-		if _, err := handler(context.Background()); err != nil {
-			log.Fatal(err)
+		_, err := handler.Handle(context.Background())
+		if err != nil {
+			panic(err)
 		}
 		return
 	}
 
-	lambda.Start(handler)
+	lambda.Start(handler.Handle)
 }

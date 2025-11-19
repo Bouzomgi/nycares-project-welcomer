@@ -1,4 +1,4 @@
-package httpclient
+package httpservice
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprint("%s %s returned %d %s", e.Method, e.URL, e.StatusCode, e.Status)
 }
 
-// IsSuccess chrecks if the response status code indicates success
+// IsSuccess checks if the response status code indicates success
 func IsSuccess(resp *http.Response) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }

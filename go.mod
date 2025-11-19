@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/aws/aws-sdk-go-v2 v1.39.6 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.21 // indirect
@@ -27,6 +28,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect
 	github.com/aws/smithy-go v1.23.2 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 )
 
 require (
@@ -46,6 +48,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
+	honnef.co/go/tools v0.6.1
 )

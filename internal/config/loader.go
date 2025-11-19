@@ -3,57 +3,72 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"reflect"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
-// LoadConfig is a unified config loader that works with any struct type.
-// It supports environment-specific configs and Lambda deployments
-//
-// Parameters:
-// 		- env: The environment to load config for ("dev", "prod", etc.)
-//					 If empty, defaults to "local"
-
-func LoadConfig(env string) (*Config, error) {
+func LoadConfig[T any]() (*T, error) {
 	v := viper.New()
 
-	// Set default environment if not specified
-	if env == "" {
-		env = "local"
-	}
-
-	// Set up paths
-	configDir := "configs"
-	configName := "config"
-
-	// Check if running in Lambda
-	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
-		configDir = "/opt/config" // Lambda layer config path
-	}
-
-	configPath := filepath.Join(configDir, env)
-
-	v.SetConfigName(configName)
-	v.SetConfigType("yaml")
-	v.AddConfigPath(configPath)
-
-	// Environment variables take precedence
 	v.AutomaticEnv()
 	v.SetEnvPrefix("NYCARES")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	// Load the config file
-	if err := v.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+	// Detect Lambda
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		// Lambda: read only from env vars
+	} else {
+		// Local dev: read YAML config file
+		v.SetConfigName("config")
+		v.SetConfigType("yaml")
+		v.AddConfigPath(".") // local config path
+
+		if err := v.ReadInConfig(); err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+				return nil, fmt.Errorf("error reading config file: %w", err)
+			}
+			// File not found is ok, continue with env vars
+		}
 	}
 
-	var config Config
-	if err := v.Unmarshal(&config); err != nil {
+	var cfg T
+	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
 	}
 
-	// Set the environment in the config\
-	config.Env = env
+	// Validate all fields
+	if err := validateStruct(cfg); err != nil {
+		return nil, fmt.Errorf("config validation failed: %w", err)
+	}
 
-	return &config, nil
+	return &cfg, nil
+}
+
+// validateStruct recursively checks all string fields in a struct
+func validateStruct(s interface{}) error {
+	val := reflect.ValueOf(s)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldType := typ.Field(i)
+
+		switch field.Kind() {
+		case reflect.String:
+			if field.String() == "" {
+				return fmt.Errorf("missing required field: %s", fieldType.Name)
+			}
+		case reflect.Struct:
+			if err := validateStruct(field.Interface()); err != nil {
+				return fmt.Errorf("%s.%w", fieldType.Name, err)
+			}
+			// Optionally handle slices/maps if needed
+		}
+	}
+	return nil
 }

@@ -1,7 +1,7 @@
 package config
 
 // Config represents the unified configuration structure for all lambdas
-type Config struct {
+type Nope struct {
 	// AWS configuration
 	AWS struct {
 		Credentials struct {
@@ -32,7 +32,4 @@ type Config struct {
 		Password   string `mapstructure:"password"`
 		InternalId string `mapstructure:"internalId"`
 	} `mapstructure:"account"`
-
-	// Environment information
-	Env string `mapstructure:"env"`
 }

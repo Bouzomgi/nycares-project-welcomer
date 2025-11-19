@@ -1,4 +1,4 @@
-package models
+package domain
 
 import "net/http"
 
@@ -8,5 +8,5 @@ type Credentials struct {
 }
 
 type Auth struct {
-	Cookies []*http.Cookie `json:"cookies"`
+	Cookies []*http.Cookie
 }
