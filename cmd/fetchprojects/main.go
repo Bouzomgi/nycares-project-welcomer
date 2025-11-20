@@ -6,15 +6,16 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func buildHandler() (*login.LoginHandler, error) {
-	cfg, err := config.LoadConfig[login.Config]()
+func buildHandler() (*fetchprojects.FetchProjectsHandler, error) {
+	cfg, err := config.LoadConfig[fetchprojects.Config]()
 	if err != nil {
 		return nil, err
 	}
@@ -24,8 +25,8 @@ func buildHandler() (*login.LoginHandler, error) {
 		return nil, err
 	}
 
-	usecase := login.NewLoginUseCase(httpSvc)
-	return login.NewLoginHandler(usecase, cfg), nil
+	usecase := fetchprojects.NewFetchProjectsUseCase(httpSvc)
+	return fetchprojects.NewFetchProjectsHandler(usecase, cfg), nil
 }
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 	}
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
-		output, err := handler.Handle(context.Background())
+		output, err := handler.Handle(context.Background(), models.FetchProjectsInput{})
 		if err != nil {
 			panic(err)
 		}

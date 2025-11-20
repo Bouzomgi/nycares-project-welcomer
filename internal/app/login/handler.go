@@ -18,7 +18,7 @@ func NewLoginHandler(u *LoginUseCase, cfg *Config) *LoginHandler {
 	return &LoginHandler{usecase: u, cfg: cfg}
 }
 
-func (h *LoginHandler) Handle(ctx context.Context) (models.Auth, error) {
+func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
 	creds := domain.Credentials{
 		Username: h.cfg.Account.Username,
 		Password: h.cfg.Account.Password,
@@ -29,7 +29,7 @@ func (h *LoginHandler) Handle(ctx context.Context) (models.Auth, error) {
 
 	authResp, err := h.usecase.Execute(ctx, creds)
 	if err != nil {
-		return models.Auth{}, err
+		return models.LoginOutput{}, err
 	}
 
 	output := ToResponseAuth(authResp)
@@ -37,14 +37,12 @@ func (h *LoginHandler) Handle(ctx context.Context) (models.Auth, error) {
 	return output, nil
 }
 
-func ToResponseAuth(domainAuth domain.Auth) models.Auth {
+func ToResponseAuth(domainAuth domain.Auth) models.LoginOutput {
 	cookies := make([]http.Cookie, len(domainAuth.Cookies))
 	for i, c := range domainAuth.Cookies {
 		if c != nil {
 			cookies[i] = *c
 		}
 	}
-	return models.Auth{
-		Cookies: cookies,
-	}
+	return models.NewLoginOutput(cookies)
 }

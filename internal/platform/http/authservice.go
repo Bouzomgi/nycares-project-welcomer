@@ -38,7 +38,7 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("login failed: %w", err)
 	}
 
-	cookies, err := s.GetCookies(endpoints.BaseUrl)
+	cookies, err := s.GetCookies()
 	if err != nil {
 		return domain.Auth{}, fmt.Errorf("failed to get cookies: %w", err)
 	}
@@ -57,7 +57,7 @@ func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request
 	form.Set("pass", creds.Password)
 
 	encoded := form.Encode()
-	loginURL := endpoints.BuildURL(endpoints.BaseUrl, endpoints.LoginPath)
+	loginURL := endpoints.BuildURL(s.baseUrl, endpoints.LoginPath)
 
 	req, err := http.NewRequest("POST", loginURL, strings.NewReader(encoded))
 	if err != nil {
@@ -67,12 +67,3 @@ func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request
 
 	return req, nil
 }
-
-// func (s *HttpService) extractCookies(u *url.URL) ([]*http.Cookie, error) {
-// 	cookies := s.client.Jar.Cookies(u)
-// 	if len(cookies) == 0 {
-// 		return nil, fmt.Errorf("login failed: no cookies set on %s", u)
-// 	}
-
-// 	return cookies, nil
-// }

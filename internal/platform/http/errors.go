@@ -17,7 +17,7 @@ type HTTPError struct {
 
 // Error implements the error interface
 func (e *HTTPError) Error() string {
-	return fmt.Sprint("%s %s returned %d %s", e.Method, e.URL, e.StatusCode, e.Status)
+	return fmt.Sprintf("%s %s returned %d %s", e.Method, e.URL, e.StatusCode, e.Status)
 }
 
 // IsSuccess checks if the response status code indicates success

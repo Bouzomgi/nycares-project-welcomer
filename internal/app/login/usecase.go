@@ -22,7 +22,6 @@ func (u *LoginUseCase) Execute(ctx context.Context, creds domain.Credentials) (d
 		return domain.Auth{}, err
 	}
 
-	// Optionally transform models.Auth → domain.Auth
 	return domain.Auth{
 		Cookies: auth.Cookies,
 	}, nil
