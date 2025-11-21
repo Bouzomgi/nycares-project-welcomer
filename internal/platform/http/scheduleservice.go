@@ -8,6 +8,7 @@ import (
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
 )
 
 type project struct {
@@ -100,7 +101,10 @@ func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]dom
 		return nil, fmt.Errorf("failed to unmarshal schedule response: %w", err)
 	}
 
-	projects := schedResp[0].toDomainProjects()
+	projects, err := schedResp[0].toDomainProjects()
+	if err != nil {
+		return nil, err
+	}
 
 	if len(projects) == 0 {
 		return nil, fmt.Errorf("empty schedule response")
@@ -123,14 +127,20 @@ func (s *HttpService) buildScheduleRequest(internalId string) (*http.Request, er
 	return req, nil
 }
 
-func (sr scheduleResponse) toDomainProjects() []domain.Project {
+func (sr scheduleResponse) toDomainProjects() ([]domain.Project, error) {
 	var projects []domain.Project
 	for _, p := range sr.Data.ScheduleList {
+		projectDate, err := utils.StringToDate(p.StartDate)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not parse validate date from site's schedule response")
+		}
+
 		projects = append(projects, domain.Project{
 			Name: p.WebTitleFF,
-			Date: p.StartDate,
+			Date: projectDate,
 			Id:   p.Id,
 		})
 	}
-	return projects
+	return projects, nil
 }

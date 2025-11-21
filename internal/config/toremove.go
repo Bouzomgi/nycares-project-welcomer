@@ -5,9 +5,9 @@ type Nope struct {
 	// AWS configuration
 	AWS struct {
 		Credentials struct {
-			AccessKeyID     string `mapstructure:"accessKeyID"`
-			SecretAccessKey string `mapstructure:"secretAccessKey"`
-			Region          string `mapstructure:"region"`
+			AccessKeyID     string `mapstructure:"accessKeyID,omitempty"`
+			SecretAccessKey string `mapstructure:"secretAccessKey,omitempty"`
+			Region          string `mapstructure:"region,omitempty"`
 		} `mapstructure:"credentials"`
 		Dynamo struct {
 			TableName string `mapstructure:"tableName"`

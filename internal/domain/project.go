@@ -1,7 +1,9 @@
 package domain
 
+import "time"
+
 type Project struct {
 	Name string
-	Date string
+	Date time.Time
 	Id   string
 }

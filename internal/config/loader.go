@@ -46,7 +46,6 @@ func LoadConfig[T any]() (*T, error) {
 	return &cfg, nil
 }
 
-// validateStruct recursively checks all string fields in a struct
 func validateStruct(s interface{}) error {
 	val := reflect.ValueOf(s)
 	if val.Kind() == reflect.Ptr {
@@ -58,16 +57,23 @@ func validateStruct(s interface{}) error {
 		field := val.Field(i)
 		fieldType := typ.Field(i)
 
+		// Check for omitempty tag
+		omitempty := false
+		if tag, ok := fieldType.Tag.Lookup("mapstructure"); ok {
+			if strings.Contains(tag, "omitempty") {
+				omitempty = true
+			}
+		}
+
 		switch field.Kind() {
 		case reflect.String:
-			if field.String() == "" {
+			if !omitempty && field.String() == "" {
 				return fmt.Errorf("missing required field: %s", fieldType.Name)
 			}
 		case reflect.Struct:
 			if err := validateStruct(field.Interface()); err != nil {
 				return fmt.Errorf("%s.%w", fieldType.Name, err)
 			}
-			// Optionally handle slices/maps if needed
 		}
 	}
 	return nil

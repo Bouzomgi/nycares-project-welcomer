@@ -14,8 +14,6 @@ type HttpService struct {
 	baseUrl string
 }
 
-type HttpClientOption func(*http.Client) error
-
 func NewHttpService(baseUrl string) (*HttpService, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -28,18 +26,6 @@ func NewHttpService(baseUrl string) (*HttpService, error) {
 
 	return &HttpService{client, baseUrl}, nil
 }
-
-// func WithAuth(auth domain.Auth, baseURL string) HttpClientOption {
-// 	return func(client *http.Client) error {
-// 		u, err := url.Parse(baseURL)
-// 		if err != nil {
-// 			return fmt.Errorf("failed to parse base URL: %w", err)
-// 		}
-
-// 		client.Jar.SetCookies(u, auth.Cookies)
-// 		return nil
-// 	}
-// }
 
 func (s *HttpService) SendRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)

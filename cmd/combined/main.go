@@ -5,11 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
+	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo"
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
+	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
 func buildLoginHandler() (*login.LoginHandler, error) {
@@ -42,6 +50,45 @@ func buildFetchProjectsHandler() (*fetchprojects.FetchProjectsHandler, error) {
 	return fetchprojects.NewFetchProjectsHandler(usecase, cfg), nil
 }
 
+func buildComputeMessageHandler() (*computemessage.ComputeMessageHandler, error) {
+	cfg, err := config.LoadConfig[computemessage.Config]()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	awsCfg, err := awsconfig.LoadAWSConfigFromConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	dynamoClient := dynamodb.NewFromConfig(awsCfg)
+	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
+
+	usecase := computemessage.NewComputeMessageUseCase(dynamoSvc)
+	return computemessage.NewComputeMessageHandler(usecase, cfg), nil
+}
+
+func buildRequestApprovalHandler() (*requestapproval.RequestApprovalHandler, error) {
+	cfg, err := config.LoadConfig[requestapproval.Config]()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	awsCfg, err := awsconfig.LoadAWSConfigFromConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	snsClient := sns.NewFromConfig(awsCfg)
+
+	snsSvc := snsservice.NewSNSSerice(snsClient, cfg.AWS.SNS.TopicArn)
+
+	usecase := requestapproval.NewRequestApprovalUseCase(snsSvc)
+	return requestapproval.NewRequestApprovalHandler(usecase, cfg), nil
+}
+
 ////////////////
 
 func main() {
@@ -57,21 +104,82 @@ func main() {
 	}
 
 	data, _ := json.MarshalIndent(loginOut, "", "  ")
-	fmt.Println(string(data))
-	/////
 
-	fetchProjectHandler, err := buildFetchProjectsHandler()
+	fmt.Println("//////// Login Output ////////")
+	fmt.Println(string(data))
+
+	///// Fetch Projects
+
+	fetchProjectsHandler, err := buildFetchProjectsHandler()
 	if err != nil {
 		panic(err)
 	}
 
-	output, err := fetchProjectHandler.Handle(context.Background(), loginOut)
+	fetchProjectsOut, err := fetchProjectsHandler.Handle(context.Background(), loginOut)
 
 	if err != nil {
 		panic(err)
 	}
 
-	data, _ = json.MarshalIndent(output, "", "  ")
+	data, _ = json.MarshalIndent(fetchProjectsOut, "", "  ")
+
+	fmt.Print("\n\n")
+	fmt.Println("//////// FetchProjects Output ////////")
 	fmt.Println(string(data))
+
+	///// Compute Message
+
+	if len(fetchProjectsOut.Projects) == 0 {
+		panic("could not fetch any projects")
+	}
+
+	computeMessageInput := models.ComputeMessageInput{
+		Auth:    fetchProjectsOut.Auth,
+		Project: fetchProjectsOut.Projects[0],
+	}
+
+	computeMessageHandler, err := buildComputeMessageHandler()
+	if err != nil {
+		panic(err)
+	}
+
+	computeMessageOut, err := computeMessageHandler.Handle(context.Background(), computeMessageInput)
+
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ = json.MarshalIndent(computeMessageOut, "", "  ")
+
+	fmt.Print("\n\n")
+	fmt.Println("//////// ComputeMessage Output ////////")
+	fmt.Println(string(data))
+
+	///// Request Approval
+
+	requestApprovalHandler, err := buildRequestApprovalHandler()
+	if err != nil {
+		panic(err)
+	}
+
+	requestApprovalIn := models.RequestApprovalInput{
+		TaskToken:     "dummy-task-token",
+		Auth:          computeMessageOut.Auth,
+		Project:       computeMessageOut.Project,
+		MessageToSend: computeMessageOut.MessageToSend,
+	}
+
+	requestApprovalOut, err := requestApprovalHandler.Handle(context.Background(), requestApprovalIn)
+
+	if err != nil {
+		panic(err)
+	}
+
+	data, _ = json.MarshalIndent(requestApprovalOut, "", "  ")
+
+	fmt.Print("\n\n")
+	fmt.Println("//////// FetchProjects Output ////////")
+	fmt.Println(string(data))
+
 	return
 }

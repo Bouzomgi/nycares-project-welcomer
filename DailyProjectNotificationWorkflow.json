@@ -63,18 +63,13 @@
             "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
             "InputPath": "$",
             "ResultPath": "$",
-            "Next": "WaitForApproval",
+            "Next": "SendAndPinMessage",
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "DLQNotifier"
               }
             ]
-          },
-          "WaitForApproval": {
-            "Type": "Wait",
-            "SecondsPath": "$.approvalTimeoutSeconds",
-            "Next": "SendAndPinMessage"
           },
           "SendAndPinMessage": {
             "Type": "Task",

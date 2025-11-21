@@ -1,36 +1,56 @@
 package models
 
 import (
-	"net/http"
+	"fmt"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
 )
 
+type FetchProjectsInput = LoginOutput
+
 type FetchProjectsOutput struct {
-	Auth     authData      `json:"auth"`
-	Projects []projectData `json:"projects"`
+	Auth     Auth      `json:"auth"`
+	Projects []project `json:"projects"`
 }
 
-type authData struct {
-	Cookies []http.Cookie `json:"cookies"`
-}
-
-type projectData struct {
+type project struct {
 	Name string `json:"name"`
 	Date string `json:"date"`
 }
 
+// MODEL -> DOMAIN
+func BuildDomainProject(p project) (domain.Project, error) {
+	projectDate, err := utils.StringToDate(p.Date)
+
+	if err != nil {
+		return domain.Project{}, fmt.Errorf("could not parse project date")
+	}
+
+	domainProject := domain.Project{
+		Name: p.Name,
+		Date: projectDate,
+	}
+
+	return domainProject, nil
+}
+
+// DOMAIN -> MODEL
+func buildModelProject(p domain.Project) project {
+	return project{
+		Name: p.Name,
+		Date: utils.DateToString(p.Date),
+	}
+}
+
 func BuildFetchProjectsOutput(input FetchProjectsInput, domainProjects []domain.Project) FetchProjectsOutput {
-	projects := make([]projectData, len(domainProjects))
+	projects := make([]project, len(domainProjects))
 	for i, p := range domainProjects {
-		projects[i] = projectData{
-			Name: p.Name,
-			Date: p.Date,
-		}
+		projects[i] = buildModelProject(p)
 	}
 
 	return FetchProjectsOutput{
-		Auth: authData{
+		Auth: Auth{
 			Cookies: input.Auth.Cookies,
 		},
 		Projects: projects,

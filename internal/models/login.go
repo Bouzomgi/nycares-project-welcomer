@@ -14,8 +14,6 @@ type LoginOutput struct {
 	Auth Auth `json:"auth"`
 }
 
-type FetchProjectsInput = LoginOutput
-
 func NewLoginOutput(cookies []http.Cookie) LoginOutput {
 	return LoginOutput{
 		Auth{
