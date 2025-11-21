@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
+	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
-	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
+	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func buildHandler() (*requestapproval.RequestApprovalHandler, error) {
-	cfg, err := config.LoadConfig[requestapproval.Config]()
+func buildHandler() (*ComputeMessageHandler, error) {
+	cfg, err := config.LoadConfig[cm.Config]()
 	if err != nil {
 		return nil, err
 	}
@@ -27,12 +27,11 @@ func buildHandler() (*requestapproval.RequestApprovalHandler, error) {
 		return nil, err
 	}
 
-	snsClient := sns.NewFromConfig(awsCfg)
+	dynamoClient := dynamodb.NewFromConfig(awsCfg)
+	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
 
-	snsSvc := snsservice.NewSNSSerice(snsClient, cfg.AWS.SNS.TopicArn)
-
-	usecase := requestapproval.NewRequestApprovalUseCase(snsSvc)
-	return requestapproval.NewRequestApprovalHandler(usecase, cfg), nil
+	usecase := cm.NewComputeMessageUseCase(dynamoSvc)
+	return NewComputeMessageHandler(usecase, cfg), nil
 }
 
 func main() {
@@ -42,7 +41,7 @@ func main() {
 	}
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
-		output, err := handler.Handle(context.Background(), models.RequestApprovalInput{})
+		output, err := handler.Handle(context.Background(), models.ComputeMessageInput{})
 		if err != nil {
 			panic(err)
 		}

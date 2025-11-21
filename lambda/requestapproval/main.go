@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/notifycompletion"
+	ra "github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
@@ -13,8 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
-func buildHandler() (*notifycompletion.NotifyCompletionHandler, error) {
-	cfg, err := config.LoadConfig[notifycompletion.Config]()
+func buildHandler() (*RequestApprovalHandler, error) {
+	cfg, err := config.LoadConfig[ra.Config]()
 	if err != nil {
 		return nil, err
 	}
@@ -27,10 +29,10 @@ func buildHandler() (*notifycompletion.NotifyCompletionHandler, error) {
 
 	snsClient := sns.NewFromConfig(awsCfg)
 
-	snsSvc := snsservice.NewSNSSerice(snsClient, cfg.AWS.SNS.TopicArn)
+	snsSvc := snsservice.NewSNSService(snsClient, cfg.AWS.SNS.TopicArn)
 
-	usecase := notifycompletion.NewNotifyCompletionUseCase(snsSvc)
-	return notifycompletion.NewNotifyCompletionHandler(usecase, cfg), nil
+	usecase := ra.NewRequestApprovalUseCase(snsSvc)
+	return NewRequestApprovalHandler(usecase, cfg), nil
 }
 
 func main() {
@@ -40,10 +42,12 @@ func main() {
 	}
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
-		err := handler.Handle(context.Background(), models.NotifyCompletionInput{})
+		output, err := handler.Handle(context.Background(), models.RequestApprovalInput{})
 		if err != nil {
 			panic(err)
 		}
+		data, _ := json.MarshalIndent(output, "", "  ")
+		fmt.Println(string(data))
 		return
 	}
 

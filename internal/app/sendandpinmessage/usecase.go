@@ -10,11 +10,11 @@ import (
 )
 
 type SendAndPinMessageUseCase struct {
-	s3Service   *s3service.S3Service
-	httpService *httpservice.HttpService
+	s3Service   s3service.ContentService
+	httpService httpservice.MessageService
 }
 
-func NewSendAndPinMessageUseCase(s3Service *s3service.S3Service, httpService *httpservice.HttpService) *SendAndPinMessageUseCase {
+func NewSendAndPinMessageUseCase(s3Service s3service.ContentService, httpService httpservice.MessageService) *SendAndPinMessageUseCase {
 	return &SendAndPinMessageUseCase{
 		s3Service,
 		httpService,
@@ -25,7 +25,7 @@ func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth
 
 	u.httpService.SetCookies(auth.Cookies)
 
-	messageContent, err := u.s3Service.GetMessageItem(ctx, messageRef)
+	messageContent, err := u.s3Service.GetMessageContent(ctx, messageRef)
 	if err != nil {
 		return err
 	}

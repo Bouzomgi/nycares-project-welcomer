@@ -10,27 +10,38 @@ import (
 )
 
 type NotifyCompletionUseCase struct {
-	snsSrv *snsservice.SNSService
+	snsSrv snsservice.NotificationService
 }
 
-func NewNotifyCompletionUseCase(snsSrv *snsservice.SNSService) *NotifyCompletionUseCase {
+func NewNotifyCompletionUseCase(snsSrv snsservice.NotificationService) *NotifyCompletionUseCase {
 	return &NotifyCompletionUseCase{
 		snsSrv: snsSrv,
 	}
 }
 
-func (u *NotifyCompletionUseCase) Execute(ctx context.Context, notificationType domain.NotificationType, project domain.Project) error {
+func (u *NotifyCompletionUseCase) Execute(
+	ctx context.Context,
+	notificationType domain.NotificationType,
+	project domain.Project,
+) error {
 
 	completionMessage := createCompletionMessage(notificationType, project)
-
 	subject := "Message Sent!"
-	u.snsSrv.PublishMessage(ctx, completionMessage, subject)
+
+	_, err := u.snsSrv.PublishNotification(ctx, completionMessage, subject)
+	if err != nil {
+		return fmt.Errorf("failed to publish completion notification: %w", err)
+	}
 
 	return nil
 }
 
 func createCompletionMessage(messageType domain.NotificationType, project domain.Project) string {
-	projectDateString := utils.DateToString(project.Date)
-
-	return fmt.Sprintf("Successfully sent %s message to %s on %s!", messageType, project.Name, projectDateString)
+	projectDate := utils.DateToString(project.Date)
+	return fmt.Sprintf(
+		"Successfully sent %s message to %s on %s!",
+		messageType.String(),
+		project.Name,
+		projectDate,
+	)
 }

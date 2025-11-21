@@ -9,10 +9,10 @@ import (
 )
 
 type RequestApprovalUseCase struct {
-	snsSrv *snsservice.SNSService
+	snsSrv snsservice.NotificationService
 }
 
-func NewRequestApprovalUseCase(snsSrv *snsservice.SNSService) *RequestApprovalUseCase {
+func NewRequestApprovalUseCase(snsSrv snsservice.NotificationService) *RequestApprovalUseCase {
 	return &RequestApprovalUseCase{
 		snsSrv: snsSrv,
 	}
@@ -26,7 +26,7 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 
 	link := buildCallbackLink(callbackEndpoint, taskToken)
 
-	u.snsSrv.PublishMessage(ctx, link, "yooooooooo")
+	u.snsSrv.PublishNotification(ctx, link, "yooooooooo")
 
 	return nil
 }

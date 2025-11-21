@@ -1,4 +1,4 @@
-package sendandpinmessage
+package main
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/sendandpinmessage"
+	spm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/sendandpinmessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
@@ -17,8 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func buildHandler() (*sendandpinmessage.SendAndPinMessageHandler, error) {
-	cfg, err := config.LoadConfig[sendandpinmessage.Config]()
+func buildHandler() (*SendAndPinMessageHandler, error) {
+	cfg, err := config.LoadConfig[spm.Config]()
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +37,8 @@ func buildHandler() (*sendandpinmessage.SendAndPinMessageHandler, error) {
 	s3Client := s3.NewFromConfig(awsCfg)
 	s3Svc := s3service.NewS3Service(s3Client, cfg.AWS.S3.BucketName)
 
-	usecase := sendandpinmessage.NewSendAndPinMessageUseCase(s3Svc, httpSvc)
-	return sendandpinmessage.NewSendAndPinMessageHandler(usecase, cfg), nil
+	usecase := spm.NewSendAndPinMessageUseCase(s3Svc, httpSvc)
+	return NewSendAndPinMessageHandler(usecase, cfg), nil
 }
 
 func main() {

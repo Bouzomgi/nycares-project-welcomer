@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
+	fp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func buildHandler() (*fetchprojects.FetchProjectsHandler, error) {
-	cfg, err := config.LoadConfig[fetchprojects.Config]()
+func buildHandler() (*FetchProjectsHandler, error) {
+	cfg, err := config.LoadConfig[fp.Config]()
 	if err != nil {
 		return nil, err
 	}
@@ -25,8 +25,8 @@ func buildHandler() (*fetchprojects.FetchProjectsHandler, error) {
 		return nil, err
 	}
 
-	usecase := fetchprojects.NewFetchProjectsUseCase(httpSvc)
-	return fetchprojects.NewFetchProjectsHandler(usecase, cfg), nil
+	usecase := fp.NewFetchProjectsUseCase(httpSvc)
+	return NewFetchProjectsHandler(usecase, cfg), nil
 }
 
 func main() {

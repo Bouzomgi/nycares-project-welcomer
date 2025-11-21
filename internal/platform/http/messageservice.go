@@ -12,6 +12,13 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 )
 
+type MessageService interface {
+	GetProjectChannelId(ctx context.Context, projectId string) (string, error)
+	SendMessage(ctx context.Context, channelId, messageContent string) (string, error)
+	PinMessage(ctx context.Context, channelId, messageId string) error
+	SetCookies(cookies []*http.Cookie) error
+}
+
 type campaignResponse []campaignWrapper
 
 type campaignWrapper struct {

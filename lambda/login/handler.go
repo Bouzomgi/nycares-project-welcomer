@@ -1,20 +1,21 @@
-package login
+package main
 
 import (
 	"context"
 	"net/http"
 	"time"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type LoginHandler struct {
-	usecase *LoginUseCase
-	cfg     *Config
+	usecase *login.LoginUseCase
+	cfg     *login.Config
 }
 
-func NewLoginHandler(u *LoginUseCase, cfg *Config) *LoginHandler {
+func NewLoginHandler(u *login.LoginUseCase, cfg *login.Config) *LoginHandler {
 	return &LoginHandler{usecase: u, cfg: cfg}
 }
 

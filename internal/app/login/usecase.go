@@ -11,7 +11,6 @@ type LoginUseCase struct {
 	authSvc httpservice.AuthService
 }
 
-// TODO: add specific services like below everywhere
 func NewLoginUseCase(authSvc httpservice.AuthService) *LoginUseCase {
 	return &LoginUseCase{authSvc: authSvc}
 }

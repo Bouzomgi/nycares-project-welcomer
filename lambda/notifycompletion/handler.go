@@ -1,19 +1,20 @@
-package notifycompletion
+package main
 
 import (
 	"context"
 	"time"
 
+	nc "github.com/Bouzomgi/nycares-project-welcomer/internal/app/notifycompletion"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type NotifyCompletionHandler struct {
-	usecase *NotifyCompletionUseCase
-	cfg     *Config
+	usecase *nc.NotifyCompletionUseCase
+	cfg     *nc.Config
 }
 
-func NewNotifyCompletionHandler(u *NotifyCompletionUseCase, cfg *Config) *NotifyCompletionHandler {
+func NewNotifyCompletionHandler(u *nc.NotifyCompletionUseCase, cfg *nc.Config) *NotifyCompletionHandler {
 	return &NotifyCompletionHandler{usecase: u, cfg: cfg}
 }
 

@@ -1,4 +1,4 @@
-package requestapproval
+package main
 
 import (
 	"context"
@@ -6,15 +6,16 @@ import (
 	"net/url"
 	"time"
 
+	ra "github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type RequestApprovalHandler struct {
-	usecase *RequestApprovalUseCase
-	cfg     *Config
+	usecase *ra.RequestApprovalUseCase
+	cfg     *ra.Config
 }
 
-func NewRequestApprovalHandler(u *RequestApprovalUseCase, cfg *Config) *RequestApprovalHandler {
+func NewRequestApprovalHandler(u *ra.RequestApprovalUseCase, cfg *ra.Config) *RequestApprovalHandler {
 	return &RequestApprovalHandler{usecase: u, cfg: cfg}
 }
 
@@ -23,7 +24,7 @@ func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.Reques
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	callbackEndpoint, err := url.Parse(h.cfg.CallbackEndpoint)
+	callbackEndpoint, err := url.Parse(h.cfg.AWS.SF.CallbackEndpoint)
 	if err != nil {
 		return models.RequestApprovalOutput{}, fmt.Errorf("callback url is invalid")
 	}

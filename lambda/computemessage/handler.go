@@ -1,18 +1,19 @@
-package computemessage
+package main
 
 import (
 	"context"
 	"time"
 
+	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type ComputeMessageHandler struct {
-	usecase *ComputeMessageUseCase
-	cfg     *Config
+	usecase *cm.ComputeMessageUseCase
+	cfg     *cm.Config
 }
 
-func NewComputeMessageHandler(u *ComputeMessageUseCase, cfg *Config) *ComputeMessageHandler {
+func NewComputeMessageHandler(u *cm.ComputeMessageUseCase, cfg *cm.Config) *ComputeMessageHandler {
 	return &ComputeMessageHandler{usecase: u, cfg: cfg}
 }
 

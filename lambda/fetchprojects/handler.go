@@ -1,18 +1,19 @@
-package fetchprojects
+package main
 
 import (
 	"context"
 	"time"
 
+	fp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type FetchProjectsHandler struct {
-	usecase *FetchProjectsUseCase
-	cfg     *Config
+	usecase *fp.FetchProjectsUseCase
+	cfg     *fp.Config
 }
 
-func NewFetchProjectsHandler(u *FetchProjectsUseCase, cfg *Config) *FetchProjectsHandler {
+func NewFetchProjectsHandler(u *fp.FetchProjectsUseCase, cfg *fp.Config) *FetchProjectsHandler {
 	return &FetchProjectsHandler{usecase: u, cfg: cfg}
 }
 

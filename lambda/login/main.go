@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func buildHandler() (*login.LoginHandler, error) {
+func buildHandler() (*LoginHandler, error) {
 	cfg, err := config.LoadConfig[login.Config]()
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func buildHandler() (*login.LoginHandler, error) {
 	}
 
 	usecase := login.NewLoginUseCase(httpSvc)
-	return login.NewLoginHandler(usecase, cfg), nil
+	return NewLoginHandler(usecase, cfg), nil
 }
 
 func main() {
