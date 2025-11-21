@@ -17,6 +17,7 @@ type FetchProjectsOutput struct {
 type project struct {
 	Name string `json:"name"`
 	Date string `json:"date"`
+	Id   string `json:"id"`
 }
 
 // MODEL -> DOMAIN

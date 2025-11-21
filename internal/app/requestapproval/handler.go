@@ -25,7 +25,7 @@ func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.Reques
 
 	callbackEndpoint, err := url.Parse(h.cfg.CallbackEndpoint)
 	if err != nil {
-		panic(fmt.Errorf("callback url is invalid"))
+		return models.RequestApprovalOutput{}, fmt.Errorf("callback url is invalid")
 	}
 
 	err = h.usecase.Execute(ctx, *callbackEndpoint, input.TaskToken)

@@ -122,6 +122,7 @@ func (s *HttpService) buildScheduleRequest(internalId string) (*http.Request, er
 		return nil, err
 	}
 
+	// TODO: can I remove this? And all others?
 	req.Header.Set("User-Agent", "Mozilla/5.0")
 
 	return req, nil

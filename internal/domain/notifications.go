@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type ProjectNotification struct {
 	ProjectName      string `json:"projectName"`
 	ProjectDate      string `json:"projectDate"`
@@ -23,5 +25,16 @@ func (m NotificationType) String() string {
 		return "reminder"
 	default:
 		return "unknown"
+	}
+}
+
+func ParseNotificationType(s string) (NotificationType, error) {
+	switch s {
+	case "welcome":
+		return Welcome, nil
+	case "reminder":
+		return Reminder, nil
+	default:
+		return 0, fmt.Errorf("unknown notification type: %s", s)
 	}
 }

@@ -1,6 +1,7 @@
 package requestapproval
 
 type Config struct {
+	// TODO: fix callbackEndpoint, review NOPE
 	CallbackEndpoint string `mapstructure:"callbackEndpoint"`
 	AWS              struct {
 		SNS struct {
