@@ -114,7 +114,7 @@ func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]dom
 }
 
 func (s *HttpService) buildScheduleRequest(internalId string) (*http.Request, error) {
-	getScheduleBaseUrl := endpoints.BuildURL(endpoints.BaseUrl, endpoints.GetSchedulePath)
+	getScheduleBaseUrl := endpoints.JoinPaths(endpoints.BaseUrl, endpoints.GetSchedulePath)
 	urlStr := fmt.Sprintf("%s/%s", getScheduleBaseUrl, internalId)
 
 	req, err := http.NewRequest("GET", urlStr, nil)

@@ -57,7 +57,7 @@ func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request
 	form.Set("pass", creds.Password)
 
 	encoded := form.Encode()
-	loginURL := endpoints.BuildURL(s.baseUrl, endpoints.LoginPath)
+	loginURL := endpoints.JoinPaths(s.baseUrl, endpoints.LoginPath)
 
 	req, err := http.NewRequest("POST", loginURL, strings.NewReader(encoded))
 	if err != nil {

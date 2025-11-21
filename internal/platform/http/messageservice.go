@@ -161,7 +161,7 @@ func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string)
 }
 
 func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, error) {
-	getCampaignBaseUrl := endpoints.BuildURL(endpoints.BaseUrl, endpoints.GetCampaignPath)
+	getCampaignBaseUrl := endpoints.JoinPaths(endpoints.BaseUrl, endpoints.GetCampaignPath)
 	urlStr := fmt.Sprintf("%s/%s", getCampaignBaseUrl, projectId)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
