@@ -10,7 +10,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
-	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo"
+	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )

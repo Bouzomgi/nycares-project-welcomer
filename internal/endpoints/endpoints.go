@@ -5,4 +5,5 @@ const (
 	LoginPath       = "/user/login"
 	GetSchedulePath = "/api/schedule/retrieve"
 	GetCampaignPath = "/api/campaign/retrieve"
+	// TODO: Fix this since some endpoints aren't here
 )

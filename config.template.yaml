@@ -5,7 +5,6 @@ aws:
     region: "${NYCARES_AWS_REGION}"
   dynamo:
     tableName: "nycares-${NYCARES_ENV}-table"
-    region: "${NYCARES_AWS_REGION}"
     endpoint: "${NYCARES_DYNAMO_ENDPOINT}" # Optional, for local development
   s3:
     bucketName: "nycare-${NYCARES_ENV}-bucket"

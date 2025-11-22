@@ -435,3 +435,5 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 ```
 
 **Output:** `n/a`
+
+TODO: I want to make a min wait time before a notification can be sent after a welcome has been sent

@@ -11,7 +11,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
-	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
+	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/s3"

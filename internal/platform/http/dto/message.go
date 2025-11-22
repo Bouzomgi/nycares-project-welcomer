@@ -1,33 +1,16 @@
-package httpservice
+package dto
 
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"mime/multipart"
-	"net/http"
+////// GetCampaign
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
-)
+type CampaignResponse []CampaignWrapper
 
-type MessageService interface {
-	GetProjectChannelId(ctx context.Context, projectId string) (string, error)
-	SendMessage(ctx context.Context, channelId, messageContent string) (string, error)
-	PinMessage(ctx context.Context, channelId, messageId string) error
-	SetCookies(cookies []*http.Cookie) error
+type CampaignWrapper struct {
+	Campaign Campaign `json:"campaign"`
 }
 
-type campaignResponse []campaignWrapper
-
-type campaignWrapper struct {
-	Campaign campaign `json:"campaign"`
-}
-
-type campaign struct {
+type Campaign struct {
 	Name                          string     `json:"Name"`
-	RecordType                    recordType `json:"RecordType"`
+	RecordType                    RecordType `json:"RecordType"`
 	ProgramType                   string     `json:"Program_Type__c"`
 	Status                        string     `json:"Status"`
 	WebTitleFF                    string     `json:"Web_Title_FF__c"`
@@ -48,7 +31,7 @@ type campaign struct {
 	ProjectDescription            string     `json:"Project_Description__c"`
 	TeamLeaderNotes               *string    `json:"Team_Leader_Notes__c"`
 	ProjectLogistics              *string    `json:"Project_Logistics__c"`
-	RepOnSite                     contact    `json:"Rep_on_site__r"`
+	RepOnSite                     Contact    `json:"Rep_on_site__r"`
 	CommunityPartnerName          string     `json:"Community_Partner_Name__c"`
 	Directions                    string     `json:"Directions__c"`
 	FullCapacity                  string     `json:"Full_Capacity__c"`
@@ -58,7 +41,7 @@ type campaign struct {
 	PinnedChatMessage             *string    `json:"Pinned_Chat_Message__c"`
 	NumOfRegistration             int        `json:"Num_of_Registration__c"`
 	CapacityRemaining             int        `json:"Capacity_Remaining__c"`
-	Agency                        agency     `json:"agency__r"`
+	Agency                        Agency     `json:"agency__r"`
 	AgencyDescription             *string    `json:"agency_Description__c"`
 	GeneralInterestCampaign       bool       `json:"General_Interest_Campaign__c"`
 	AttendanceSignedUpCount       int        `json:"Attendance_Signed_Up_Count__c"`
@@ -101,82 +84,33 @@ type campaign struct {
 	TeamLeaderChannelLink         string     `json:"TeamLeader_ChannelLink__tl"`
 	Bookmarked                    bool       `json:"Bookmarked__tl"`
 	IsRecent                      bool       `json:"IsRecent__tl"`
-	CampaignSiblings              []campaign `json:"CampaignSiblings__tl"`
+	CampaignSiblings              []Campaign `json:"CampaignSiblings__tl"`
 }
 
-type recordType struct {
-	Attributes recordTypeAttributes `json:"attributes"`
+type RecordType struct {
+	Attributes RecordTypeAttributes `json:"attributes"`
 	Name       string               `json:"Name"`
 }
 
-type recordTypeAttributes struct {
+type RecordTypeAttributes struct {
 	Type string `json:"type"`
 	URL  string `json:"url"`
 }
 
-type contact struct {
-	Attributes recordTypeAttributes `json:"attributes"`
+type Contact struct {
+	Attributes RecordTypeAttributes `json:"attributes"`
 	Name       string               `json:"Name"`
 }
 
-type agency struct {
-	Attributes  recordTypeAttributes `json:"attributes"`
+type Agency struct {
+	Attributes  RecordTypeAttributes `json:"attributes"`
 	Name        string               `json:"Name"`
 	Description string               `json:"Description"`
 }
 
-func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string) (string, error) {
+////// SendMessage
 
-	req, err := s.buildCampaignRequest(projectId)
-	if err != nil {
-		return "", fmt.Errorf("failed to build schedule request: %w", err)
-	}
-
-	resp, err := s.SendRequest(ctx, req)
-	if err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	body, err := s.ReadBody(resp)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var campaignResp campaignResponse
-	if err := json.Unmarshal(body, &campaignResp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal campaign response: %w", err)
-	}
-
-	if len(campaignResp) == 0 {
-		return "", fmt.Errorf("campaign response was empty: %w", err)
-	}
-
-	channelId := campaignResp[0].Campaign.AWSChimeChannelID
-
-	return channelId, nil
-}
-
-func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, error) {
-	getCampaignBaseUrl := endpoints.JoinPaths(endpoints.BaseUrl, endpoints.GetCampaignPath)
-	urlStr := fmt.Sprintf("%s/%s", getCampaignBaseUrl, projectId)
-
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", "Mozilla/5.0")
-
-	return req, nil
-}
-
-/////////
-
-type sendMessageResponse struct {
+type SendMessageResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    Data   `json:"data"`
@@ -207,104 +141,41 @@ type TransferStats struct {
 	HTTP [][]interface{} `json:"http"`
 }
 
-func (s *HttpService) SendMessage(ctx context.Context, channelId, messageContent string) (string, error) {
-	req, err := s.buildSendMessageRequest(channelId, messageContent)
-	if err != nil {
-		return "", fmt.Errorf("failed to build schedule request: %w", err)
-	}
+/////// GetMessages
 
-	resp, err := s.SendRequest(ctx, req)
-	if err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	body, err := s.ReadBody(resp)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var sendMessageResp sendMessageResponse
-	if err := json.Unmarshal(body, &sendMessageResp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal campaign response: %w", err)
-	}
-
-	messageId := sendMessageResp.Data.MessageId
-	return messageId, nil
+type ChannelMessagesResponse []struct {
+	ChannelMessages []ChannelMessage `json:"ChannelMessages"`
 }
 
-func (s *HttpService) buildSendMessageRequest(channelId, messageContent string) (*http.Request, error) {
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	part, err := writer.CreateFormField("message")
-	if err != nil {
-		return nil, err
-	}
-
-	io.WriteString(part, messageContent)
-	writer.Close()
-
-	urlStr := fmt.Sprintf("%s/api/messenger/channel/%s/message/post", endpoints.BaseUrl, channelId)
-
-	req, err := http.NewRequest("POST", urlStr, &body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("x-requested-with", "XMLHttpRequest")
-
-	return req, nil
+type ChannelMessage struct {
+	MessageId            string          `json:"MessageId"`
+	Content              string          `json:"Content"`
+	Metadata             MessageMetadata `json:"Metadata"`
+	Type                 string          `json:"Type"`
+	CreatedTimestamp     string          `json:"CreatedTimestamp"`
+	LastUpdatedTimestamp string          `json:"LastUpdatedTimestamp"`
+	Sender               MessageSender   `json:"Sender"`
+	Redacted             bool            `json:"Redacted"`
+	ChannelType          string          `json:"ChannelType"`
+	ProjectIdTL          string          `json:"Project_Id__tl"`
+	JSONRepresentationTL string          `json:"JSON_Representation__tl"`
 }
 
-////////
-
-func (s *HttpService) PinMessage(ctx context.Context, channelId, messageId string) error {
-	req, err := s.buildPinMessageRequest(channelId, messageId)
-	if err != nil {
-		return fmt.Errorf("failed to build schedule request: %w", err)
-	}
-
-	resp, err := s.SendRequest(ctx, req)
-	if err != nil {
-		return fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	if err := CheckResponse(resp); err != nil {
-		return fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	return nil
+type MessageMetadata struct {
+	SenderSFIDTL string        `json:"Sender_SFID__tl"`
+	Attachments  []interface{} `json:"attachments"`
 }
 
-func (s *HttpService) buildPinMessageRequest(channelId, messageId string) (*http.Request, error) {
+type MessageSender struct {
+	Arn                  string `json:"Arn"`
+	Name                 string `json:"Name"`
+	RoleC                string `json:"Role__c"`
+	FirstNameLastInitial string `json:"FirstNameLastInitial__tl"`
+	PhotoURL             string `json:"PhotoUrl__c"`
+}
 
-	body := map[string]string{
-		"MessageId": messageId,
-	}
+/////// PostPinMessage
 
-	jsonBody, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	urlStr := fmt.Sprintf("%s/api/messenger/create-pin-message/%s", endpoints.BaseUrl, channelId)
-
-	req, err := http.NewRequest(
-		"POST",
-		urlStr,
-		bytes.NewBuffer(jsonBody),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "*/*")
-
-	return req, nil
+type PostPinResponse struct {
+	Scalar bool `json:"scalar"`
 }

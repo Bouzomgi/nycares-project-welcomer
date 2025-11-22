@@ -1,17 +1,28 @@
+version: "3.9"
+
 services:
   localstack:
     image: localstack/localstack:latest
     container_name: localstack
     ports:
-      - "4566:4566" # Gateway for all AWS services
-      - "4571:4571"
+      - "4566:4566" # All AWS services gateway
+      - "4571:4571" # Edge service port
     environment:
-      - SERVICES=s3,dynamodb
+      - SERVICES=s3,dynamodb,sns,lambda,stepfunctions
       - DEBUG=1
-      - DATA_DIR=/var/lib/localstack/data
+      - DATA_DIR=/var/lib/localstack
       - AWS_DEFAULT_REGION=us-east-1
+      - LAMBDA_EXECUTOR=docker # allows Lambda execution inside Docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - "./init-scripts:/etc/localstack/init/ready.d" # Run on startup
+      - "./init-scripts:/etc/localstack/init/ready.d" # initialization scripts
       - "localstack_data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock" # required for Lambda Docker executor
+    networks:
+      - localstack_net
+
 volumes:
   localstack_data:
+
+networks:
+  localstack_net:

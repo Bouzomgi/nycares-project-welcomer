@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
-	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
+	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 )
 
 type LoginUseCase struct {

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
-	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo"
+	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

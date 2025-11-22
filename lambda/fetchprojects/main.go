@@ -10,7 +10,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
-	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
+	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 

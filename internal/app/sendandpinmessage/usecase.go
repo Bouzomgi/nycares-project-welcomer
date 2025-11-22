@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
-	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http"
+	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
 )
 

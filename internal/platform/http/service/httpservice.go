@@ -56,7 +56,7 @@ func (s *HttpService) GetCookies() ([]*http.Cookie, error) {
 		return nil, fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	return s.client.Jar.Cookies(u), nil // nukes the expr date!!
+	return s.client.Jar.Cookies(u), nil
 }
 
 func (s *HttpService) SetCookies(cookies []*http.Cookie) error {
