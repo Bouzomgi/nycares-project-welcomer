@@ -2,9 +2,11 @@ package domain
 
 import "fmt"
 
+// Maps to Dynamo Schema
 type ProjectNotification struct {
-	ProjectName      string `json:"projectName"`
-	ProjectDate      string `json:"projectDate"`
+	Name             string `json:"name"`
+	Date             string `json:"date"`
+	Id               string `json:"id"`
 	HasSentWelcome   bool   `json:"hasSentWelcome"`
 	HasSentReminder  bool   `json:"hasSentReminder"`
 	ShouldStopNotify bool   `json:"shouldStopNotify"`

@@ -24,7 +24,7 @@ func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.Send
 
 	auth := models.ConvertAuth(input.Auth)
 
-	err := h.usecase.Execute(ctx, auth, input.Project.Id, input.MessageToSend.TemplateRef)
+	err := h.usecase.Execute(ctx, auth, input.ExistingProjectNotification.Id, input.MessageToSend.TemplateRef)
 	if err != nil {
 		return models.SendAndPinMessageOutput{}, err
 	}

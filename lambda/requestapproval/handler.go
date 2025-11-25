@@ -35,9 +35,9 @@ func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.Reques
 	}
 
 	requestApprovalOutput := models.RequestApprovalOutput{
-		Auth:          input.Auth,
-		Project:       input.Project,
-		MessageToSend: input.MessageToSend,
+		Auth:                        input.Auth,
+		ExistingProjectNotification: input.ExistingProjectNotification,
+		MessageToSend:               input.MessageToSend,
 	}
 
 	return requestApprovalOutput, nil

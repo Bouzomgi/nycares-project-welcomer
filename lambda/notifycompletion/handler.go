@@ -23,7 +23,7 @@ func (h *NotifyCompletionHandler) Handle(ctx context.Context, input models.Notif
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	domainProject, err := models.BuildDomainProject(input.Project)
+	domainProject, err := models.ConvertProjectNotificationToDomainProject(input.ExistingProjectNotification)
 	if err != nil {
 		return err
 	}

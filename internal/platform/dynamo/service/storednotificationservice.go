@@ -3,6 +3,7 @@ package dynamoservice
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/dto"
@@ -14,6 +15,7 @@ import (
 
 type StoredNotificationService interface {
 	GetProjectNotification(ctx context.Context, project domain.Project) (*domain.ProjectNotification, error)
+	UpsertProjectNotification(ctx context.Context, projectNotification domain.ProjectNotification) (*domain.ProjectNotification, error)
 }
 
 func (s *DynamoService) GetProjectNotification(ctx context.Context, project domain.Project) (*domain.ProjectNotification, error) {
@@ -48,12 +50,59 @@ func (s *DynamoService) GetProjectNotification(ctx context.Context, project doma
 	}
 
 	domainNotification := &domain.ProjectNotification{
-		ProjectName:      pn.ProjectName,
-		ProjectDate:      pn.ProjectDate,
+		Name:             pn.ProjectName,
+		Date:             pn.ProjectDate,
+		Id:               pn.ProjectId,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
 		ShouldStopNotify: pn.ShouldStopNotify,
 	}
 
 	return domainNotification, nil
+}
+
+func (s *DynamoService) UpsertProjectNotification(
+	ctx context.Context,
+	projectNotification domain.ProjectNotification,
+) (*domain.ProjectNotification, error) {
+
+	if s.tableName == "" {
+		return nil, fmt.Errorf("dynamo table name is required")
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	item := dto.ProjectNotification{
+		ProjectName:      projectNotification.Name,
+		ProjectDate:      projectNotification.Date,
+		ProjectId:        projectNotification.Id,
+		HasSentWelcome:   projectNotification.HasSentWelcome,
+		HasSentReminder:  projectNotification.HasSentReminder,
+		ShouldStopNotify: projectNotification.ShouldStopNotify,
+		LastUpdated:      now,
+	}
+
+	av, err := attributevalue.MarshalMap(item)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal item: %w", err)
+	}
+
+	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(s.tableName),
+		Item:      av,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("dynamo put item failed: %w", err)
+	}
+
+	result := &domain.ProjectNotification{
+		Name:             item.ProjectName,
+		Date:             item.ProjectDate,
+		Id:               item.ProjectId,
+		HasSentWelcome:   item.HasSentWelcome,
+		HasSentReminder:  item.HasSentReminder,
+		ShouldStopNotify: item.ShouldStopNotify,
+	}
+
+	return result, nil
 }

@@ -27,17 +27,18 @@ func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.Compute
 		return models.ComputeMessageOutput{}, err
 	}
 
-	messageType, messageRef, err := h.usecase.Execute(ctx, h.cfg.AWS.S3.BucketName, domainProject)
+	existingNotification, messageType, messageRef, err := h.usecase.Execute(ctx, h.cfg.AWS.S3.BucketName, domainProject)
 	if err != nil {
 		return models.ComputeMessageOutput{}, err
 	}
 
 	message := models.BuildMessage(messageType.String(), messageRef)
+	outputNotification := models.ConvertDomainProjectNotification(existingNotification)
 
 	output := models.ComputeMessageOutput{
-		Auth:          input.Auth,
-		Project:       input.Project,
-		MessageToSend: message,
+		Auth:                        input.Auth,
+		ExistingProjectNotification: outputNotification,
+		MessageToSend:               message,
 	}
 
 	return output, nil

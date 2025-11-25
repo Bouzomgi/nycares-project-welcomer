@@ -1,3 +1,3 @@
 package models
 
-type NotifyCompletionInput = SendAndPinMessageOutput
+type NotifyCompletionInput = RecordMessageOutput

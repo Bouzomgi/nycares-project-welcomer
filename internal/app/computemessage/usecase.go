@@ -21,24 +21,24 @@ func NewComputeMessageUseCase(dynamoSvc dynamoservice.StoredNotificationService)
 	return &ComputeMessageUseCase{dynamoSvc}
 }
 
-func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName string, project domain.Project) (domain.NotificationType, string, error) {
+func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName string, project domain.Project) (domain.ProjectNotification, domain.NotificationType, string, error) {
 
 	existingNotification, err := u.dynamoSvc.GetProjectNotification(ctx, project)
 	if err != nil {
-		return domain.Welcome, "", err
+		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
 	messageType, err := computeNotificationType(project.Date, existingNotification)
 	if err != nil {
-		return domain.Welcome, "", err
+		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
 	s3MessageRef, err := computeS3MessageRefPath(messageBucketName, project.Name, messageType)
 	if err != nil {
-		return domain.Welcome, "", err
+		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
-	return messageType, s3MessageRef, nil
+	return *existingNotification, messageType, s3MessageRef, nil
 }
 
 func computeNotificationType(projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
