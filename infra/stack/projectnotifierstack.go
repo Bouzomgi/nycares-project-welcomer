@@ -5,8 +5,11 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsstepfunctions"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -24,7 +27,43 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	lambdas := []string{
+	// --- AWS Resources ---
+
+	table := awsdynamodb.NewTable(stack, jsii.String("SentNotifications"), &awsdynamodb.TableProps{
+		TableName: jsii.String("Sent_Notifications"),
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("ProjectName"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		SortKey: &awsdynamodb.Attribute{
+			Name: jsii.String("ProjectDate"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
+		RemovalPolicy: awscdk.RemovalPolicy_RETAIN,
+	})
+
+	bucket := awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
+		BucketName:    jsii.String("nycares-message-templates"),
+		RemovalPolicy: awscdk.RemovalPolicy_RETAIN,
+	})
+
+	topic := awssns.NewTopic(stack, jsii.String("NotificationTopic"), &awssns.TopicProps{
+		TopicName: jsii.String("nycares-notifications"),
+	})
+
+	// --- Shared environment variables ---
+
+	sharedEnv := &map[string]*string{
+		"NYCARES_AWS_REGION":       stack.Region(),
+		"NYCARES_DYNAMO_TABLE":     table.TableName(),
+		"NYCARES_S3_BUCKET":        bucket.BucketName(),
+		"NYCARES_SNS_TOPIC_ARN":    topic.TopicArn(),
+	}
+
+	// --- Lambda Functions ---
+
+	lambdaNames := []string{
 		"Login",
 		"FetchProjects",
 		"ComputeMessageToSend",
@@ -35,11 +74,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"DLQNotifier",
 	}
 
-	for _, name := range lambdas {
+	lambdaFns := make(map[string]awslambda.Function)
+
+	for _, name := range lambdaNames {
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
-		awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
+		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
 			Code: awslambda.Code_FromAsset(
@@ -48,25 +89,46 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			),
 			FunctionName: jsii.String(kebabName),
 			Architecture: awslambda.Architecture_ARM_64(),
+			Environment:  sharedEnv,
 		})
+
+		lambdaFns[name] = fn
 	}
 
-	// Create ApprovalCallback lambda (outside loop — needs API Gateway wiring)
+	// --- IAM Permissions ---
+
+	// ComputeMessageToSend needs DynamoDB read
+	table.GrantReadData(lambdaFns["ComputeMessageToSend"])
+
+	// RecordMessage needs DynamoDB read/write
+	table.GrantReadWriteData(lambdaFns["RecordMessage"])
+
+	// SendAndPinMessage needs S3 read
+	bucket.GrantRead(lambdaFns["SendAndPinMessage"], nil)
+
+	// SNS publish for notification lambdas
+	topic.GrantPublish(lambdaFns["RequestApprovalToSend"])
+	topic.GrantPublish(lambdaFns["NotifyCompletion"])
+	topic.GrantPublish(lambdaFns["DLQNotifier"])
+
+	// --- Approval Callback Lambda (outside loop — needs API Gateway wiring) ---
+
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), nil),
 		FunctionName: jsii.String("approval-callback"),
 		Architecture: awslambda.Architecture_ARM_64(),
+		Environment:  sharedEnv,
 	})
 
-	// Grant SFN permissions to the callback lambda
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
 		Resources: jsii.Strings("*"),
 	}))
 
-	// Create REST API with GET /callback route
+	// --- API Gateway ---
+
 	api := awsapigateway.NewRestApi(stack, jsii.String("ApprovalCallbackApi"), &awsapigateway.RestApiProps{
 		RestApiName: jsii.String("approval-callback-api"),
 	})
@@ -78,10 +140,24 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		nil,
 	)
 
-	awsstepfunctions.NewStateMachine(stack, jsii.String("ProjectNotifierStateMachine"), &awsstepfunctions.StateMachineProps{
-		StateMachineName: jsii.String("project-notifier-workflow"),
-		DefinitionBody:   awsstepfunctions.DefinitionBody_FromFile((jsii.String("DailyProjectNotificationWorkflow.json")), nil),
+	// --- Step Functions State Machine ---
+
+	// Build substitution map: workflow JSON uses ${LoginLambdaArn}, etc.
+	definitionSubs := make(map[string]*string)
+	for _, name := range lambdaNames {
+		definitionSubs[name+"LambdaArn"] = lambdaFns[name].FunctionArn()
+	}
+
+	stateMachine := awsstepfunctions.NewStateMachine(stack, jsii.String("ProjectNotifierStateMachine"), &awsstepfunctions.StateMachineProps{
+		StateMachineName:        jsii.String("project-notifier-workflow"),
+		DefinitionBody:          awsstepfunctions.DefinitionBody_FromFile(jsii.String("DailyProjectNotificationWorkflow.json"), nil),
+		DefinitionSubstitutions: &definitionSubs,
 	})
+
+	// Grant the state machine permission to invoke all workflow lambdas
+	for _, name := range lambdaNames {
+		lambdaFns[name].GrantInvoke(stateMachine)
+	}
 
 	return stack
 }

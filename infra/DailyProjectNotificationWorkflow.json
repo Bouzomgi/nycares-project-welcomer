@@ -4,7 +4,7 @@
   "States": {
     "Login": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:LoginLambda",
+      "Resource": "${LoginLambdaArn}",
       "ResultPath": "$.auth",
       "Next": "FetchProjects",
       "Catch": [
@@ -16,7 +16,7 @@
     },
     "FetchProjects": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:FetchProjectsLambda",
+      "Resource": "${FetchProjectsLambdaArn}",
       "InputPath": "$",
       "ResultPath": "$.projects",
       "Next": "ProcessEachProject",
@@ -43,7 +43,7 @@
         "States": {
           "ComputeMessageToSend": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:ComputeMessageToSendLambda",
+            "Resource": "${ComputeMessageToSendLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
             "Next": "RequestApprovalToSend",
@@ -64,7 +64,7 @@
             "TimeoutSeconds": 86400,
             "Comment": "86400 seconds = 24 hours approval window",
             "Parameters": {
-              "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
+              "FunctionName": "${RequestApprovalToSendLambdaArn}",
               "Payload": {
                 "taskToken.$": "$$.Task.Token",
                 "$.$": "$"
@@ -81,7 +81,7 @@
           },
           "SendAndPinMessage": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendAndPinMessageLambda",
+            "Resource": "${SendAndPinMessageLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
             "Next": "RecordMessage",
@@ -94,7 +94,7 @@
           },
           "RecordMessage": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RecordMessageLambda",
+            "Resource": "${RecordMessageLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
             "Next": "NotifyCompletion",
@@ -107,7 +107,7 @@
           },
           "NotifyCompletion": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:NotifyCompletionLambda",
+            "Resource": "${NotifyCompletionLambdaArn}",
             "InputPath": "$",
             "End": true,
             "Catch": [
@@ -119,7 +119,7 @@
           },
           "DLQNotifier": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:DLQNotifierLambda",
+            "Resource": "${DLQNotifierLambdaArn}",
             "InputPath": "$",
             "End": true
           },
@@ -137,7 +137,7 @@
     },
     "DLQNotifier": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:DLQNotifierLambda",
+      "Resource": "${DLQNotifierLambdaArn}",
       "InputPath": "$",
       "End": true
     }
