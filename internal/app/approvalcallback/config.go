@@ -7,5 +7,8 @@ type Config struct {
 			SecretAccessKey string `mapstructure:"secretAccessKey,omitempty"`
 			Region          string `mapstructure:"region,omitempty"`
 		} `mapstructure:"credentials"`
+		SF struct {
+			ApprovalSecret string `mapstructure:"approvalSecret"`
+		} `mapstructure:"sf"`
 	} `mapstructure:"aws"`
 }

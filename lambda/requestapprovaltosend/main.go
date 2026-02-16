@@ -31,7 +31,7 @@ func buildHandler() (*RequestApprovalHandler, error) {
 
 	snsSvc := snsservice.NewSNSService(snsClient, cfg.AWS.SNS.TopicArn)
 
-	usecase := ra.NewRequestApprovalUseCase(snsSvc)
+	usecase := ra.NewRequestApprovalUseCase(snsSvc, cfg.AWS.SF.ApprovalSecret)
 	return NewRequestApprovalHandler(usecase, cfg), nil
 }
 

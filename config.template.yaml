@@ -13,6 +13,7 @@ aws:
     topicArn: "${NYCARES_SNS_TOPIC_ARN}"
   sf:
     callbackEndpoint: "${NYCARES_SF_CALLBACK_ENDPOINT}"
+    approvalSecret: "${NYCARES_SF_APPROVAL_SECRET}"
 
 auth:
   account:

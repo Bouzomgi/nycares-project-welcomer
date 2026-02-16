@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"html"
 	"time"
@@ -22,6 +23,18 @@ func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config) *
 func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+
+	// Validate shared secret if configured
+	if expectedSecret := h.cfg.AWS.SF.ApprovalSecret; expectedSecret != "" {
+		providedSecret := request.QueryStringParameters["secret"]
+		if subtle.ConstantTimeCompare([]byte(expectedSecret), []byte(providedSecret)) != 1 {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 403,
+				Headers:    map[string]string{"Content-Type": "text/html"},
+				Body:       "<html><body><h1>Forbidden</h1><p>Invalid or missing secret.</p></body></html>",
+			}, nil
+		}
+	}
 
 	token := request.QueryStringParameters["token"]
 	action := request.QueryStringParameters["action"]

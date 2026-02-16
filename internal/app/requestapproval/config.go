@@ -7,6 +7,7 @@ type Config struct {
 		} `mapstructure:"sns"`
 		SF struct {
 			CallbackEndpoint string `mapstructure:"callbackEndpoint"`
+			ApprovalSecret   string `mapstructure:"approvalSecret"`
 		} `mapstructure:"sf"`
 	} `mapstructure:"aws"`
 }
