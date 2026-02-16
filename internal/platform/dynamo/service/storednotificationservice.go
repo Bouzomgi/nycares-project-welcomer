@@ -49,9 +49,14 @@ func (s *DynamoService) GetProjectNotification(ctx context.Context, project doma
 		return nil, fmt.Errorf("failed to unmarshal item: %w", err)
 	}
 
+	projectDate, err := utils.StringToDate(pn.ProjectDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse project date: %w", err)
+	}
+
 	domainNotification := &domain.ProjectNotification{
 		Name:             pn.ProjectName,
-		Date:             pn.ProjectDate,
+		Date:             projectDate,
 		Id:               pn.ProjectId,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
@@ -74,7 +79,7 @@ func (s *DynamoService) UpsertProjectNotification(
 
 	item := dto.ProjectNotification{
 		ProjectName:      projectNotification.Name,
-		ProjectDate:      projectNotification.Date,
+		ProjectDate:      utils.DateToString(projectNotification.Date),
 		ProjectId:        projectNotification.Id,
 		HasSentWelcome:   projectNotification.HasSentWelcome,
 		HasSentReminder:  projectNotification.HasSentReminder,
@@ -97,7 +102,7 @@ func (s *DynamoService) UpsertProjectNotification(
 
 	result := &domain.ProjectNotification{
 		Name:             item.ProjectName,
-		Date:             item.ProjectDate,
+		Date:             projectNotification.Date,
 		Id:               item.ProjectId,
 		HasSentWelcome:   item.HasSentWelcome,
 		HasSentReminder:  item.HasSentReminder,

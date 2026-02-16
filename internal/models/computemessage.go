@@ -42,7 +42,7 @@ func BuildMessage(messageType, templateRef string) message {
 func ConvertDomainProjectNotification(pn domain.ProjectNotification) projectNotification {
 	return projectNotification{
 		Name:             pn.Name,
-		Date:             pn.Date,
+		Date:             utils.DateToString(pn.Date),
 		Id:               pn.Id,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
@@ -50,15 +50,19 @@ func ConvertDomainProjectNotification(pn domain.ProjectNotification) projectNoti
 	}
 }
 
-func ConvertModelProjectNotification(pn projectNotification) domain.ProjectNotification {
+func ConvertModelProjectNotification(pn projectNotification) (domain.ProjectNotification, error) {
+	date, err := utils.StringToDate(pn.Date)
+	if err != nil {
+		return domain.ProjectNotification{}, fmt.Errorf("failed to parse notification date: %w", err)
+	}
 	return domain.ProjectNotification{
 		Name:             pn.Name,
-		Date:             pn.Date,
+		Date:             date,
 		Id:               pn.Id,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
 		ShouldStopNotify: pn.ShouldStopNotify,
-	}
+	}, nil
 }
 
 func ConvertProjectNotificationToDomainProject(pn projectNotification) (domain.Project, error) {

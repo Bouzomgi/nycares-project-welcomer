@@ -23,7 +23,10 @@ func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMe
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	domainProjectNotification := models.ConvertModelProjectNotification(input.ExistingProjectNotification)
+	domainProjectNotification, err := models.ConvertModelProjectNotification(input.ExistingProjectNotification)
+	if err != nil {
+		return models.RecordMessageOutput{}, err
+	}
 
 	notificationType, err := domain.ParseNotificationType(input.MessageToSend.Type)
 	if err != nil {
