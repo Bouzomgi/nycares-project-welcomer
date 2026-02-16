@@ -20,7 +20,8 @@ func RegisterScheduleRoute(r *mux.Router) {
 			return
 		}
 
-		resp := mockresponses.MockScheduleResponse(nil)
+		projects := GetAdminProjects()
+		resp := mockresponses.MockScheduleResponse(projects)
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(resp)
