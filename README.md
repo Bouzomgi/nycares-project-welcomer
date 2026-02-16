@@ -435,3 +435,10 @@ To ensure reliability if the **auth cookie expires during execution**, the workf
 ```
 
 **Output:** `n/a`
+
+awslocal stepfunctions start-execution \
+ --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:ProjectNotifierStateMachine
+
+awslocal stepfunctions list-executions \
+ --no-sign-request \
+ --state-machine-arn arn:aws:states:us-east-1:000000000000:stateMachine:ProjectNotifierStateMachine

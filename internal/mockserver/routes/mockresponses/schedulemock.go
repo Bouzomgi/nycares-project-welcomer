@@ -3,11 +3,11 @@ package mockresponses
 import (
 	"time"
 
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/utils"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/dto"
 )
 
 func MockScheduleResponse() dto.ScheduleResponse {
+
 	return dto.ScheduleResponse{
 		Success:          true,
 		Message:          "Mock schedule",
@@ -27,12 +27,12 @@ func MockScheduleResponse() dto.ScheduleResponse {
 					FamilyFriendlyRole: nil,
 					Id:                 "a1Bxx0000001XYZ",
 					Status:             "Scheduled",
-					WebTitleFF:         "Community Cleanup",
+					WebTitleFF:         "Test Project",
 					StartDate:          time.Now().Format("2006-01-02"),
 					ActivityStartTime:  "09:00",
 					EndDate:            time.Now().Add(2 * time.Hour).Format("2006-01-02"),
 					ActivityEndTime:    "12:00",
-					CampaignId:         utils.NewUUID(),
+					CampaignId:         "11111111-1111-1111-1111-111111111111",
 				},
 			},
 			UpcomingCount:        1,

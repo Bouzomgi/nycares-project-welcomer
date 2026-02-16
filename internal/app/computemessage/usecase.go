@@ -9,8 +9,6 @@ import (
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 type ComputeMessageUseCase struct {
@@ -81,7 +79,7 @@ func shouldSendReminder(now, projectDate time.Time) bool {
 
 func computeS3MessageRefPath(s3BucketName, projectName string, messageType domain.NotificationType) (string, error) {
 	messageTypeStr := strings.ToLower(messageType.String())
-	s3MessageRef := fmt.Sprintf("s3://%s/%s/%s.md", s3BucketName, toCamelCase(projectName), messageTypeStr)
+	s3MessageRef := fmt.Sprintf("s3://%s/%s/%s.md", s3BucketName, toKebabCase(projectName), messageTypeStr)
 
 	if isValidS3URI(s3MessageRef) {
 		return s3MessageRef, nil
@@ -90,21 +88,17 @@ func computeS3MessageRefPath(s3BucketName, projectName string, messageType domai
 	return "", fmt.Errorf("could not compute valid s3 bucket reference for message")
 }
 
-func toCamelCase(s string) string {
+func toKebabCase(s string) string {
 	words := strings.Fields(s)
 	if len(words) == 0 {
 		return ""
 	}
 
-	caser := cases.Title(language.English)
-
-	result := strings.ToLower(words[0])
-	for i := 1; i < len(words); i++ {
-		w := strings.ToLower(words[i])
-		result += caser.String(w)
+	for i := range words {
+		words[i] = strings.ToLower(words[i])
 	}
 
-	return result
+	return strings.Join(words, "-")
 }
 
 var basicS3URIRegex = regexp.MustCompile(`^s3://[a-z0-9\-]{3,63}/.+$`)

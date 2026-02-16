@@ -43,14 +43,14 @@
         "States": {
           "ComputeMessageToSend": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:ComputeMessagesToSendLambda",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:ComputeMessageToSendLambda",
             "InputPath": "$",
             "ResultPath": "$",
             "Next": "RequestApprovalToSend",
             "Catch": [
               {
                 "ErrorEquals": ["ProjectTooFar", "ProjectPassed"],
-                "Next": "EndWorkflow"
+                "Next": "EndProjectIteration"
               },
               {
                 "ErrorEquals": ["States.ALL"],
@@ -60,9 +60,15 @@
           },
           "RequestApprovalToSend": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
-            "InputPath": "$",
-            "ResultPath": "$",
+            "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+            "TimeoutSeconds": 86400,
+            "Parameters": {
+              "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
+              "Payload": {
+                "taskToken.$": "$$.Task.Token",
+                "$.$": "$"
+              }
+            },
             "Next": "SendAndPinMessage",
             "Catch": [
               {
@@ -76,12 +82,21 @@
             "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendAndPinMessageLambda",
             "InputPath": "$",
             "ResultPath": "$",
-            "Next": "NotifyCompletion",
+            "Next": "RecordMessage",
             "Catch": [
               {
-                "ErrorEquals": ["AuthFailureException"],
-                "Next": "Login"
-              },
+                "ErrorEquals": ["States.ALL"],
+                "Next": "DLQNotifier"
+              }
+            ]
+          },
+          "RecordMessage": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RecordMessageLambda",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "NotifyCompletion",
+            "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "DLQNotifier"
@@ -99,6 +114,16 @@
                 "Next": "DLQNotifier"
               }
             ]
+          },
+          "DLQNotifier": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:DLQNotifierLambda",
+            "InputPath": "$",
+            "End": true
+          },
+          "EndProjectIteration": {
+            "Type": "Pass",
+            "End": true
           }
         }
       },

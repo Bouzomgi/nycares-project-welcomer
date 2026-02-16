@@ -1,28 +1,70 @@
-version: "3.9"
-
 services:
   localstack:
     image: localstack/localstack:latest
-    container_name: localstack
     ports:
-      - "4566:4566" # All AWS services gateway
-      - "4571:4571" # Edge service port
-    environment:
-      - SERVICES=s3,dynamodb,sns,lambda,stepfunctions
-      - DEBUG=1
-      - DATA_DIR=/var/lib/localstack
-      - AWS_DEFAULT_REGION=us-east-1
-      - LAMBDA_EXECUTOR=docker # allows Lambda execution inside Docker
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    volumes:
-      - "./init-scripts:/etc/localstack/init/ready.d" # initialization scripts
-      - "localstack_data:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock" # required for Lambda Docker executor
+      - "4566:4566"
     networks:
-      - localstack_net
+      localstack-network:
+        ipv4_address: 10.5.0.5
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
-volumes:
-  localstack_data:
+  build-lambdas:
+    image: golang:latest
+    volumes:
+      - ./:/repo
+      - ./lambda-build:/output
+    working_dir: /repo
+    command: >
+      sh -c '
+        go mod download &&
+        find lambda -name main.go | while read file; do
+          dir=$(dirname "$file")
+          name=$(basename "$dir")
+          echo "Building $name"
+          mkdir -p /output/$name
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /output/$name/bootstrap "$file"
+        done
+      '
+
+  deploy-cdk:
+    image: golang:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+      build-lambdas:
+        condition: service_completed_successfully
+    networks:
+      - localstack-network
+    volumes:
+      - ./infra:/infra
+      - ./lambda-build:/lambda-build
+    working_dir: /infra
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ENDPOINT_URL_S3=http://s3.localstack:4566
+    command: >
+      sh -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1 &&
+             apt-get install -y -qq nodejs > /dev/null 2>&1 &&
+             npm install -g aws-cdk aws-cdk-local > /dev/null 2>&1 &&
+             go mod download &&
+             cdklocal bootstrap --force &&
+             cdklocal deploy --require-approval never --all"
+    extra_hosts:
+      - "cdk-hnb659fds-assets-000000000000-us-east-1.s3.localstack:10.5.0.5"
 
 networks:
-  localstack_net:
+  localstack-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
