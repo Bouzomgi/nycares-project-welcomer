@@ -14,6 +14,25 @@ services:
       timeout: 5s
       retries: 3
 
+  mockserver:
+    image: golang:latest
+    volumes:
+      - ./:/repo
+    working_dir: /repo
+    networks:
+      localstack-network:
+        ipv4_address: 10.5.0.6
+    command: >
+      sh -c "go mod download && go run ./internal/mockserver"
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   build-lambdas:
     image: golang:latest
     volumes:
@@ -42,6 +61,8 @@ services:
         condition: service_healthy
       build-lambdas:
         condition: service_completed_successfully
+      mockserver:
+        condition: service_healthy
     networks:
       - localstack-network
     volumes:
@@ -54,6 +75,8 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ENDPOINT_URL=http://localstack:4566
       - AWS_ENDPOINT_URL_S3=http://s3.localstack:4566
+      - NYCARES_API_BASE_URL=http://10.5.0.6:3001
+      - NYCARES_CURRENT_DATE=${NYCARES_CURRENT_DATE:-}
     command: >
       sh -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1 &&
              apt-get install -y -qq nodejs > /dev/null 2>&1 &&
@@ -63,6 +86,24 @@ services:
              cdklocal deploy --require-approval never --all"
     extra_hosts:
       - "cdk-hnb659fds-assets-000000000000-us-east-1.s3.localstack:10.5.0.5"
+
+  seed-s3:
+    image: amazon/aws-cli:latest
+    depends_on:
+      deploy-cdk:
+        condition: service_completed_successfully
+    networks:
+      - localstack-network
+    volumes:
+      - ./seed:/seed
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    entrypoint: /bin/sh
+    command: >
+      -c "FILES_DIR=/seed/s3Items /seed/seed_s3.sh"
 
 networks:
   localstack-network:

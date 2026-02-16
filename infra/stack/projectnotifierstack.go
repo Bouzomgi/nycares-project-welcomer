@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"os"
 	"strings"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -55,10 +56,17 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// --- Shared environment variables ---
 
 	sharedEnv := &map[string]*string{
-		"NYCARES_AWS_REGION":       stack.Region(),
-		"NYCARES_DYNAMO_TABLE":     table.TableName(),
-		"NYCARES_S3_BUCKET":        bucket.BucketName(),
-		"NYCARES_SNS_TOPIC_ARN":    topic.TopicArn(),
+		"NYCARES_AWS_REGION":    stack.Region(),
+		"NYCARES_DYNAMO_TABLE":  table.TableName(),
+		"NYCARES_S3_BUCKET":     bucket.BucketName(),
+		"NYCARES_SNS_TOPIC_ARN": topic.TopicArn(),
+	}
+
+	if apiBaseUrl := os.Getenv("NYCARES_API_BASE_URL"); apiBaseUrl != "" {
+		(*sharedEnv)["NYCARES_API_BASE_URL"] = jsii.String(apiBaseUrl)
+	}
+	if currentDate := os.Getenv("NYCARES_CURRENT_DATE"); currentDate != "" {
+		(*sharedEnv)["NYCARES_CURRENT_DATE"] = jsii.String(currentDate)
 	}
 
 	// --- Lambda Functions ---

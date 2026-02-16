@@ -1,24 +1,19 @@
 #!/bin/bash
 set -e
 
-# Bucket name
-BUCKET="cdk-hnb659fds-assets-000000000000-us-east-1"
+ENDPOINT_URL="${AWS_ENDPOINT_URL:-http://localhost:4566}"
 
-# Ensure the bucket exists
+BUCKET="nycares-message-templates"
+
 echo "Creating bucket $BUCKET if it doesn't exist..."
-awslocal s3 mb s3://$BUCKET || echo "Bucket already exists"
+aws --endpoint-url "$ENDPOINT_URL" s3 mb "s3://$BUCKET" 2>/dev/null || echo "Bucket already exists"
 
-# Path to local files to upload
-FILES=(
-  "seed/reminder.txt"
-  "seed/welcome.txt"
-)
+FILES_DIR="${FILES_DIR:-seed/s3Items}"
 
-# Upload files
-for FILE in "${FILES[@]}"; do
+for FILE in "$FILES_DIR"/*.txt; do
   BASENAME=$(basename "$FILE")
   echo "Uploading $FILE to s3://$BUCKET/$BASENAME..."
-  awslocal s3 cp "$FILE" "s3://$BUCKET/$BASENAME"
+  aws --endpoint-url "$ENDPOINT_URL" s3 cp "$FILE" "s3://$BUCKET/$BASENAME"
 done
 
 echo "All files uploaded!"
