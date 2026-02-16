@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html"
 	"time"
 
 	ac "github.com/Bouzomgi/nycares-project-welcomer/internal/app/approvalcallback"
@@ -40,7 +41,7 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers:    map[string]string{"Content-Type": "text/html"},
-			Body:       fmt.Sprintf("<html><body><h1>Error</h1><p>%s</p></body></html>", err.Error()),
+			Body:       fmt.Sprintf("<html><body><h1>Error</h1><p>%s</p></body></html>", html.EscapeString(err.Error())),
 		}, nil
 	}
 
