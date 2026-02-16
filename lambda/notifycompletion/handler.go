@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	nc "github.com/Bouzomgi/nycares-project-welcomer/internal/app/notifycompletion"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
@@ -20,7 +20,7 @@ func NewNotifyCompletionHandler(u *nc.NotifyCompletionUseCase, cfg *nc.Config) *
 
 func (h *NotifyCompletionHandler) Handle(ctx context.Context, input models.NotifyCompletionInput) error {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProject, err := models.ConvertProjectNotificationToDomainProject(input.ExistingProjectNotification)

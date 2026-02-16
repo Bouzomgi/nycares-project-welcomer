@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
@@ -25,7 +25,7 @@ func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
 		Password: h.cfg.Account.Password,
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	authResp, err := h.usecase.Execute(ctx, creds)

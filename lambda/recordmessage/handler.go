@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	rm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/recordmessage"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
@@ -20,7 +20,7 @@ func NewRecordMessageHandler(u *rm.RecordMessageUseCase, cfg *rm.Config) *Record
 
 func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMessageInput) (models.RecordMessageOutput, error) {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProjectNotification, err := models.ConvertModelProjectNotification(input.ExistingProjectNotification)

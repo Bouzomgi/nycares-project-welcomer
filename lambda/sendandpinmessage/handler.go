@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	spm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/sendandpinmessage"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
@@ -19,7 +19,7 @@ func NewSendAndPinMessageHandler(u *spm.SendAndPinMessageUseCase, cfg *spm.Confi
 
 func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.SendAndPinMessageInput) (models.SendAndPinMessageOutput, error) {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	auth := models.ConvertAuth(input.Auth)

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	fp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
@@ -19,7 +19,7 @@ func NewFetchProjectsHandler(u *fp.FetchProjectsUseCase, cfg *fp.Config) *FetchP
 
 func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchProjectsInput) (models.FetchProjectsOutput, error) {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	auth := models.ConvertAuth(input.Auth)

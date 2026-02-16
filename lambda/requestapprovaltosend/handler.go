@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"time"
 
 	ra "github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
@@ -21,7 +21,7 @@ func NewRequestApprovalHandler(u *ra.RequestApprovalUseCase, cfg *ra.Config) *Re
 
 func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.RequestApprovalInput) (models.RequestApprovalOutput, error) {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	callbackEndpoint, err := url.Parse(h.cfg.AWS.SF.CallbackEndpoint)

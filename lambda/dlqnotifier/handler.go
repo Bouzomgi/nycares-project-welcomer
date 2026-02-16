@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	dlq "github.com/Bouzomgi/nycares-project-welcomer/internal/app/dlqnotifier"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 )
 
 type DLQNotifierHandler struct {
@@ -17,7 +17,7 @@ func NewDLQNotifierHandler(u *dlq.DLQNotifierUseCase, cfg *dlq.Config) *DLQNotif
 }
 
 func (h *DLQNotifierHandler) Handle(ctx context.Context, input map[string]interface{}) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	return h.usecase.Execute(ctx, input)

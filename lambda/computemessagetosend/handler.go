@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
 
 	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
@@ -19,7 +19,7 @@ func NewComputeMessageHandler(u *cm.ComputeMessageUseCase, cfg *cm.Config) *Comp
 
 func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.ComputeMessageInput) (models.ComputeMessageOutput, error) {
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProject, err := models.BuildDomainProject(input.Project)

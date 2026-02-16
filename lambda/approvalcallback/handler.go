@@ -5,9 +5,9 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"html"
-	"time"
 
 	ac "github.com/Bouzomgi/nycares-project-welcomer/internal/app/approvalcallback"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/aws/aws-lambda-go/events"
 )
 
@@ -21,7 +21,7 @@ func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config) *
 }
 
 func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	// Validate shared secret if configured
