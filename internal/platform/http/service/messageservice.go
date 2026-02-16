@@ -67,59 +67,6 @@ func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, err
 	return req, nil
 }
 
-///////
-
-// TODO fix all these endpoints
-func (s *HttpService) GetFirstMessageId(ctx context.Context, channelId string) (string, error) {
-
-	req, err := s.buildMessagesRequest(channelId)
-	if err != nil {
-		return "", fmt.Errorf("failed to build schedule request: %w", err)
-	}
-
-	resp, err := s.SendRequest(ctx, req)
-	if err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
-	}
-
-	body, err := s.ReadBody(resp)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var messageResp dto.ChannelMessagesResponse
-	if err := json.Unmarshal(body, &messageResp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal campaign response: %w", err)
-	}
-
-	if len(messageResp) == 0 {
-		return "", fmt.Errorf("messages response was empty: %w", err)
-	}
-
-	if len(messageResp[0].ChannelMessages) == 0 {
-		return "", fmt.Errorf("no channel messages in first element")
-	}
-
-	return messageResp[0].ChannelMessages[0].MessageId, nil
-}
-
-func (s *HttpService) buildMessagesRequest(channelId string) (*http.Request, error) {
-	urlStr := endpoints.JoinPaths(endpoints.BaseUrl, "/api/messenger/channel/", channelId, "messages")
-
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-///////
-
 func (s *HttpService) SendMessage(ctx context.Context, channelId, messageContent string) (string, error) {
 	req, err := s.buildSendMessageRequest(channelId, messageContent)
 	if err != nil {
