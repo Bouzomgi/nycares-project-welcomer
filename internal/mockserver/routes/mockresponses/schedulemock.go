@@ -1,12 +1,54 @@
 package mockresponses
 
 import (
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/dto"
 )
 
-func MockScheduleResponse() dto.ScheduleResponse {
+type ProjectConfig struct {
+	Name       string
+	Date       time.Time
+	Id         string
+	CampaignId string
+}
+
+func currentDate() time.Time {
+	if dateStr := os.Getenv("NYCARES_CURRENT_DATE"); dateStr != "" {
+		if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+			return t
+		}
+	}
+	return time.Now()
+}
+
+func MockScheduleResponse(projects []ProjectConfig) dto.ScheduleResponse {
+	scheduleList := make(map[string]dto.Project)
+
+	if projects == nil {
+		now := currentDate()
+		projects = []ProjectConfig{
+			{Name: "Test Project", Date: now, Id: "a1Bxx0000001XYZ", CampaignId: "11111111-1111-1111-1111-111111111111"},
+		}
+	}
+
+	for i, p := range projects {
+		key := fmt.Sprintf("%d", i+1)
+		scheduleList[key] = dto.Project{
+			Role:               "Volunteer",
+			FamilyFriendlyRole: nil,
+			Id:                 p.Id,
+			Status:             "Scheduled",
+			WebTitleFF:         p.Name,
+			StartDate:          p.Date.Format("2006-01-02"),
+			ActivityStartTime:  "09:00",
+			EndDate:            p.Date.Format("2006-01-02"),
+			ActivityEndTime:    "12:00",
+			CampaignId:         p.CampaignId,
+		}
+	}
 
 	return dto.ScheduleResponse{
 		Success:          true,
@@ -21,21 +63,8 @@ func MockScheduleResponse() dto.ScheduleResponse {
 		OrientationURL:         "https://example.com/orientation",
 		VIFURL:                 "https://example.com/vif",
 		Data: dto.ScheduleData{
-			ScheduleList: map[string]dto.Project{
-				"1": {
-					Role:               "Volunteer",
-					FamilyFriendlyRole: nil,
-					Id:                 "a1Bxx0000001XYZ",
-					Status:             "Scheduled",
-					WebTitleFF:         "Test Project",
-					StartDate:          time.Now().Format("2006-01-02"),
-					ActivityStartTime:  "09:00",
-					EndDate:            time.Now().Add(2 * time.Hour).Format("2006-01-02"),
-					ActivityEndTime:    "12:00",
-					CampaignId:         "11111111-1111-1111-1111-111111111111",
-				},
-			},
-			UpcomingCount:        1,
+			ScheduleList:         scheduleList,
+			UpcomingCount:        len(scheduleList),
 			PlusCount:            0,
 			ShowNewFunctionality: true,
 		},

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -30,7 +31,16 @@ func buildHandler() (*ComputeMessageHandler, error) {
 	dynamoClient := dynamodb.NewFromConfig(awsCfg)
 	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
 
-	usecase := cm.NewComputeMessageUseCase(dynamoSvc)
+	var currentDate *time.Time
+	if cfg.CurrentDate != "" {
+		t, err := time.Parse("2006-01-02", cfg.CurrentDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid NYCARES_CURRENT_DATE %q: %w", cfg.CurrentDate, err)
+		}
+		currentDate = &t
+	}
+
+	usecase := cm.NewComputeMessageUseCase(dynamoSvc, currentDate)
 	return NewComputeMessageHandler(usecase, cfg), nil
 }
 

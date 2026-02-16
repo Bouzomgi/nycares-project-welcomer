@@ -12,11 +12,12 @@ import (
 )
 
 type ComputeMessageUseCase struct {
-	dynamoSvc dynamoservice.StoredNotificationService
+	dynamoSvc   dynamoservice.StoredNotificationService
+	currentDate *time.Time
 }
 
-func NewComputeMessageUseCase(dynamoSvc dynamoservice.StoredNotificationService) *ComputeMessageUseCase {
-	return &ComputeMessageUseCase{dynamoSvc}
+func NewComputeMessageUseCase(dynamoSvc dynamoservice.StoredNotificationService, currentDate *time.Time) *ComputeMessageUseCase {
+	return &ComputeMessageUseCase{dynamoSvc: dynamoSvc, currentDate: currentDate}
 }
 
 func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName string, project domain.Project) (domain.ProjectNotification, domain.NotificationType, string, error) {
@@ -26,7 +27,12 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
-	messageType, err := computeNotificationType(project.Date, existingNotification)
+	now := time.Now()
+	if u.currentDate != nil {
+		now = *u.currentDate
+	}
+
+	messageType, err := computeNotificationType(now, project.Date, existingNotification)
 	if err != nil {
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
@@ -39,9 +45,9 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	return *existingNotification, messageType, s3MessageRef, nil
 }
 
-func computeNotificationType(projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+func computeNotificationType(now, projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
 	if existingNotification == nil {
-		if shouldSendWelcome(time.Now(), projectDate) {
+		if shouldSendWelcome(now, projectDate) {
 			return domain.Welcome, nil
 		}
 	}
@@ -51,13 +57,13 @@ func computeNotificationType(projectDate time.Time, existingNotification *domain
 	}
 
 	if !existingNotification.HasSentWelcome {
-		if shouldSendWelcome(time.Now(), projectDate) {
+		if shouldSendWelcome(now, projectDate) {
 			return domain.Welcome, nil
 		}
 	}
 
 	if !existingNotification.HasSentReminder {
-		if shouldSendReminder(time.Now(), projectDate) {
+		if shouldSendReminder(now, projectDate) {
 			return domain.Reminder, nil
 		}
 	}

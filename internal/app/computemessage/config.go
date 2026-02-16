@@ -16,4 +16,5 @@ type Config struct {
 			BucketName string `mapstructure:"bucketName"`
 		} `mapstructure:"s3"`
 	} `mapstructure:"aws"`
+	CurrentDate string `mapstructure:"currentDate,omitempty"`
 }
