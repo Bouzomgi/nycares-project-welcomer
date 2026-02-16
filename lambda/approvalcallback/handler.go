@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"html"
+	"log/slog"
 
 	ac "github.com/Bouzomgi/nycares-project-welcomer/internal/app/approvalcallback"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -21,6 +22,8 @@ func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config) *
 }
 
 func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	slog.Info("approvalcallback handler invoked", "action", request.QueryStringParameters["action"])
+
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
@@ -28,6 +31,7 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 	if expectedSecret := h.cfg.AWS.SF.ApprovalSecret; expectedSecret != "" {
 		providedSecret := request.QueryStringParameters["secret"]
 		if subtle.ConstantTimeCompare([]byte(expectedSecret), []byte(providedSecret)) != 1 {
+			slog.Warn("approvalcallback rejected: invalid secret")
 			return events.APIGatewayProxyResponse{
 				StatusCode: 403,
 				Headers:    map[string]string{"Content-Type": "text/html"},
@@ -51,12 +55,15 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 
 	err := h.usecase.Execute(ctx, token, approved)
 	if err != nil {
+		slog.Error("approvalcallback failed", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers:    map[string]string{"Content-Type": "text/html"},
 			Body:       fmt.Sprintf("<html><body><h1>Error</h1><p>%s</p></body></html>", html.EscapeString(err.Error())),
 		}, nil
 	}
+
+	slog.Info("approvalcallback succeeded", "approved", approved)
 
 	var message string
 	if approved {

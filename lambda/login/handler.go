@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
@@ -20,6 +21,8 @@ func NewLoginHandler(u *login.LoginUseCase, cfg *login.Config) *LoginHandler {
 }
 
 func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
+	slog.Info("login handler invoked")
+
 	creds := domain.Credentials{
 		Username: h.cfg.Account.Username,
 		Password: h.cfg.Account.Password,
@@ -30,9 +33,11 @@ func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
 
 	authResp, err := h.usecase.Execute(ctx, creds)
 	if err != nil {
+		slog.Error("login failed", "error", err)
 		return models.LoginOutput{}, err
 	}
 
+	slog.Info("login succeeded")
 	output := ToResponseAuth(authResp)
 
 	return output, nil

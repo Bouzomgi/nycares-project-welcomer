@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	fp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/fetchprojects"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -18,6 +19,7 @@ func NewFetchProjectsHandler(u *fp.FetchProjectsUseCase, cfg *fp.Config) *FetchP
 }
 
 func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchProjectsInput) (models.FetchProjectsOutput, error) {
+	slog.Info("fetchprojects handler invoked")
 
 	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
@@ -26,9 +28,11 @@ func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchPro
 
 	projects, err := h.usecase.Execute(ctx, auth, h.cfg.Account.InternalId)
 	if err != nil {
+		slog.Error("fetchprojects failed", "error", err)
 		return models.FetchProjectsOutput{}, err
 	}
 
+	slog.Info("fetchprojects succeeded", "count", len(projects))
 	output := models.BuildFetchProjectsOutput(input, projects)
 
 	return output, nil

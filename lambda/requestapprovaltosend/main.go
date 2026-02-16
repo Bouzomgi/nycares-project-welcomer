@@ -36,6 +36,7 @@ func buildHandler() (*RequestApprovalHandler, error) {
 }
 
 func main() {
+	config.InitLogging()
 	handler, err := buildHandler()
 	if err != nil {
 		panic(err)

@@ -35,6 +35,7 @@ func buildHandler() (*RecordMessageHandler, error) {
 }
 
 func main() {
+	config.InitLogging()
 	handler, err := buildHandler()
 	if err != nil {
 		panic(err)

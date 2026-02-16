@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	spm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/sendandpinmessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -18,6 +19,7 @@ func NewSendAndPinMessageHandler(u *spm.SendAndPinMessageUseCase, cfg *spm.Confi
 }
 
 func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.SendAndPinMessageInput) (models.SendAndPinMessageOutput, error) {
+	slog.Info("sendandpinmessage handler invoked", "projectId", input.ExistingProjectNotification.Id)
 
 	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
@@ -26,9 +28,11 @@ func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.Send
 
 	err := h.usecase.Execute(ctx, auth, input.ExistingProjectNotification.Id, input.MessageToSend.TemplateRef)
 	if err != nil {
+		slog.Error("sendandpinmessage failed", "error", err)
 		return models.SendAndPinMessageOutput{}, err
 	}
 
+	slog.Info("sendandpinmessage succeeded")
 	sendAndPinMessageOutput := models.SendAndPinMessageOutput(input)
 
 	return sendAndPinMessageOutput, nil
