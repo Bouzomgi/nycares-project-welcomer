@@ -6,6 +6,7 @@ import (
 
 	dlq "github.com/Bouzomgi/nycares-project-welcomer/internal/app/dlqnotifier"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
 	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -40,7 +41,7 @@ func main() {
 	}
 
 	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
-		err := handler.Handle(context.Background(), map[string]interface{}{})
+		err := handler.Handle(context.Background(), models.DLQNotifierInput{})
 		if err != nil {
 			panic(err)
 		}

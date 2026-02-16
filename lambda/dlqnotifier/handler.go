@@ -6,6 +6,7 @@ import (
 
 	dlq "github.com/Bouzomgi/nycares-project-welcomer/internal/app/dlqnotifier"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
 type DLQNotifierHandler struct {
@@ -17,8 +18,8 @@ func NewDLQNotifierHandler(u *dlq.DLQNotifierUseCase, cfg *dlq.Config) *DLQNotif
 	return &DLQNotifierHandler{usecase: u, cfg: cfg}
 }
 
-func (h *DLQNotifierHandler) Handle(ctx context.Context, input map[string]interface{}) error {
-	slog.Error("dlqnotifier handler invoked", "input", input)
+func (h *DLQNotifierHandler) Handle(ctx context.Context, input models.DLQNotifierInput) error {
+	slog.Error("dlqnotifier handler invoked", "error", input.Error, "cause", input.Cause)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
