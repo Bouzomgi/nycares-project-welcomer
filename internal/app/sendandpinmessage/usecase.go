@@ -2,7 +2,6 @@ package sendandpinmessage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
@@ -35,21 +34,15 @@ func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth
 		return err
 	}
 
-	fmt.Printf("channelId: %s\n\n", channelId)
+	messageId, err := u.httpService.SendMessage(ctx, channelId, messageContent)
+	if err != nil {
+		return err
+	}
 
-	fmt.Printf("messageContent: %s\n\n", messageContent)
-
-	println("We are NOT sending and pinning yet!!")
-
-	// messageId, err := u.httpService.SendMessage(ctx, channelId, messageContent)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = u.httpService.PinMessage(ctx, channelId, messageId)
-	// if err != nil {
-	// 	return err
-	// }
+	err = u.httpService.PinMessage(ctx, channelId, messageId)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

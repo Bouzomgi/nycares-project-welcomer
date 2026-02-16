@@ -19,10 +19,10 @@ func (s *SNSService) PublishNotification(ctx context.Context, message, subject s
 		return "", fmt.Errorf("topicARN cannot be empty")
 	}
 	if subject == "" {
-		return "", fmt.Errorf("message cannot be empty")
+		return "", fmt.Errorf("subject cannot be empty")
 	}
 	if message == "" {
-		return "", fmt.Errorf("subject cannot be empty")
+		return "", fmt.Errorf("message cannot be empty")
 	}
 
 	input := &sns.PublishInput{

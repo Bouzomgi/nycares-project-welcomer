@@ -24,14 +24,17 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 		return fmt.Errorf("taskToken must be defined")
 	}
 
-	link := buildCallbackLink(callbackEndpoint, taskToken)
+	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve")
+	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject")
 
-	u.snsSrv.PublishNotification(ctx, link, "yooooooooo")
+	message := fmt.Sprintf("Approve: %s\n\nReject: %s", approveLink, rejectLink)
+
+	u.snsSrv.PublishNotification(ctx, message, "Project Message Approval")
 
 	return nil
 }
 
-func buildCallbackLink(baseURL url.URL, taskToken string) string {
+func buildCallbackLink(baseURL url.URL, taskToken string, action string) string {
 
 	// Append "/callback" to path correctly
 	if len(baseURL.Path) == 0 || baseURL.Path[len(baseURL.Path)-1] != '/' {
@@ -40,9 +43,10 @@ func buildCallbackLink(baseURL url.URL, taskToken string) string {
 		baseURL.Path += "callback"
 	}
 
-	// Add the task token as a query parameter
+	// Add the task token and action as query parameters
 	q := baseURL.Query()
 	q.Set("token", taskToken)
+	q.Set("action", action)
 	baseURL.RawQuery = q.Encode()
 
 	return baseURL.String()

@@ -24,7 +24,7 @@ services:
       sh -c "go mod download &&
              CGO_ENABLED=0 GOOS=linux GOARCH=arm64 &&
              export CGO_ENABLED GOOS GOARCH &&
-             mkdir -p /output/login /output/fetchprojects /output/computemessagetosend /output/requestapprovaltosend /output/sendandpinmessage /output/recordmessage /output/notifycompletion /output/dlqnotifier &&
+             mkdir -p /output/login /output/fetchprojects /output/computemessagetosend /output/requestapprovaltosend /output/sendandpinmessage /output/recordmessage /output/notifycompletion /output/dlqnotifier /output/approvalcallback &&
              go build -o /output/login/bootstrap ./lambda/login &&
              go build -o /output/fetchprojects/bootstrap ./lambda/fetchprojects &&
              go build -o /output/computemessagetosend/bootstrap ./lambda/computemessagetosend &&
@@ -32,7 +32,8 @@ services:
              go build -o /output/sendandpinmessage/bootstrap ./lambda/sendandpinmessage &&
              go build -o /output/recordmessage/bootstrap ./lambda/recordmessage &&
              go build -o /output/notifycompletion/bootstrap ./lambda/notifycompletion &&
-             go build -o /output/dlqnotifier/bootstrap ./lambda/dlqnotifier"
+             go build -o /output/dlqnotifier/bootstrap ./lambda/dlqnotifier &&
+             go build -o /output/approvalcallback/bootstrap ./lambda/approvalcallback"
 
   deploy-cdk:
     image: golang:latest

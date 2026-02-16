@@ -20,8 +20,8 @@ func NewRecordMessageHandler(u *rm.RecordMessageUseCase, cfg *rm.Config) *Record
 
 func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMessageInput) (models.RecordMessageOutput, error) {
 
-	ctx, carmel := context.WithTimeout(ctx, 10*time.Second)
-	defer carmel()
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
 	domainProjectNotification := models.ConvertModelProjectNotification(input.ExistingProjectNotification)
 
