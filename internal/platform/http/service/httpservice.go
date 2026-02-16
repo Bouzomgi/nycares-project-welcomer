@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"time"
 )
 
 type HttpService struct {
@@ -21,7 +22,8 @@ func NewHttpService(baseUrl string) (*HttpService, error) {
 	}
 
 	client := &http.Client{
-		Jar: jar,
+		Jar:     jar,
+		Timeout: 30 * time.Second,
 	}
 
 	return &HttpService{client, baseUrl}, nil
