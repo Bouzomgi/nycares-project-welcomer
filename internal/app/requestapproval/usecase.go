@@ -29,7 +29,10 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 
 	message := fmt.Sprintf("Approve: %s\n\nReject: %s", approveLink, rejectLink)
 
-	u.snsSrv.PublishNotification(ctx, message, "Project Message Approval")
+	_, err := u.snsSrv.PublishNotification(ctx, message, "Project Message Approval")
+	if err != nil {
+		return fmt.Errorf("failed to publish approval notification: %w", err)
+	}
 
 	return nil
 }
