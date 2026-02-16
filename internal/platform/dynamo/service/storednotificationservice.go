@@ -31,7 +31,7 @@ func (s *DynamoService) GetProjectNotification(ctx context.Context, project doma
 		return nil, fmt.Errorf("failed to marshal key: %w", err)
 	}
 
-	resp, err := s.client.GetItem(context.Background(), &dynamodb.GetItemInput{
+	resp, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(s.tableName),
 		Key:       key,
 	})
