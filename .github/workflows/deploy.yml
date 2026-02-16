@@ -1,0 +1,45 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build Lambdas
+        run: |
+          export CGO_ENABLED=0 GOOS=linux GOARCH=arm64
+          for dir in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback; do
+            mkdir -p lambda-build/$dir
+            go build -o lambda-build/$dir/bootstrap ./lambda/$dir
+          done
+
+      - name: CDK Deploy
+        working-directory: infra
+        run: |
+          go mod download
+          cdk deploy --require-approval never --all
