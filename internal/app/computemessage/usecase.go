@@ -65,16 +65,19 @@ func computeNotificationType(projectDate time.Time, existingNotification *domain
 	return domain.Welcome, fmt.Errorf("all notifications already sent")
 }
 
-// ShouldSendWelcome checks if a welcome message should be sent
+const (
+	welcomeLeadDays  = 7
+	reminderLeadDays = 2
+)
+
 func shouldSendWelcome(now, projectDate time.Time) bool {
-	weekBefore := projectDate.AddDate(0, 0, -7)
-	return now.After(weekBefore) && now.Before(projectDate)
+	cutoff := projectDate.AddDate(0, 0, -welcomeLeadDays)
+	return now.After(cutoff) && now.Before(projectDate)
 }
 
-// ShouldSendReminder checks if a reminder message should be sent
 func shouldSendReminder(now, projectDate time.Time) bool {
-	weekBefore := projectDate.AddDate(0, 0, -2)
-	return now.After(weekBefore) && now.Before(projectDate)
+	cutoff := projectDate.AddDate(0, 0, -reminderLeadDays)
+	return now.After(cutoff) && now.Before(projectDate)
 }
 
 func computeS3MessageRefPath(s3BucketName, projectName string, messageType domain.NotificationType) (string, error) {

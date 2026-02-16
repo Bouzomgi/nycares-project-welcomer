@@ -62,6 +62,7 @@
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
             "TimeoutSeconds": 86400,
+            "Comment": "86400 seconds = 24 hours approval window",
             "Parameters": {
               "FunctionName": "arn:aws:lambda:REGION:ACCOUNT_ID:function:RequestApprovalToSendLambda",
               "Payload": {
