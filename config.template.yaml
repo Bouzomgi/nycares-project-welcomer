@@ -9,6 +9,10 @@ aws:
   s3:
     bucketName: "nycare-${NYCARES_ENV}-bucket"
     endpoint: "${NYCARES_S3_ENDPOINT}"
+  sns:
+    topicArn: "${NYCARES_SNS_TOPIC_ARN}"
+  sf:
+    callbackEndpoint: "${NYCARES_SF_CALLBACK_ENDPOINT}"
 
 auth:
   account:

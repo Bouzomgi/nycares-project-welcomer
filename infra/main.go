@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Bouzomgi/nycares-project-welcomer/infra/stack"
+	"nycares-project-welcomer-infra/stack"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/jsii-runtime-go"
 )

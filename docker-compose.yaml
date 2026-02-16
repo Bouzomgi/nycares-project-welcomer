@@ -21,16 +21,18 @@ services:
       - ./lambda-build:/output
     working_dir: /repo
     command: >
-      sh -c '
-        go mod download &&
-        find lambda -name main.go | while read file; do
-          dir=$(dirname "$file")
-          name=$(basename "$dir")
-          echo "Building $name"
-          mkdir -p /output/$name
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /output/$name/bootstrap "$file"
-        done
-      '
+      sh -c "go mod download &&
+             CGO_ENABLED=0 GOOS=linux GOARCH=arm64 &&
+             export CGO_ENABLED GOOS GOARCH &&
+             mkdir -p /output/login /output/fetchprojects /output/computemessagetosend /output/requestapprovaltosend /output/sendandpinmessage /output/recordmessage /output/notifycompletion /output/dlqnotifier &&
+             go build -o /output/login/bootstrap ./lambda/login &&
+             go build -o /output/fetchprojects/bootstrap ./lambda/fetchprojects &&
+             go build -o /output/computemessagetosend/bootstrap ./lambda/computemessagetosend &&
+             go build -o /output/requestapprovaltosend/bootstrap ./lambda/requestapprovaltosend &&
+             go build -o /output/sendandpinmessage/bootstrap ./lambda/sendandpinmessage &&
+             go build -o /output/recordmessage/bootstrap ./lambda/recordmessage &&
+             go build -o /output/notifycompletion/bootstrap ./lambda/notifycompletion &&
+             go build -o /output/dlqnotifier/bootstrap ./lambda/dlqnotifier"
 
   deploy-cdk:
     image: golang:latest
