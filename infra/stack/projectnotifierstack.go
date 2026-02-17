@@ -54,19 +54,29 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 
 	// --- Shared environment variables ---
+	// Env var names must match viper config paths: prefix NYCARES_ + path with . replaced by _
 
 	sharedEnv := &map[string]*string{
-		"NYCARES_AWS_REGION":    stack.Region(),
-		"NYCARES_DYNAMO_TABLE":  table.TableName(),
-		"NYCARES_S3_BUCKET":     bucket.BucketName(),
-		"NYCARES_SNS_TOPIC_ARN": topic.TopicArn(),
+		"NYCARES_AWS_DYNAMO_TABLENAME": table.TableName(),
+		"NYCARES_AWS_DYNAMO_REGION":    stack.Region(),
+		"NYCARES_AWS_S3_BUCKETNAME":    bucket.BucketName(),
+		"NYCARES_AWS_SNS_TOPICARN":     topic.TopicArn(),
 	}
 
-	if apiBaseUrl := os.Getenv("NYCARES_API_BASE_URL"); apiBaseUrl != "" {
-		(*sharedEnv)["NYCARES_API_BASE_URL"] = jsii.String(apiBaseUrl)
+	// Passthrough env vars from deploy environment
+	passthroughEnvVars := []string{
+		"NYCARES_API_BASE_URL",
+		"NYCARES_CURRENT_DATE",
+		"NYCARES_ACCOUNT_USERNAME",
+		"NYCARES_ACCOUNT_PASSWORD",
+		"NYCARES_ACCOUNT_INTERNALID",
+		"NYCARES_AWS_SF_APPROVALSECRET",
+		"NYCARES_AWS_SF_CALLBACKENDPOINT",
 	}
-	if currentDate := os.Getenv("NYCARES_CURRENT_DATE"); currentDate != "" {
-		(*sharedEnv)["NYCARES_CURRENT_DATE"] = jsii.String(currentDate)
+	for _, key := range passthroughEnvVars {
+		if val := os.Getenv(key); val != "" {
+			(*sharedEnv)[key] = jsii.String(val)
+		}
 	}
 
 	// --- Lambda Functions ---
@@ -97,6 +107,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			),
 			FunctionName: jsii.String(kebabName),
 			Architecture: awslambda.Architecture_ARM_64(),
+			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
 		})
 
@@ -127,6 +138,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), nil),
 		FunctionName: jsii.String("approval-callback"),
 		Architecture: awslambda.Architecture_ARM_64(),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
 	})
 

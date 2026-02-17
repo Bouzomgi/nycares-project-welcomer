@@ -6,6 +6,8 @@ services:
     networks:
       localstack-network:
         ipv4_address: 10.5.0.5
+    environment:
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=60
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
@@ -77,6 +79,11 @@ services:
       - AWS_ENDPOINT_URL_S3=http://s3.localstack:4566
       - NYCARES_API_BASE_URL=http://10.5.0.6:3001
       - NYCARES_CURRENT_DATE=${NYCARES_CURRENT_DATE:-}
+      - NYCARES_ACCOUNT_USERNAME=user
+      - NYCARES_ACCOUNT_PASSWORD=pass
+      - NYCARES_ACCOUNT_INTERNALID=000000000000000000
+      - NYCARES_AWS_SF_CALLBACKENDPOINT=http://localhost:4566
+      - NYCARES_AWS_SF_APPROVALSECRET=test-secret
     command: >
       sh -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1 &&
              apt-get install -y -qq nodejs > /dev/null 2>&1 &&
