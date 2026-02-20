@@ -45,10 +45,33 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	return *existingNotification, messageType, s3MessageRef, nil
 }
 
+// ProjectTooFar is returned when the project is too far in the future for any notification.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type ProjectTooFar struct{}
+
+func (e *ProjectTooFar) Error() string { return "project is too far in the future to notify" }
+
+// ProjectPassed is returned when the project date has already passed.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type ProjectPassed struct{}
+
+func (e *ProjectPassed) Error() string { return "project date has already passed" }
+
 func computeNotificationType(now, projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+	if !now.Before(projectDate) {
+		return domain.Welcome, &ProjectPassed{}
+	}
+
+	if !shouldSendWelcome(now, projectDate) && !shouldSendReminder(now, projectDate) {
+		return domain.Welcome, &ProjectTooFar{}
+	}
+
 	if existingNotification == nil {
 		if shouldSendWelcome(now, projectDate) {
 			return domain.Welcome, nil
+		}
+		if shouldSendReminder(now, projectDate) {
+			return domain.Reminder, nil
 		}
 	}
 

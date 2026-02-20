@@ -7,7 +7,9 @@ services:
       localstack-network:
         ipv4_address: 10.5.0.5
     environment:
-      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=60
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=120
+      - LAMBDA_DOCKER_NETWORK=nycares-project-welcomer_localstack-network
+      - DEBUG=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
@@ -57,7 +59,7 @@ services:
              go build -o /output/approvalcallback/bootstrap ./lambda/approvalcallback"
 
   deploy-cdk:
-    image: golang:latest
+    build: ./infra
     depends_on:
       localstack:
         condition: service_healthy
@@ -85,10 +87,7 @@ services:
       - NYCARES_AWS_SF_CALLBACKENDPOINT=http://localhost:4566
       - NYCARES_AWS_SF_APPROVALSECRET=test-secret
     command: >
-      sh -c "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - > /dev/null 2>&1 &&
-             apt-get install -y -qq nodejs > /dev/null 2>&1 &&
-             npm install -g aws-cdk aws-cdk-local > /dev/null 2>&1 &&
-             go mod download &&
+      sh -c "go mod download &&
              cdklocal bootstrap --force &&
              cdklocal deploy --require-approval never --all"
     extra_hosts:

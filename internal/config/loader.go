@@ -12,13 +12,16 @@ import (
 func LoadConfig[T any]() (*T, error) {
 	v := viper.New()
 
-	v.AutomaticEnv()
 	v.SetEnvPrefix("NYCARES")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
 
 	// Detect Lambda
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
-		// Lambda: read only from env vars
+		// Lambda: bind env vars for nested struct fields so Viper
+		// knows about them before Unmarshal.
+		var cfg T
+		bindEnvKeys(v, reflect.TypeOf(cfg), "")
 	} else {
 		// Local dev: read YAML config file
 		v.SetConfigName("config")
@@ -44,6 +47,37 @@ func LoadConfig[T any]() (*T, error) {
 	}
 
 	return &cfg, nil
+}
+
+// bindEnvKeys walks the struct type and calls BindEnv for each leaf field,
+// using the mapstructure tags to build the dotted key path that Viper maps
+// to env vars via the replacer (e.g. "account.username" -> NYCARES_ACCOUNT_USERNAME).
+func bindEnvKeys(v *viper.Viper, t reflect.Type, prefix string) {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tag := field.Tag.Get("mapstructure")
+		if tag == "" || tag == "-" {
+			continue
+		}
+		// Strip modifiers like ",omitempty"
+		if idx := strings.Index(tag, ","); idx != -1 {
+			tag = tag[:idx]
+		}
+
+		key := tag
+		if prefix != "" {
+			key = prefix + "." + tag
+		}
+
+		if field.Type.Kind() == reflect.Struct {
+			bindEnvKeys(v, field.Type, key)
+		} else {
+			v.BindEnv(key)
+		}
+	}
 }
 
 func validateStruct(s interface{}) error {

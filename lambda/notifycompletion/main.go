@@ -40,7 +40,7 @@ func main() {
 		panic(err)
 	}
 
-	if os.Getenv("_LAMBDA_SERVER_PORT") == "" {
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
 		err := handler.Handle(context.Background(), models.NotifyCompletionInput{})
 		if err != nil {
 			panic(err)
