@@ -95,7 +95,7 @@ func MockCampaignResponse() dto.CampaignResponse {
 				SiteDescription:               "Mock site description",
 				CommunityPartnerNameTL:        "Mock CP",
 				CommunityPartnerDescriptionTL: "Mock CP Description",
-				AWSChimeChannelID:             "mock-channel-id",
+				AWSChimeChannelID:             "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
 				CurrentUserID:                 "005USERXYZ",
 				ProjectManagerID:              "005PM12345",
 				ProjectManagerName:            "PM Name",

@@ -24,8 +24,6 @@ func RegisterLoginRoute(r *mux.Router) {
 		username := r.FormValue("name")
 		password := r.FormValue("pass")
 
-		fmt.Printf("login attempt: form_id=%q username=%q password=%q\n", formId, username, password)
-
 		if username == "" || password == "" || formId != "user_login_form" {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "form_id, username, password required")

@@ -1,7 +1,6 @@
 package mockresponses
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -30,13 +29,12 @@ func MockScheduleResponse(projects []ProjectConfig) []dto.ScheduleResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now, Id: "a1Bxx0000001XYZ", CampaignId: "11111111-1111-1111-1111-111111111111"},
+			{Name: "Test Project", Date: now, Id: "a1Bxx0000001XYZAAB", CampaignId: "a1Bxx0000001XYZAAB"},
 		}
 	}
 
-	for i, p := range projects {
-		key := fmt.Sprintf("%d", i+1)
-		scheduleList[key] = dto.Project{
+	for _, p := range projects {
+		scheduleList[p.Id] = dto.Project{
 			Role:               "Volunteer",
 			FamilyFriendlyRole: nil,
 			Id:                 p.Id,

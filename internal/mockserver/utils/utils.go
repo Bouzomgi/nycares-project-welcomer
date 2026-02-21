@@ -24,7 +24,7 @@ func ValidateCampaignID(id string) bool {
 }
 
 func ValidateUUID(id string) bool {
-	uuidRegex := `^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$`
+	uuidRegex := `^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$`
 	matched, err := regexp.MatchString(uuidRegex, id)
 	if err != nil {
 		return false
