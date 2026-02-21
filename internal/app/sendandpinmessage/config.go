@@ -1,6 +1,9 @@
 package sendandpinmessage
 
 type Config struct {
+	Api struct {
+		BaseUrl string `mapstructure:"baseUrl,omitempty"`
+	} `mapstructure:"api"`
 	AWS struct {
 		Credentials struct {
 			AccessKeyID     string `mapstructure:"accessKeyID,omitempty"`

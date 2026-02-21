@@ -19,7 +19,12 @@ func buildHandler() (*LoginHandler, error) {
 		return nil, err
 	}
 
-	httpSvc, err := httpservice.NewHttpService(endpoints.BaseUrl)
+	baseUrl := endpoints.BaseUrl
+	if cfg.Api.BaseUrl != "" {
+		baseUrl = cfg.Api.BaseUrl
+	}
+
+	httpSvc, err := httpservice.NewHttpService(baseUrl)
 	if err != nil {
 		return nil, err
 	}

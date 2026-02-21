@@ -3,6 +3,7 @@ package httpservice
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -28,6 +29,10 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 	if err != nil {
 		return domain.Auth{}, fmt.Errorf("failed to build login request: %w", err)
 	}
+
+	bodyReader, _ := req.GetBody()
+	bodyBytes, _ := io.ReadAll(bodyReader)
+	fmt.Printf("login request: %s %s body=%s\n", req.Method, req.URL.String(), string(bodyBytes))
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {

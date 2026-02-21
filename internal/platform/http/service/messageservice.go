@@ -56,7 +56,7 @@ func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string)
 }
 
 func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, error) {
-	getCampaignBaseUrl := endpoints.JoinPaths(endpoints.BaseUrl, endpoints.GetCampaignPath)
+	getCampaignBaseUrl := endpoints.JoinPaths(s.baseUrl, endpoints.GetCampaignPath)
 	urlStr := fmt.Sprintf("%s/%s", getCampaignBaseUrl, projectId)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
@@ -108,7 +108,7 @@ func (s *HttpService) buildSendMessageRequest(channelId, messageContent string) 
 	io.WriteString(part, messageContent)
 	writer.Close()
 
-	urlStr := endpoints.JoinPaths(endpoints.BaseUrl, "/api/messenger/channel/", channelId, "/message/post")
+	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/channel/", channelId, "/message/post")
 
 	req, err := http.NewRequest("POST", urlStr, &body)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *HttpService) buildPinMessageRequest(channelId, messageId string) (*http
 		return nil, err
 	}
 
-	urlStr := endpoints.JoinPaths(endpoints.BaseUrl, "/api/messenger/create-pin-message/", channelId)
+	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/create-pin-message/", channelId)
 
 	req, err := http.NewRequest(
 		"POST",

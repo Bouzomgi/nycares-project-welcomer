@@ -1,14 +1,6 @@
 package endpoints
 
-import "os"
-
-var BaseUrl = "https://www.newyorkcares.org"
-
-func init() {
-	if url := os.Getenv("NYCARES_API_BASE_URL"); url != "" {
-		BaseUrl = url
-	}
-}
+const BaseUrl = "https://www.newyorkcares.org"
 
 const (
 	LoginPath       = "/user/login"

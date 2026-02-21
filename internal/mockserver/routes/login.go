@@ -14,7 +14,7 @@ type LoginResponse struct {
 
 func RegisterLoginRoute(r *mux.Router) {
 	r.HandleFunc("/user/login", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB max memory
+		if err := r.ParseForm(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "invalid form")
 			return
