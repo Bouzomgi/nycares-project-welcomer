@@ -42,6 +42,9 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
+	if existingNotification == nil {
+		return domain.ProjectNotification{}, messageType, s3MessageRef, nil
+	}
 	return *existingNotification, messageType, s3MessageRef, nil
 }
 

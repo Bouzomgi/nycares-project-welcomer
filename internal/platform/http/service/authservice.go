@@ -3,10 +3,10 @@ package httpservice
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"strings"
+	"os"
+	"bytes"
+	"mime/multipart"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
@@ -30,9 +30,7 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("failed to build login request: %w", err)
 	}
 
-	bodyReader, _ := req.GetBody()
-	bodyBytes, _ := io.ReadAll(bodyReader)
-	fmt.Printf("login request: %s %s body=%s\n", req.Method, req.URL.String(), string(bodyBytes))
+	fmt.Fprintf(os.Stderr, "login request: %s %s\n", req.Method, req.URL.String())
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
@@ -56,19 +54,20 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 }
 
 func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request, error) {
-	form := url.Values{}
-	form.Set("form_id", "user_login_form")
-	form.Set("name", creds.Username)
-	form.Set("pass", creds.Password)
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	writer.WriteField("form_id", "user_login_form")
+	writer.WriteField("name", creds.Username)
+	writer.WriteField("pass", creds.Password)
+	writer.Close()
 
-	encoded := form.Encode()
 	loginURL := endpoints.JoinPaths(s.baseUrl, endpoints.LoginPath)
 
-	req, err := http.NewRequest("POST", loginURL, strings.NewReader(encoded))
+	req, err := http.NewRequest("POST", loginURL, &body)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	return req, nil
 }

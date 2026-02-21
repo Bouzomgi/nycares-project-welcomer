@@ -13,6 +13,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
 	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
@@ -28,7 +29,13 @@ func buildHandler() (*ComputeMessageHandler, error) {
 		return nil, err
 	}
 
-	dynamoClient := dynamodb.NewFromConfig(awsCfg)
+	dynamoOpts := []func(*dynamodb.Options){}
+	if cfg.AWS.Dynamo.Endpoint != "" {
+		dynamoOpts = append(dynamoOpts, func(o *dynamodb.Options) {
+			o.BaseEndpoint = aws.String(cfg.AWS.Dynamo.Endpoint)
+		})
+	}
+	dynamoClient := dynamodb.NewFromConfig(awsCfg, dynamoOpts...)
 	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
 
 	var currentDate *time.Time
@@ -52,7 +59,12 @@ func main() {
 	}
 
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
-		output, err := handler.Handle(context.Background(), models.ComputeMessageInput{})
+		var input models.ComputeMessageInput
+		if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
+			panic(fmt.Errorf("failed to decode input: %w", err))
+		}
+
+		output, err := handler.Handle(context.Background(), input)
 		if err != nil {
 			panic(err)
 		}

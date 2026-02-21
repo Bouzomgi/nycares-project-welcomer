@@ -24,7 +24,7 @@ func currentDate() time.Time {
 	return time.Now()
 }
 
-func MockScheduleResponse(projects []ProjectConfig) dto.ScheduleResponse {
+func MockScheduleResponse(projects []ProjectConfig) []dto.ScheduleResponse {
 	scheduleList := make(map[string]dto.Project)
 
 	if projects == nil {
@@ -50,23 +50,25 @@ func MockScheduleResponse(projects []ProjectConfig) dto.ScheduleResponse {
 		}
 	}
 
-	return dto.ScheduleResponse{
-		Success:          true,
-		Message:          "Mock schedule",
-		Command:          "GetSchedule",
-		IsUserTeamLeader: false,
-		UserSFID:         "005xx000001Sv6dAAC",
-		IsUserFlagged: dto.UserFlagged{
-			Deactivated: false,
-		},
-		UserFamilyFriendlyRole: nil,
-		OrientationURL:         "https://example.com/orientation",
-		VIFURL:                 "https://example.com/vif",
-		Data: dto.ScheduleData{
-			ScheduleList:         scheduleList,
-			UpcomingCount:        len(scheduleList),
-			PlusCount:            0,
-			ShowNewFunctionality: true,
+	return []dto.ScheduleResponse{
+		{
+			Success:          true,
+			Message:          "Mock schedule",
+			Command:          "GetSchedule",
+			IsUserTeamLeader: false,
+			UserSFID:         "005xx000001Sv6dAAC",
+			IsUserFlagged: dto.UserFlagged{
+				Deactivated: false,
+			},
+			UserFamilyFriendlyRole: nil,
+			OrientationURL:         "https://example.com/orientation",
+			VIFURL:                 "https://example.com/vif",
+			Data: dto.ScheduleData{
+				ScheduleList:         scheduleList,
+				UpcomingCount:        len(scheduleList),
+				PlusCount:            0,
+				ShowNewFunctionality: true,
+			},
 		},
 	}
 }

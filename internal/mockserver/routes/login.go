@@ -14,7 +14,7 @@ type LoginResponse struct {
 
 func RegisterLoginRoute(r *mux.Router) {
 	r.HandleFunc("/user/login", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
+		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "invalid form")
 			return
@@ -23,6 +23,8 @@ func RegisterLoginRoute(r *mux.Router) {
 		formId := r.FormValue("form_id")
 		username := r.FormValue("name")
 		password := r.FormValue("pass")
+
+		fmt.Printf("login attempt: form_id=%q username=%q password=%q\n", formId, username, password)
 
 		if username == "" || password == "" || formId != "user_login_form" {
 			w.WriteHeader(http.StatusBadRequest)

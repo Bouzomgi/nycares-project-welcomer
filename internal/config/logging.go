@@ -7,7 +7,7 @@ import (
 
 // InitLogging configures structured JSON logging for Lambda environments.
 func InitLogging() {
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	handler := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})
 	slog.SetDefault(slog.New(handler))
