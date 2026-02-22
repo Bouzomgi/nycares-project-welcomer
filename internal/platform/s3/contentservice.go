@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -17,9 +18,15 @@ type ContentService interface {
 
 func (s *S3Service) GetMessageContent(ctx context.Context, messageRef string) (string, error) {
 
+	// Strip s3://bucket-name/ prefix to get just the key
+	key := messageRef
+	if prefix := "s3://" + s.bucketName + "/"; strings.HasPrefix(messageRef, prefix) {
+		key = strings.TrimPrefix(messageRef, prefix)
+	}
+
 	resp, err := s.s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),
-		Key:    aws.String(messageRef),
+		Key:    aws.String(key),
 	})
 	if err != nil {
 		var nsk *types.NoSuchKey

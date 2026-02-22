@@ -12,6 +12,7 @@ type Config struct {
 		} `mapstructure:"credentials"`
 		S3 struct {
 			BucketName string `mapstructure:"bucketName"`
+			Endpoint   string `mapstructure:"endpoint,omitempty"`
 		} `mapstructure:"s3"`
 		SNS struct {
 			TopicArn string `mapstructure:"topicArn"`

@@ -45,7 +45,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 
 	bucket := awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
-		BucketName:    jsii.String("nycares-message-templates"),
+		BucketName:    jsii.String("message-storage-bucket"),
 		RemovalPolicy: awscdk.RemovalPolicy_RETAIN,
 	})
 

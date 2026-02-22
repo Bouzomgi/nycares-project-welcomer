@@ -39,7 +39,7 @@ func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth
 		return err
 	}
 
-	err = u.httpService.PinMessage(ctx, channelId, messageId)
+	err = u.httpService.PinMessage(ctx, projectId, messageId)
 	if err != nil {
 		return err
 	}

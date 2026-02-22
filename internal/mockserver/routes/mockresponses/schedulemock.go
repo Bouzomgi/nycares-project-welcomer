@@ -29,7 +29,7 @@ func MockScheduleResponse(projects []ProjectConfig) []dto.ScheduleResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now, Id: "a1Bxx0000001XYZAAB", CampaignId: "a1Bxx0000001XYZAAB"},
+			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "a1Bxx0000001XYZAAB", CampaignId: "a1Bxx0000001XYZAAB"},
 		}
 	}
 
