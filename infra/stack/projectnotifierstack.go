@@ -11,6 +11,8 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsstepfunctions"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -52,6 +54,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	topic := awssns.NewTopic(stack, jsii.String("NotificationTopic"), &awssns.TopicProps{
 		TopicName: jsii.String("nycares-notifications"),
 	})
+
+	debugQueue := awssqs.NewQueue(stack, jsii.String("DebugNotificationQueue"), &awssqs.QueueProps{
+		QueueName: jsii.String("nycares-notifications-debug"),
+	})
+	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(debugQueue, nil))
 
 	// --- Shared environment variables ---
 	// Env var names must match viper config paths: prefix NYCARES_ + path with . replaced by _
