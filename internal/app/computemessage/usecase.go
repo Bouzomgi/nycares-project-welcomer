@@ -27,10 +27,11 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	if u.currentDate != nil {
 		now = *u.currentDate
 	}
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
 	messageType, err := computeNotificationType(now, project.Date, existingNotification)
 	if err != nil {

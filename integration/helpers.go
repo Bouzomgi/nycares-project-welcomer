@@ -225,6 +225,21 @@ func (tc *testClients) getNotification(projectName, projectDate string) (map[str
 	return result.Item, nil
 }
 
+func (tc *testClients) deleteNotification(projectName, projectDate string) error {
+	ctx := context.Background()
+	_, err := tc.dynamoClient.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(dynamoTableName),
+		Key: map[string]types.AttributeValue{
+			"ProjectName": &types.AttributeValueMemberS{Value: projectName},
+			"ProjectDate": &types.AttributeValueMemberS{Value: projectDate},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete DynamoDB item: %w", err)
+	}
+	return nil
+}
+
 func (tc *testClients) seedNotification(projectName, projectDate, projectId string, hasSentWelcome, hasSentReminder bool) error {
 	ctx := context.Background()
 	_, err := tc.dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
@@ -300,7 +315,7 @@ func currentDateStr() string {
 	if d := os.Getenv("NYCARES_CURRENT_DATE"); d != "" {
 		return d
 	}
-	return time.Now().Format("2006-01-02")
+	return time.Now().UTC().Format("2006-01-02")
 }
 
 func dateOffset(baseDate string, days int) string {
