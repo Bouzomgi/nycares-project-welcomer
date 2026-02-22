@@ -5,7 +5,7 @@
     "Login": {
       "Type": "Task",
       "Resource": "${LoginLambdaArn}",
-      "ResultPath": "$.auth",
+      "ResultPath": "$",
       "Next": "FetchProjects",
       "Catch": [
         {
@@ -33,7 +33,7 @@
     },
     "ProcessEachProject": {
       "Type": "Map",
-      "ItemsPath": "$.projects",
+      "ItemsPath": "$.projects.projects",
       "Parameters": {
         "project.$": "$$.Map.Item.Value",
         "auth.$": "$.auth"

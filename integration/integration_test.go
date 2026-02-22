@@ -11,7 +11,7 @@ import (
 
 const (
 	testProjectName = "Test Project"
-	testProjectId   = "a1Bxx0000001XYZ"
+	testProjectId   = "a1Bxx0000001XYZAAA"
 	testCampaignId  = "11111111-1111-1111-1111-111111111111"
 )
 

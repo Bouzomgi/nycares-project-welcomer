@@ -2,7 +2,7 @@ package fetchprojects
 
 type Config struct {
 	Api struct {
-		BaseUrl string `mapstructure:"baseUrl,omitempty"`
+		BaseUrl string `mapstructure:"base_url,omitempty"`
 	} `mapstructure:"api"`
 	Account struct {
 		Username   string `mapstructure:"username"`
