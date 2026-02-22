@@ -31,6 +31,7 @@ func BuildDomainProject(p project) (domain.Project, error) {
 	domainProject := domain.Project{
 		Name: p.Name,
 		Date: projectDate,
+		Id:   p.Id,
 	}
 
 	return domainProject, nil
@@ -41,6 +42,7 @@ func buildModelProject(p domain.Project) project {
 	return project{
 		Name: p.Name,
 		Date: utils.DateToString(p.Date),
+		Id:   p.Id,
 	}
 }
 

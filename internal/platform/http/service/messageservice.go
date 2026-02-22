@@ -108,7 +108,7 @@ func (s *HttpService) buildSendMessageRequest(channelId, messageContent string) 
 	io.WriteString(part, messageContent)
 	writer.Close()
 
-	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/channel/", channelId, "/message/post")
+	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/channel/", channelId, "/messages/post")
 
 	req, err := http.NewRequest("POST", urlStr, &body)
 	if err != nil {
