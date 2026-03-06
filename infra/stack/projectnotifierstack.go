@@ -21,6 +21,7 @@ import (
 
 type LambdaStackProps struct {
 	awscdk.StackProps
+	MockServerUrl *string
 }
 
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
@@ -119,6 +120,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		})
 
 		lambdaFns[name] = fn
+	}
+
+	// Override API base URL for SendAndPinMessage in dry-run mode
+	if props != nil && props.MockServerUrl != nil {
+		lambdaFns["SendAndPinMessage"].AddEnvironment(
+			jsii.String("NYCARES_API_BASE_URL"),
+			props.MockServerUrl,
+			nil,
+		)
 	}
 
 	// --- IAM Permissions ---
