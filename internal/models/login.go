@@ -10,15 +10,19 @@ type Auth struct {
 	Cookies []http.Cookie `json:"cookies"`
 }
 
-type LoginOutput struct {
-	Auth Auth `json:"auth"`
+type LoginInput struct {
+	ExecutionId string `json:"executionId"`
 }
 
-func NewLoginOutput(cookies []http.Cookie) LoginOutput {
+type LoginOutput struct {
+	Auth        Auth   `json:"auth"`
+	ExecutionId string `json:"executionId"`
+}
+
+func NewLoginOutput(cookies []http.Cookie, executionId string) LoginOutput {
 	return LoginOutput{
-		Auth{
-			Cookies: cookies,
-		},
+		Auth:        Auth{Cookies: cookies},
+		ExecutionId: executionId,
 	}
 }
 

@@ -20,8 +20,8 @@ func NewLoginHandler(u *login.LoginUseCase, cfg *login.Config) *LoginHandler {
 	return &LoginHandler{usecase: u, cfg: cfg}
 }
 
-func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
-	slog.Info("login handler invoked")
+func (h *LoginHandler) Handle(ctx context.Context, input models.LoginInput) (models.LoginOutput, error) {
+	slog.Info("login handler invoked", "executionId", input.ExecutionId)
 
 	creds := domain.Credentials{
 		Username: h.cfg.Account.Username,
@@ -33,22 +33,22 @@ func (h *LoginHandler) Handle(ctx context.Context) (models.LoginOutput, error) {
 
 	authResp, err := h.usecase.Execute(ctx, creds)
 	if err != nil {
-		slog.Error("login failed", "error", err)
+		slog.Error("login failed", "executionId", input.ExecutionId, "error", err)
 		return models.LoginOutput{}, err
 	}
 
-	slog.Info("login succeeded")
-	output := ToResponseAuth(authResp)
+	slog.Info("login succeeded", "executionId", input.ExecutionId)
+	output := ToResponseAuth(authResp, input.ExecutionId)
 
 	return output, nil
 }
 
-func ToResponseAuth(domainAuth domain.Auth) models.LoginOutput {
+func ToResponseAuth(domainAuth domain.Auth, executionId string) models.LoginOutput {
 	cookies := make([]http.Cookie, len(domainAuth.Cookies))
 	for i, c := range domainAuth.Cookies {
 		if c != nil {
 			cookies[i] = *c
 		}
 	}
-	return models.NewLoginOutput(cookies)
+	return models.NewLoginOutput(cookies, executionId)
 }

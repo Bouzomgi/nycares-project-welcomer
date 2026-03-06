@@ -8,4 +8,5 @@ type RecordMessageOutput struct {
 	ExistingProjectNotification projectNotification `json:"existingProjectNotification"`
 	MessageToSend               message             `json:"message"`
 	RecordedProjectNotification projectNotification `json:"recordedProjectNotification"`
+	ExecutionId                 string              `json:"executionId"`
 }

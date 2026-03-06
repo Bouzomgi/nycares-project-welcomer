@@ -20,30 +20,30 @@ func NewRecordMessageHandler(u *rm.RecordMessageUseCase, cfg *rm.Config) *Record
 }
 
 func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMessageInput) (models.RecordMessageOutput, error) {
-	slog.Info("recordmessage handler invoked")
+	slog.Info("recordmessage handler invoked", "executionId", input.ExecutionId)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProjectNotification, err := models.ConvertModelProjectNotification(input.ExistingProjectNotification)
 	if err != nil {
-		slog.Error("recordmessage failed to convert notification", "error", err)
+		slog.Error("recordmessage failed to convert notification", "executionId", input.ExecutionId, "error", err)
 		return models.RecordMessageOutput{}, err
 	}
 
 	notificationType, err := domain.ParseNotificationType(input.MessageToSend.Type)
 	if err != nil {
-		slog.Error("recordmessage invalid notification type", "error", err)
+		slog.Error("recordmessage invalid notification type", "executionId", input.ExecutionId, "error", err)
 		return models.RecordMessageOutput{}, err
 	}
 
 	updatedProjectNotification, err := h.usecase.Execute(ctx, domainProjectNotification, notificationType)
 	if err != nil {
-		slog.Error("recordmessage failed", "error", err)
+		slog.Error("recordmessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.RecordMessageOutput{}, err
 	}
 
-	slog.Info("recordmessage succeeded")
+	slog.Info("recordmessage succeeded", "executionId", input.ExecutionId)
 
 	outputProjectNotification := models.ConvertDomainProjectNotification(updatedProjectNotification)
 
@@ -53,6 +53,7 @@ func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMe
 		ExistingProjectNotification: input.ExistingProjectNotification,
 		MessageToSend:               input.MessageToSend,
 		RecordedProjectNotification: outputProjectNotification,
+		ExecutionId:                 input.ExecutionId,
 	}
 
 	return output, nil

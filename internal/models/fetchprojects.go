@@ -10,8 +10,9 @@ import (
 type FetchProjectsInput = LoginOutput
 
 type FetchProjectsOutput struct {
-	Auth     Auth      `json:"auth"`
-	Projects []project `json:"projects"`
+	Auth        Auth      `json:"auth"`
+	Projects    []project `json:"projects"`
+	ExecutionId string    `json:"executionId"`
 }
 
 type project struct {
@@ -56,6 +57,7 @@ func BuildFetchProjectsOutput(input FetchProjectsInput, domainProjects []domain.
 		Auth: Auth{
 			Cookies: input.Auth.Cookies,
 		},
-		Projects: projects,
+		Projects:    projects,
+		ExecutionId: input.ExecutionId,
 	}
 }

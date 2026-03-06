@@ -9,6 +9,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/app/login"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -41,7 +42,12 @@ func main() {
 	}
 
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
-		output, err := handler.Handle(context.Background())
+		var input models.LoginInput
+		if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
+			panic(fmt.Errorf("failed to decode input: %w", err))
+		}
+
+		output, err := handler.Handle(context.Background(), input)
 		if err != nil {
 			panic(err)
 		}

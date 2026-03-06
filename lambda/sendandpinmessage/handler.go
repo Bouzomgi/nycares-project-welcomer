@@ -19,7 +19,7 @@ func NewSendAndPinMessageHandler(u *spm.SendAndPinMessageUseCase, cfg *spm.Confi
 }
 
 func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.SendAndPinMessageInput) (models.SendAndPinMessageOutput, error) {
-	slog.Info("sendandpinmessage handler invoked", "projectId", input.ExistingProjectNotification.Id)
+	slog.Info("sendandpinmessage handler invoked", "executionId", input.ExecutionId, "projectId", input.ExistingProjectNotification.Id)
 
 	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
@@ -28,11 +28,11 @@ func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.Send
 
 	err := h.usecase.Execute(ctx, auth, input.ExistingProjectNotification.Id, input.MessageToSend.TemplateRef)
 	if err != nil {
-		slog.Error("sendandpinmessage failed", "error", err)
+		slog.Error("sendandpinmessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.SendAndPinMessageOutput{}, err
 	}
 
-	slog.Info("sendandpinmessage succeeded")
+	slog.Info("sendandpinmessage succeeded", "executionId", input.ExecutionId)
 	sendAndPinMessageOutput := models.SendAndPinMessageOutput(input)
 
 	return sendAndPinMessageOutput, nil

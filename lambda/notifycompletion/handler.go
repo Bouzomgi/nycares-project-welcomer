@@ -20,29 +20,29 @@ func NewNotifyCompletionHandler(u *nc.NotifyCompletionUseCase, cfg *nc.Config) *
 }
 
 func (h *NotifyCompletionHandler) Handle(ctx context.Context, input models.NotifyCompletionInput) error {
-	slog.Info("notifycompletion handler invoked")
+	slog.Info("notifycompletion handler invoked", "executionId", input.ExecutionId)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProject, err := models.ConvertProjectNotificationToDomainProject(input.ExistingProjectNotification)
 	if err != nil {
-		slog.Error("notifycompletion failed to convert project", "error", err)
+		slog.Error("notifycompletion failed to convert project", "executionId", input.ExecutionId, "error", err)
 		return err
 	}
 
 	notificationType, err := domain.ParseNotificationType(input.MessageToSend.Type)
 	if err != nil {
-		slog.Error("notifycompletion invalid notification type", "error", err)
+		slog.Error("notifycompletion invalid notification type", "executionId", input.ExecutionId, "error", err)
 		return err
 	}
 
 	err = h.usecase.Execute(ctx, notificationType, domainProject)
 	if err != nil {
-		slog.Error("notifycompletion failed", "error", err)
+		slog.Error("notifycompletion failed", "executionId", input.ExecutionId, "error", err)
 		return err
 	}
 
-	slog.Info("notifycompletion succeeded")
+	slog.Info("notifycompletion succeeded", "executionId", input.ExecutionId)
 	return nil
 }

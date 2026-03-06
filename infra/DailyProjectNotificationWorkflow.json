@@ -5,6 +5,9 @@
     "Login": {
       "Type": "Task",
       "Resource": "${LoginLambdaArn}",
+      "Parameters": {
+        "executionId.$": "$$.Execution.Id"
+      },
       "ResultPath": "$",
       "Next": "FetchProjects",
       "Catch": [
@@ -36,7 +39,8 @@
       "ItemsPath": "$.projects.projects",
       "Parameters": {
         "project.$": "$$.Map.Item.Value",
-        "auth.$": "$.auth"
+        "auth.$": "$.auth",
+        "executionId.$": "$.executionId"
       },
       "Iterator": {
         "StartAt": "ComputeMessageToSend",

@@ -8,14 +8,16 @@ import (
 )
 
 type ComputeMessageInput struct {
-	Auth    Auth    `json:"auth"`
-	Project project `json:"project"`
+	Auth        Auth    `json:"auth"`
+	Project     project `json:"project"`
+	ExecutionId string  `json:"executionId"`
 }
 
 type ComputeMessageOutput struct {
 	Auth                        Auth                `json:"auth"`
 	ExistingProjectNotification projectNotification `json:"existingProjectNotification"`
 	MessageToSend               message             `json:"message"`
+	ExecutionId                 string              `json:"executionId"`
 }
 
 type projectNotification struct {
