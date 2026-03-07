@@ -24,16 +24,16 @@ func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string)
 
 	req, err := s.buildCampaignRequest(projectId)
 	if err != nil {
-		return "", fmt.Errorf("failed to build schedule request: %w", err)
+		return "", fmt.Errorf("failed to build campaign request: %w", err)
 	}
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
+		return "", fmt.Errorf("campaign request failed: %w", err)
 	}
 
 	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
+		return "", fmt.Errorf("campaign request failed: %w", err)
 	}
 
 	body, err := s.ReadBody(resp)
@@ -70,16 +70,16 @@ func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, err
 func (s *HttpService) SendMessage(ctx context.Context, channelId, messageContent string) (string, error) {
 	req, err := s.buildSendMessageRequest(channelId, messageContent)
 	if err != nil {
-		return "", fmt.Errorf("failed to build schedule request: %w", err)
+		return "", fmt.Errorf("failed to build send message request: %w", err)
 	}
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
+		return "", fmt.Errorf("send message request failed: %w", err)
 	}
 
 	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("schedule request failed: %w", err)
+		return "", fmt.Errorf("send message request failed: %w", err)
 	}
 
 	body, err := s.ReadBody(resp)
@@ -126,16 +126,16 @@ func (s *HttpService) buildSendMessageRequest(channelId, messageContent string) 
 func (s *HttpService) PinMessage(ctx context.Context, channelId, messageId string) error {
 	req, err := s.buildPinMessageRequest(channelId, messageId)
 	if err != nil {
-		return fmt.Errorf("failed to build schedule request: %w", err)
+		return fmt.Errorf("failed to build pin message request: %w", err)
 	}
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
-		return fmt.Errorf("schedule request failed: %w", err)
+		return fmt.Errorf("pin message request failed: %w", err)
 	}
 
 	if err := CheckResponse(resp); err != nil {
-		return fmt.Errorf("schedule request failed: %w", err)
+		return fmt.Errorf("pin message request failed: %w", err)
 	}
 
 	return nil
