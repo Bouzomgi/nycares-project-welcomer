@@ -97,16 +97,9 @@ func registerPinMessageRoute(r *mux.Router) {
 		}
 
 		defer r.Body.Close()
-		_, err := io.ReadAll(r.Body)
-		if err != nil {
+		if _, err := io.ReadAll(r.Body); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintln(w, "cannot read body")
-			return
-		}
-
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintln(w, "invalid message body:", err)
 			return
 		}
 
