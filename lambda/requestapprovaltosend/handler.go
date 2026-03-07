@@ -21,7 +21,7 @@ func NewRequestApprovalHandler(u *ra.RequestApprovalUseCase, cfg *ra.Config) *Re
 }
 
 func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.RequestApprovalInput) (models.RequestApprovalOutput, error) {
-	slog.Info("requestapproval handler invoked", "executionId", input.ExecutionId, "mockMode", h.cfg.Mock.Mode)
+	slog.Info("requestapproval handler invoked", "executionId", input.ExecutionId, "mockSendMessage", h.cfg.Mock.SendMessage)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()

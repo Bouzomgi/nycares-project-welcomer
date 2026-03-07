@@ -45,7 +45,7 @@ jobs:
           DEPLOY_MOCKSERVER: ${{ vars.DEPLOY_MOCKSERVER }}
           CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
-          NYCARES_MOCK_MODE: ${{ vars.DEPLOY_MOCKSERVER }}
+          NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
         run: |
           go mod download
           cdk bootstrap

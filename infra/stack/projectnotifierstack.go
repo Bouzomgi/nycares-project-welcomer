@@ -80,7 +80,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_ACCOUNT_INTERNALID",
 		"NYCARES_AWS_SF_APPROVALSECRET",
 		"NYCARES_AWS_SF_CALLBACKENDPOINT",
-		"NYCARES_MOCK_MODE",
+		"NYCARES_MOCK_SENDMESSAGE",
 	}
 	for _, key := range passthroughEnvVars {
 		if val := os.Getenv(key); val != "" {

@@ -11,6 +11,6 @@ type Config struct {
 		} `mapstructure:"sf"`
 	} `mapstructure:"aws"`
 	Mock struct {
-		Mode bool `mapstructure:"mode,omitempty"`
+		SendMessage bool `mapstructure:"sendMessage,omitempty"`
 	} `mapstructure:"mock"`
 }
