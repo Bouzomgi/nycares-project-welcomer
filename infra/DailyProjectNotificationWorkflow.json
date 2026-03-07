@@ -136,12 +136,12 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "DLQNotifierFailed"
+                "Next": "ProjectDLQNotifierFailed"
               }
             ],
             "End": true
           },
-          "DLQNotifierFailed": {
+          "ProjectDLQNotifierFailed": {
             "Type": "Fail",
             "Error": "DLQNotifierFailed",
             "Cause": "DLQNotifier failed to report the error after retries"
