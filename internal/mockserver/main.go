@@ -23,5 +23,7 @@ func main() {
 	}).Methods("GET")
 
 	fmt.Println("Mock server running on http://localhost:3001")
-	http.ListenAndServe(":3001", r)
+	if err := http.ListenAndServe(":3001", r); err != nil {
+		panic(err)
+	}
 }
