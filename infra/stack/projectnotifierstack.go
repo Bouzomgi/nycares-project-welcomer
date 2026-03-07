@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
@@ -117,6 +118,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: awslambda.Architecture_ARM_64(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
+			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 		})
 
 		lambdaFns[name] = fn
@@ -157,6 +159,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: awslambda.Architecture_ARM_64(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
