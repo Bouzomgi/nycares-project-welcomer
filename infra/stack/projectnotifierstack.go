@@ -129,6 +129,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			props.MockServerUrl,
 			nil,
 		)
+		lambdaFns["RequestApprovalToSend"].AddEnvironment(
+			jsii.String("NYCARES_MOCK_MODE"),
+			jsii.String("true"),
+			nil,
+		)
 	}
 
 	// --- IAM Permissions ---

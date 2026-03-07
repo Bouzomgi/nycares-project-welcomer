@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"os"
 
 	ra "github.com/Bouzomgi/nycares-project-welcomer/internal/app/requestapproval"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -21,7 +22,8 @@ func NewRequestApprovalHandler(u *ra.RequestApprovalUseCase, cfg *ra.Config) *Re
 }
 
 func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.RequestApprovalInput) (models.RequestApprovalOutput, error) {
-	slog.Info("requestapproval handler invoked", "executionId", input.ExecutionId)
+	mockMode := os.Getenv("NYCARES_MOCK_MODE") == "true"
+	slog.Info("requestapproval handler invoked", "executionId", input.ExecutionId, "mockMode", mockMode)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
