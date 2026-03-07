@@ -32,7 +32,6 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Build Lambdas
-        if: ${{ vars.DEPLOY_MOCKSERVER != 'true' }}
         run: |
           export CGO_ENABLED=0 GOOS=linux GOARCH=arm64
           for dir in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback; do
