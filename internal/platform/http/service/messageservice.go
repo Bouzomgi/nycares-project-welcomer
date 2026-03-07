@@ -47,7 +47,7 @@ func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string)
 	}
 
 	if len(campaignResp) == 0 {
-		return "", fmt.Errorf("campaign response was empty: %w", err)
+		return "", fmt.Errorf("campaign response was empty")
 	}
 
 	channelId := campaignResp[0].Campaign.AWSChimeChannelID

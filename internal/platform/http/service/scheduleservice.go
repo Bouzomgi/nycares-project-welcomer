@@ -45,13 +45,13 @@ func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]dom
 		return nil, fmt.Errorf("failed to unmarshal schedule response: %w", err)
 	}
 
+	if len(schedResp) == 0 {
+		return nil, fmt.Errorf("schedule response was empty")
+	}
+
 	projects, err := schedResp[0].ToDomainProjects()
 	if err != nil {
 		return nil, err
-	}
-
-	if len(projects) == 0 {
-		return nil, fmt.Errorf("empty schedule response")
 	}
 
 	return projects, nil
