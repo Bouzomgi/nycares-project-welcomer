@@ -35,6 +35,7 @@ Feature: Project notification workflow
     And a welcome has already been sent
     When the workflow runs
     Then the execution should succeed
+    And the project should be skipped
 
   Scenario: Reminder message is approved
     Given a project "Test Project" scheduled 1 day from now
@@ -51,6 +52,7 @@ Feature: Project notification workflow
     And both welcome and reminder have already been sent
     When the workflow runs
     Then the execution should succeed
+    And the project should be skipped
 
   Scenario: Past projects are skipped
     Given a project "Test Project" scheduled -1 days from now

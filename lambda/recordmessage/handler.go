@@ -48,7 +48,6 @@ func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMe
 	outputProjectNotification := models.ConvertDomainProjectNotification(updatedProjectNotification)
 
 	output := models.RecordMessageOutput{
-		TaskToken:                   input.TaskToken,
 		Auth:                        input.Auth,
 		ExistingProjectNotification: input.ExistingProjectNotification,
 		MessageToSend:               input.MessageToSend,

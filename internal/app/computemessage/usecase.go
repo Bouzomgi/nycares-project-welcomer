@@ -65,6 +65,18 @@ type ProjectPassed struct{}
 
 func (e *ProjectPassed) Error() string { return "project date has already passed" }
 
+// AllNotificationsSent is returned when all applicable notifications have already been sent.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type AllNotificationsSent struct{}
+
+func (e *AllNotificationsSent) Error() string { return "all notifications already sent for project" }
+
+// NotificationsDisabled is returned when ShouldStopNotify is set for the project.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type NotificationsDisabled struct{}
+
+func (e *NotificationsDisabled) Error() string { return "notifications are disabled for this project" }
+
 func computeNotificationType(now, projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
 	if !now.Before(projectDate) {
 		return domain.Welcome, &ProjectPassed{}
@@ -84,7 +96,7 @@ func computeNotificationType(now, projectDate time.Time, existingNotification *d
 	}
 
 	if existingNotification.ShouldStopNotify {
-		return domain.Welcome, fmt.Errorf("notifications disabled for project")
+		return domain.Welcome, &NotificationsDisabled{}
 	}
 
 	if !existingNotification.HasSentWelcome {
@@ -99,7 +111,7 @@ func computeNotificationType(now, projectDate time.Time, existingNotification *d
 		}
 	}
 
-	return domain.Welcome, fmt.Errorf("all notifications already sent")
+	return domain.Welcome, &AllNotificationsSent{}
 }
 
 const (

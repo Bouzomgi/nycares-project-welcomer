@@ -53,7 +53,7 @@
             "Next": "RequestApprovalToSend",
             "Catch": [
               {
-                "ErrorEquals": ["ProjectTooFar", "ProjectPassed"],
+                "ErrorEquals": ["ProjectTooFar", "ProjectPassed", "AllNotificationsSent", "NotificationsDisabled"],
                 "Next": "EndProjectIteration"
               },
               {
