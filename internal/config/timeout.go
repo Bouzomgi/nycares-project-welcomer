@@ -9,5 +9,6 @@ const (
 
 	// HTTPHandlerTimeout is the timeout for handlers that make external
 	// HTTP calls (login, fetch projects, send messages).
-	HTTPHandlerTimeout = 30 * time.Second
+	// Set below the Lambda function timeout (30s) to allow graceful error propagation.
+	HTTPHandlerTimeout = 25 * time.Second
 )
