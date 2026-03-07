@@ -22,7 +22,7 @@ import (
 
 const (
 	stateMachineARN  = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
-	dynamoTableName  = "Sent_Notifications"
+	dynamoTableName  = "nycares-project-welcomer-notifications"
 	pollInterval     = 2 * time.Second
 	executionTimeout = 120 * time.Second
 )

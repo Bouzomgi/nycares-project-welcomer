@@ -108,7 +108,7 @@ func (sc *scenarioContext) theProjectShouldBeSkipped() error {
 }
 
 func (sc *scenarioContext) theWorkflowShouldRouteToErrorHandling() error {
-	entered, err := sc.tc.executionEnteredState(sc.execArn, "DLQNotifier")
+	entered, err := sc.tc.executionEnteredState(sc.execArn, "ProjectDLQNotifier")
 	if err != nil {
 		return err
 	}

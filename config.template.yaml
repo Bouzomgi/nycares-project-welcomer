@@ -12,11 +12,11 @@ aws:
     secretAccessKey: "" # NYCARES_AWS_CREDENTIALS_SECRETACCESSKEY (optional)
     region: ""          # NYCARES_AWS_CREDENTIALS_REGION (optional)
   dynamo:
-    tableName: "Sent_Notifications" # NYCARES_AWS_DYNAMO_TABLENAME
+    tableName: "nycares-project-welcomer-notifications" # NYCARES_AWS_DYNAMO_TABLENAME
     region: "us-east-1"             # NYCARES_AWS_DYNAMO_REGION
     endpoint: "http://localhost:4566" # NYCARES_AWS_DYNAMO_ENDPOINT (LocalStack)
   s3:
-    bucketName: "message-storage-bucket" # NYCARES_AWS_S3_BUCKETNAME
+    bucketName: "nycares-project-welcomer-messages" # NYCARES_AWS_S3_BUCKETNAME
     endpoint: "http://localhost:4566"     # NYCARES_AWS_S3_ENDPOINT (LocalStack)
   sns:
     topicArn: "arn:aws:sns:us-east-1:000000000000:nycares-notifications" # NYCARES_AWS_SNS_TOPICARN

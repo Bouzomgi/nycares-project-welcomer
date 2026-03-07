@@ -55,7 +55,7 @@ A Step Functions state machine orchestrates 8 Lambda functions per project:
 ### Data Flow
 Auth cookies, project metadata, message type, and task tokens are passed through the workflow via Lambda I/O models serialized as JSON between steps.
 
-### DynamoDB Schema (`Sent_Notifications` table)
+### DynamoDB Schema (`nycares-project-welcomer-notifications` table)
 - **Key:** `ProjectName` + `ProjectDate` (composite)
 - **Fields:** `HasSentWelcome`, `HasSentReminder`, `ShouldStopNotify`, `LastUpdated`, `ProjectId`
 
