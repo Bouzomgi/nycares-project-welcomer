@@ -10,6 +10,10 @@ import (
 )
 
 func LoadConfig[T any]() (*T, error) {
+	if err := loadSecretsToEnv(); err != nil {
+		return nil, fmt.Errorf("failed to load secrets: %w", err)
+	}
+
 	v := viper.New()
 
 	v.SetEnvPrefix("NYCARES")

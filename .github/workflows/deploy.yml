@@ -43,6 +43,30 @@ jobs:
             go build -o lambda-build/$dir/bootstrap ./lambda/$dir
           done
 
+      - name: Upsert Secrets Manager secret
+        env:
+          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
+          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
+          NYCARES_ACCOUNT_INTERNALID: ${{ secrets.NYCARES_ACCOUNT_INTERNALID }}
+          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
+        run: |
+          SECRET_JSON=$(python3 -c "
+          import json, os
+          print(json.dumps({
+            'NYCARES_ACCOUNT_USERNAME': os.environ['NYCARES_ACCOUNT_USERNAME'],
+            'NYCARES_ACCOUNT_PASSWORD': os.environ['NYCARES_ACCOUNT_PASSWORD'],
+            'NYCARES_ACCOUNT_INTERNALID': os.environ['NYCARES_ACCOUNT_INTERNALID'],
+            'NYCARES_AWS_SF_APPROVALSECRET': os.environ['NYCARES_AWS_SF_APPROVALSECRET'],
+          }))
+          ")
+          aws secretsmanager describe-secret --secret-id nycares-project-welcomer/secrets \
+            && aws secretsmanager put-secret-value \
+                --secret-id nycares-project-welcomer/secrets \
+                --secret-string "$SECRET_JSON" \
+            || aws secretsmanager create-secret \
+                --name nycares-project-welcomer/secrets \
+                --secret-string "$SECRET_JSON"
+
       - name: CDK Deploy
         working-directory: infra
         env:
@@ -50,10 +74,6 @@ jobs:
           CDK_DEFAULT_ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
-          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
-          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
-          NYCARES_ACCOUNT_INTERNALID: ${{ secrets.NYCARES_ACCOUNT_INTERNALID }}
-          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
           NYCARES_API_BASE_URL: ${{ vars.NYCARES_API_BASE_URL }}
         run: |
           go mod download

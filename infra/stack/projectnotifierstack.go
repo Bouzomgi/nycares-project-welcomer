@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssecretsmanager"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
@@ -62,6 +63,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(debugQueue, nil))
 
+	// --- Secrets Manager ---
+	// Secret is created by the deploy workflow (aws secretsmanager create-secret / put-secret-value).
+	// CDK imports it by name to grant Lambda access and pass the ARN.
+	secret := awssecretsmanager.Secret_FromSecretNameV2(stack, jsii.String("AppSecrets"), jsii.String("nycares-project-welcomer/secrets"))
+
 	// --- Shared environment variables ---
 	// Env var names must match viper config paths: prefix NYCARES_ + path with . replaced by _
 
@@ -70,16 +76,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_AWS_DYNAMO_REGION":    stack.Region(),
 		"NYCARES_AWS_S3_BUCKETNAME":    bucket.BucketName(),
 		"NYCARES_AWS_SNS_TOPICARN":     topic.TopicArn(),
+		"NYCARES_SECRET_ARN":           secret.SecretArn(),
 	}
 
 	// Passthrough env vars from deploy environment
 	passthroughEnvVars := []string{
 		"NYCARES_API_BASE_URL",
 		"NYCARES_CURRENT_DATE",
-		"NYCARES_ACCOUNT_USERNAME",
-		"NYCARES_ACCOUNT_PASSWORD",
-		"NYCARES_ACCOUNT_INTERNALID",
-		"NYCARES_AWS_SF_APPROVALSECRET",
 		"NYCARES_MOCK_SENDMESSAGE",
 	}
 	for _, key := range passthroughEnvVars {
@@ -135,6 +138,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- IAM Permissions ---
 
+	// All lambdas need to read the shared secret
+	for _, name := range lambdaNames {
+		secret.GrantRead(lambdaFns[name], nil)
+	}
+
 	// ComputeMessageToSend needs DynamoDB read
 	table.GrantReadData(lambdaFns["ComputeMessageToSend"])
 
@@ -166,6 +174,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
 		Resources: jsii.Strings("*"),
 	}))
+	secret.GrantRead(approvalCallbackFn, nil)
 
 	// --- API Gateway ---
 
