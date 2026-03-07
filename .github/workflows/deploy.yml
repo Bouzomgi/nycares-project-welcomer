@@ -48,4 +48,4 @@ jobs:
           NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
         run: |
           go mod download
-          cdk deploy --hotswap --require-approval never --all
+          cdk deploy --require-approval never --all
