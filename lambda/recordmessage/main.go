@@ -42,7 +42,12 @@ func main() {
 	}
 
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
-		output, err := handler.Handle(context.Background(), models.RecordMessageInput{})
+		var input models.RecordMessageInput
+		if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
+			panic(fmt.Errorf("failed to decode input: %w", err))
+		}
+
+		output, err := handler.Handle(context.Background(), input)
 		if err != nil {
 			panic(err)
 		}
