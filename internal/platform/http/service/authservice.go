@@ -1,12 +1,11 @@
 package httpservice
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"bytes"
 	"mime/multipart"
+	"net/http"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
@@ -29,8 +28,6 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 	if err != nil {
 		return domain.Auth{}, fmt.Errorf("failed to build login request: %w", err)
 	}
-
-	fmt.Fprintf(os.Stderr, "login request: %s %s\n", req.Method, req.URL.String())
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
