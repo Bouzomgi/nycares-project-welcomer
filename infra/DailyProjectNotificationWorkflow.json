@@ -25,10 +25,6 @@
       "Next": "ProcessEachProject",
       "Catch": [
         {
-          "ErrorEquals": ["AuthFailureException"],
-          "Next": "Login"
-        },
-        {
           "ErrorEquals": ["States.ALL"],
           "Next": "DLQNotifier"
         }
