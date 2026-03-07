@@ -132,7 +132,7 @@ Locally, config loads from `config.yaml`. In Lambda, environment variables with 
 
 ## DynamoDB Schema
 
-**Table:** `Sent_Notifications`
+**Table:** `nycares-project-welcomer-notifications`
 
 | Attribute          | Type    | Description                          |
 |--------------------|---------|--------------------------------------|
