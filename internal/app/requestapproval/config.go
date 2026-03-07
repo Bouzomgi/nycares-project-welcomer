@@ -10,4 +10,7 @@ type Config struct {
 			ApprovalSecret   string `mapstructure:"approvalSecret"`
 		} `mapstructure:"sf"`
 	} `mapstructure:"aws"`
+	Mock struct {
+		Mode bool `mapstructure:"mode,omitempty"`
+	} `mapstructure:"mock"`
 }
