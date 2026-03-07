@@ -39,7 +39,7 @@ jobs:
             go build -o lambda-build/$dir/bootstrap ./lambda/$dir
           done
 
-      - name: CDK Bootstrap & Deploy
+      - name: CDK Deploy
         working-directory: infra
         env:
           DEPLOY_MOCKSERVER: ${{ vars.DEPLOY_MOCKSERVER }}
@@ -48,5 +48,4 @@ jobs:
           NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
         run: |
           go mod download
-          cdk bootstrap
           cdk deploy --hotswap --require-approval never --all
