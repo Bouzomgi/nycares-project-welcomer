@@ -47,4 +47,5 @@ jobs:
           CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
         run: |
           go mod download
+          cdk bootstrap
           cdk deploy --hotswap --require-approval never --all
