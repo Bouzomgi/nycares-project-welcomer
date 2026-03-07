@@ -79,7 +79,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_ACCOUNT_PASSWORD",
 		"NYCARES_ACCOUNT_INTERNALID",
 		"NYCARES_AWS_SF_APPROVALSECRET",
-		"NYCARES_AWS_SF_CALLBACKENDPOINT",
 		"NYCARES_MOCK_SENDMESSAGE",
 	}
 	for _, key := range passthroughEnvVars {
@@ -175,6 +174,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	callbackResource.AddMethod(
 		jsii.String("GET"),
 		awsapigateway.NewLambdaIntegration(approvalCallbackFn, nil),
+		nil,
+	)
+
+	// Set the callback endpoint from the API Gateway URL (resolved at deploy time)
+	lambdaFns["RequestApprovalToSend"].AddEnvironment(
+		jsii.String("NYCARES_AWS_SF_CALLBACKENDPOINT"),
+		api.Url(),
 		nil,
 	)
 
