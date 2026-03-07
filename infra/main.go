@@ -15,8 +15,8 @@ func main() {
 	app := awscdk.NewApp(nil)
 
 	env := &awscdk.Environment{
-		Account: jsii.String("000000000000"),
-		Region:  jsii.String("us-east-1"),
+		Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
+		Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
 	}
 
 	var mockServerUrl *string
