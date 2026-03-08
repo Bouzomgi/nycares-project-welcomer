@@ -29,9 +29,13 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
-	message := fmt.Sprintf("Approve: %s\n\nReject: %s", approveLink, rejectLink)
+	plainText := fmt.Sprintf("Approve: %s\n\nReject: %s", approveLink, rejectLink)
+	htmlBody := fmt.Sprintf(
+		`<p><a href="%s">Approve</a></p><p><a href="%s">Reject</a></p>`,
+		approveLink, rejectLink,
+	)
 
-	_, err := u.snsSrv.PublishNotification(ctx, message, "Project Message Approval")
+	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, "Project Message Approval")
 	if err != nil {
 		return fmt.Errorf("failed to publish approval notification: %w", err)
 	}
