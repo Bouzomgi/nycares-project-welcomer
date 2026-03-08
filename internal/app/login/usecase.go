@@ -23,6 +23,7 @@ func (u *LoginUseCase) Execute(ctx context.Context, creds domain.Credentials) (d
 	}
 
 	return domain.Auth{
-		Cookies: auth.Cookies,
+		Cookies:    auth.Cookies,
+		InternalId: auth.InternalId,
 	}, nil
 }

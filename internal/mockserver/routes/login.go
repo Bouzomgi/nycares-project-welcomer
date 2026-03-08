@@ -1,16 +1,11 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
-
-type LoginResponse struct {
-	Message string `json:"message"`
-}
 
 func RegisterLoginRoute(r *mux.Router) {
 	r.HandleFunc("/user/login", func(w http.ResponseWriter, r *http.Request) {
@@ -38,13 +33,8 @@ func RegisterLoginRoute(r *mux.Router) {
 			MaxAge:   3600, // 1 hour
 		})
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-
-		resp := LoginResponse{
-			Message: "Login successful!",
-		}
-
-		json.NewEncoder(w).Encode(resp)
+		fmt.Fprintln(w, `<!DOCTYPE html><html><body><div data-endpoint="api/schedule/retrieve/003MOCK00000000001"></div></body></html>`)
 	}).Methods("POST")
 }

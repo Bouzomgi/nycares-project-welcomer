@@ -47,7 +47,6 @@ jobs:
         env:
           NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
           NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
-          NYCARES_ACCOUNT_INTERNALID: ${{ secrets.NYCARES_ACCOUNT_INTERNALID }}
           NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
         run: |
           SECRET_JSON=$(python3 -c "
@@ -55,7 +54,6 @@ jobs:
           print(json.dumps({
             'NYCARES_ACCOUNT_USERNAME': os.environ['NYCARES_ACCOUNT_USERNAME'],
             'NYCARES_ACCOUNT_PASSWORD': os.environ['NYCARES_ACCOUNT_PASSWORD'],
-            'NYCARES_ACCOUNT_INTERNALID': os.environ['NYCARES_ACCOUNT_INTERNALID'],
             'NYCARES_AWS_SF_APPROVALSECRET': os.environ['NYCARES_AWS_SF_APPROVALSECRET'],
           }))
           ")

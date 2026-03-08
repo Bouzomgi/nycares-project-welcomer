@@ -50,5 +50,5 @@ func ToResponseAuth(domainAuth domain.Auth, executionId string) models.LoginOutp
 			cookies[i] = *c
 		}
 	}
-	return models.NewLoginOutput(cookies, executionId)
+	return models.NewLoginOutput(cookies, domainAuth.InternalId, executionId)
 }

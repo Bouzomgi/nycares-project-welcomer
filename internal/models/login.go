@@ -16,12 +16,14 @@ type LoginInput struct {
 
 type LoginOutput struct {
 	Auth        Auth   `json:"auth"`
+	InternalId  string `json:"internalId"`
 	ExecutionId string `json:"executionId"`
 }
 
-func NewLoginOutput(cookies []http.Cookie, executionId string) LoginOutput {
+func NewLoginOutput(cookies []http.Cookie, internalId string, executionId string) LoginOutput {
 	return LoginOutput{
 		Auth:        Auth{Cookies: cookies},
+		InternalId:  internalId,
 		ExecutionId: executionId,
 	}
 }

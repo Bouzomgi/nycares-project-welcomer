@@ -8,5 +8,6 @@ type Credentials struct {
 }
 
 type Auth struct {
-	Cookies []*http.Cookie
+	Cookies    []*http.Cookie
+	InternalId string
 }

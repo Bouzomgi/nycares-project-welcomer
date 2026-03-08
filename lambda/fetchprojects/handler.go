@@ -11,11 +11,10 @@ import (
 
 type FetchProjectsHandler struct {
 	usecase *fp.FetchProjectsUseCase
-	cfg     *fp.Config
 }
 
 func NewFetchProjectsHandler(u *fp.FetchProjectsUseCase, cfg *fp.Config) *FetchProjectsHandler {
-	return &FetchProjectsHandler{usecase: u, cfg: cfg}
+	return &FetchProjectsHandler{usecase: u}
 }
 
 func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchProjectsInput) (models.FetchProjectsOutput, error) {
@@ -26,7 +25,7 @@ func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchPro
 
 	auth := models.ConvertAuth(input.Auth)
 
-	projects, err := h.usecase.Execute(ctx, auth, h.cfg.Account.InternalId)
+	projects, err := h.usecase.Execute(ctx, auth, input.InternalId)
 	if err != nil {
 		slog.Error("fetchprojects failed", "executionId", input.ExecutionId, "error", err)
 		return models.FetchProjectsOutput{}, err

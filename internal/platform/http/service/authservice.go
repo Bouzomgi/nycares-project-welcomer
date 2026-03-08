@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"regexp"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/endpoints"
@@ -38,6 +39,18 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("login failed: %w", err)
 	}
 
+	body, err := s.ReadBody(resp)
+	if err != nil {
+		return domain.Auth{}, fmt.Errorf("failed to read login response body: %w", err)
+	}
+
+	re := regexp.MustCompile(`api/schedule/retrieve/([A-Za-z0-9]{15,18})`)
+	matches := re.FindSubmatch(body)
+	if matches == nil {
+		return domain.Auth{}, fmt.Errorf("internalId not found in login response")
+	}
+	internalId := string(matches[1])
+
 	cookies, err := s.GetCookies()
 	if err != nil {
 		return domain.Auth{}, fmt.Errorf("failed to get cookies: %w", err)
@@ -47,7 +60,7 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("no cookies set after login")
 	}
 
-	return domain.Auth{Cookies: cookies}, nil
+	return domain.Auth{Cookies: cookies, InternalId: internalId}, nil
 }
 
 func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request, error) {
