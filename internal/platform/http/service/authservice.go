@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"regexp"
@@ -44,9 +45,20 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("failed to read login response body: %w", err)
 	}
 
-	re := regexp.MustCompile(`api/schedule/retrieve/([A-Za-z0-9]{15,18})`)
+	re := regexp.MustCompile(`schedule/retrieve/([A-Za-z0-9]{15,18})`)
 	matches := re.FindSubmatch(body)
 	if matches == nil {
+		bodyLen := len(body)
+		snippet := body
+		if bodyLen > 500 {
+			snippet = body[:500]
+		}
+		slog.Error("internalId not found in login response",
+			"finalUrl", resp.Request.URL.String(),
+			"contentType", resp.Header.Get("Content-Type"),
+			"bodyLen", bodyLen,
+			"bodySnippet", string(snippet),
+		)
 		return domain.Auth{}, fmt.Errorf("internalId not found in login response")
 	}
 	internalId := string(matches[1])
