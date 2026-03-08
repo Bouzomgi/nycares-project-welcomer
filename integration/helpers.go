@@ -21,11 +21,19 @@ import (
 )
 
 const (
-	stateMachineARN  = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
-	dynamoTableName  = "nycares-project-welcomer-notifications"
-	pollInterval     = 2 * time.Second
-	executionTimeout = 20 * time.Second
+	stateMachineARN = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
+	dynamoTableName = "nycares-project-welcomer-notifications"
+	pollInterval    = 2 * time.Second
 )
+
+var executionTimeout = func() time.Duration {
+	if v := os.Getenv("INTEGRATION_TIMEOUT"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return 20 * time.Second
+}()
 
 type testClients struct {
 	sfnClient     *sfn.Client

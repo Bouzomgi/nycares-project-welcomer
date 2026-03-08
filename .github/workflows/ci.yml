@@ -48,6 +48,8 @@ jobs:
         timeout-minutes: 5
 
       - name: Run integration tests
+        env:
+          INTEGRATION_TIMEOUT: 60s
         run: go test -tags integration -v -count=1 ./integration/
         timeout-minutes: 5
 
