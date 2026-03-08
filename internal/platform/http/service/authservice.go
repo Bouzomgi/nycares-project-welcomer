@@ -31,6 +31,13 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("failed to build login request: %w", err)
 	}
 
+	var redirectURLs []string
+	s.client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		redirectURLs = append(redirectURLs, req.URL.String())
+		return nil
+	}
+	defer func() { s.client.CheckRedirect = nil }()
+
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
 		return domain.Auth{}, fmt.Errorf("login request failed: %w", err)
@@ -40,28 +47,30 @@ func (s *HttpService) Login(ctx context.Context, creds domain.Credentials) (doma
 		return domain.Auth{}, fmt.Errorf("login failed: %w", err)
 	}
 
-	body, err := s.ReadBody(resp)
-	if err != nil {
-		return domain.Auth{}, fmt.Errorf("failed to read login response body: %w", err)
+	re := regexp.MustCompile(`003[A-Za-z0-9]{15}`)
+
+	var internalId string
+	for _, u := range redirectURLs {
+		if m := re.FindString(u); m != "" {
+			internalId = m
+			break
+		}
 	}
 
-	re := regexp.MustCompile(`schedule/retrieve/([A-Za-z0-9]{15,18})`)
-	matches := re.FindSubmatch(body)
-	if matches == nil {
-		bodyLen := len(body)
-		snippet := body
-		if bodyLen > 500 {
-			snippet = body[:500]
+	if internalId == "" {
+		body, err := s.ReadBody(resp)
+		if err != nil {
+			return domain.Auth{}, fmt.Errorf("failed to read login response body: %w", err)
 		}
-		slog.Error("internalId not found in login response",
-			"finalUrl", resp.Request.URL.String(),
-			"contentType", resp.Header.Get("Content-Type"),
-			"bodyLen", bodyLen,
-			"bodySnippet", string(snippet),
-		)
+		if m := re.Find(body); m != nil {
+			internalId = string(m)
+		}
+	}
+
+	if internalId == "" {
+		slog.Error("internalId not found in login response", "redirectUrls", redirectURLs, "finalUrl", resp.Request.URL.String())
 		return domain.Auth{}, fmt.Errorf("internalId not found in login response")
 	}
-	internalId := string(matches[1])
 
 	cookies, err := s.GetCookies()
 	if err != nil {
