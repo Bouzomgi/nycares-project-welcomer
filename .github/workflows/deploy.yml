@@ -43,27 +43,15 @@ jobs:
             go build -o lambda-build/$dir/bootstrap ./lambda/$dir
           done
 
-      - name: Upsert Secrets Manager secret
+      - name: Upsert SSM parameters
         env:
           NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
           NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
           NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
         run: |
-          SECRET_JSON=$(python3 -c "
-          import json, os
-          print(json.dumps({
-            'NYCARES_ACCOUNT_USERNAME': os.environ['NYCARES_ACCOUNT_USERNAME'],
-            'NYCARES_ACCOUNT_PASSWORD': os.environ['NYCARES_ACCOUNT_PASSWORD'],
-            'NYCARES_AWS_SF_APPROVALSECRET': os.environ['NYCARES_AWS_SF_APPROVALSECRET'],
-          }))
-          ")
-          aws secretsmanager describe-secret --secret-id nycares-project-welcomer/secrets \
-            && aws secretsmanager put-secret-value \
-                --secret-id nycares-project-welcomer/secrets \
-                --secret-string "$SECRET_JSON" \
-            || aws secretsmanager create-secret \
-                --name nycares-project-welcomer/secrets \
-                --secret-string "$SECRET_JSON"
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_ACCOUNT_USERNAME" --value "$NYCARES_ACCOUNT_USERNAME" --type SecureString --overwrite
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_ACCOUNT_PASSWORD" --value "$NYCARES_ACCOUNT_PASSWORD" --type SecureString --overwrite
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_AWS_SF_APPROVALSECRET" --value "$NYCARES_AWS_SF_APPROVALSECRET" --type SecureString --overwrite
 
       - name: CDK Deploy
         working-directory: infra

@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awssecretsmanager"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
@@ -63,20 +63,17 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(debugQueue, nil))
 
-	// --- Secrets Manager ---
-	// Secret is created by the deploy workflow (aws secretsmanager create-secret / put-secret-value).
-	// CDK imports it by name to grant Lambda access and pass the ARN.
-	secret := awssecretsmanager.Secret_FromSecretNameV2(stack, jsii.String("AppSecrets"), jsii.String("nycares-project-welcomer/secrets"))
-
 	// --- Shared environment variables ---
 	// Env var names must match viper config paths: prefix NYCARES_ + path with . replaced by _
+
+	const ssmPath = "/nycares-project-welcomer/"
 
 	sharedEnv := &map[string]*string{
 		"NYCARES_AWS_DYNAMO_TABLENAME": table.TableName(),
 		"NYCARES_AWS_DYNAMO_REGION":    stack.Region(),
 		"NYCARES_AWS_S3_BUCKETNAME":    bucket.BucketName(),
 		"NYCARES_AWS_SNS_TOPICARN":     topic.TopicArn(),
-		"NYCARES_SECRET_ARN":           secret.SecretArn(),
+		"NYCARES_SSM_PATH":             jsii.String(ssmPath),
 	}
 
 	// Tag all stack resources with the commit SHA
@@ -143,9 +140,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- IAM Permissions ---
 
-	// All lambdas need to read the shared secret
+	// All lambdas need to read SSM parameters
+	ssmArn := fmt.Sprintf("arn:aws:ssm:%s:%s:parameter%s*", *stack.Region(), *stack.Account(), ssmPath)
 	for _, name := range lambdaNames {
-		secret.GrantRead(lambdaFns[name], nil)
+		lambdaFns[name].AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+			Actions:   jsii.Strings("ssm:GetParametersByPath"),
+			Resources: jsii.Strings(ssmArn),
+		}))
 	}
 
 	// ComputeMessageToSend needs DynamoDB read
@@ -179,7 +180,10 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
 		Resources: jsii.Strings("*"),
 	}))
-	secret.GrantRead(approvalCallbackFn, nil)
+	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("ssm:GetParametersByPath"),
+		Resources: jsii.Strings(ssmArn),
+	}))
 
 	// --- API Gateway ---
 
