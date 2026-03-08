@@ -20,7 +20,7 @@ func NewRequestApprovalUseCase(snsSrv snsservice.NotificationService, approvalSe
 	}
 }
 
-func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken string) error {
+func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType string) error {
 
 	if taskToken == "" {
 		return fmt.Errorf("taskToken must be defined")
@@ -29,10 +29,13 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
-	plainText := fmt.Sprintf("Approve: %s\n\nReject: %s", approveLink, rejectLink)
+	plainText := fmt.Sprintf(
+		"Project: %s\nDate: %s\nMessage Type: %s\n\nApprove: %s\n\nReject: %s",
+		projectName, projectDate, messageType, approveLink, rejectLink,
+	)
 	htmlBody := fmt.Sprintf(
-		`<p><a href="%s">Approve</a></p><p><a href="%s">Reject</a></p>`,
-		approveLink, rejectLink,
+		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p><p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
+		projectName, projectDate, messageType, approveLink, rejectLink,
 	)
 
 	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, "Project Message Approval")

@@ -32,7 +32,11 @@ func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.Reques
 		return models.RequestApprovalOutput{}, fmt.Errorf("callback url is invalid")
 	}
 
-	err = h.usecase.Execute(ctx, *callbackEndpoint, input.TaskToken)
+	err = h.usecase.Execute(ctx, *callbackEndpoint, input.TaskToken,
+		input.ExistingProjectNotification.Name,
+		input.ExistingProjectNotification.Date,
+		input.MessageToSend.Type,
+	)
 	if err != nil {
 		slog.Error("requestapproval failed", "executionId", input.ExecutionId, "error", err)
 		return models.RequestApprovalOutput{}, err
