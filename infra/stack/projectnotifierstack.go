@@ -79,6 +79,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_SECRET_ARN":           secret.SecretArn(),
 	}
 
+	// Tag all stack resources with the commit SHA
+	if commitSha := os.Getenv("COMMIT_SHA"); commitSha != "" {
+		awscdk.Tags_Of(stack).Add(jsii.String("CommitSha"), jsii.String(commitSha), nil)
+	}
+
 	// Passthrough env vars from deploy environment
 	passthroughEnvVars := []string{
 		"NYCARES_API_BASE_URL",

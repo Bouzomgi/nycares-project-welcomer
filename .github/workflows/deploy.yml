@@ -73,6 +73,7 @@ jobs:
           CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
           NYCARES_API_BASE_URL: ${{ vars.NYCARES_API_BASE_URL }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           go mod download
           cdk deploy --require-approval never --all
