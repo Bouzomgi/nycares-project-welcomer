@@ -3,6 +3,7 @@ package fetchprojects
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
@@ -27,10 +28,12 @@ func NewFetchProjectsUseCase(scheduleSvc httpservice.ScheduleService) *FetchProj
 func (u *FetchProjectsUseCase) Execute(ctx context.Context, auth domain.Auth, internalID string) ([]domain.Project, error) {
 
 	u.scheduleSvc.SetCookies(auth.Cookies)
+	slog.Info("fetchprojects invoking schedule", "cookieCount", len(auth.Cookies))
 	projects, err := u.scheduleSvc.GetSchedule(ctx, internalID)
 	if err != nil {
 		var httpErr *httpservice.HTTPError
 		if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusUnauthorized || httpErr.StatusCode == http.StatusForbidden) {
+			slog.Error("schedule request auth failure", "statusCode", httpErr.StatusCode, "url", httpErr.URL, "body", string(httpErr.Body))
 			return nil, &AuthFailureException{}
 		}
 		return nil, err
