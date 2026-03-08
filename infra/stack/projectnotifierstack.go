@@ -86,6 +86,9 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_API_BASE_URL",
 		"NYCARES_CURRENT_DATE",
 		"NYCARES_MOCK_SENDMESSAGE",
+		"NYCARES_ACCOUNT_USERNAME",
+		"NYCARES_ACCOUNT_PASSWORD",
+		"NYCARES_AWS_SF_APPROVALSECRET",
 	}
 	for _, key := range passthroughEnvVars {
 		if val := os.Getenv(key); val != "" {
@@ -155,8 +158,9 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// RecordMessage needs DynamoDB read/write
 	table.GrantReadWriteData(lambdaFns["RecordMessage"])
 
-	// SendAndPinMessage needs S3 read
+	// SendAndPinMessage and RequestApprovalToSend need S3 read
 	bucket.GrantRead(lambdaFns["SendAndPinMessage"], nil)
+	bucket.GrantRead(lambdaFns["RequestApprovalToSend"], nil)
 
 	// SNS publish for notification lambdas
 	topic.GrantPublish(lambdaFns["RequestApprovalToSend"])

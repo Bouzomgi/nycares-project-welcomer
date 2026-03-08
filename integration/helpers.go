@@ -24,7 +24,7 @@ const (
 	stateMachineARN  = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
 	dynamoTableName  = "nycares-project-welcomer-notifications"
 	pollInterval     = 2 * time.Second
-	executionTimeout = 120 * time.Second
+	executionTimeout = 20 * time.Second
 )
 
 type testClients struct {

@@ -67,7 +67,10 @@
               "FunctionName": "${RequestApprovalToSendLambdaArn}",
               "Payload": {
                 "taskToken.$": "$$.Task.Token",
-                "$.$": "$"
+                "auth.$": "$.auth",
+                "existingProjectNotification.$": "$.existingProjectNotification",
+                "message.$": "$.message",
+                "executionId.$": "$.executionId"
               }
             },
             "ResultPath": "$.approvalResult",
