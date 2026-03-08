@@ -10,7 +10,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Start infrastructure
+        run: docker compose up -d --wait
+        timeout-minutes: 10
+
+      - name: Wait for seed-s3 to complete
+        run: docker compose wait seed-s3
+        timeout-minutes: 5
+
+      - name: Run integration tests
+        run: go test -tags integration -v -count=1 ./integration/
+        timeout-minutes: 5
+
+      - name: Tear down
+        if: always()
+        run: docker compose down
+
   deploy:
+    needs: integration
     runs-on: ubuntu-latest
     permissions:
       id-token: write
