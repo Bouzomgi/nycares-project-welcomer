@@ -39,6 +39,10 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Pre-pull Lambda runtime image
+        run: docker pull public.ecr.aws/lambda/provided:al2023-x86_64
+        timeout-minutes: 5
+
       - name: Start infrastructure
         env:
           LAMBDA_GOARCH: amd64
@@ -53,7 +57,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
-        timeout-minutes: 3
+        timeout-minutes: 5
         run: |
           echo '{}' > /tmp/payload.json
           for fn in login fetch-projects compute-message-to-send request-approval-to-send send-and-pin-message record-message notify-completion dlq-notifier approval-callback; do
