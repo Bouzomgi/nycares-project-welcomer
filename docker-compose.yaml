@@ -44,6 +44,7 @@ services:
     volumes:
       - ./:/repo
       - ./lambda-build:/output
+      - go-mod-cache:/go/pkg/mod
     working_dir: /repo
     command: >
       sh -c "go mod download &&
@@ -74,6 +75,7 @@ services:
     volumes:
       - ./infra:/infra
       - ./lambda-build:/lambda-build
+      - go-mod-cache:/go/pkg/mod
     working_dir: /infra
     environment:
       - AWS_ACCESS_KEY_ID=test
@@ -89,7 +91,7 @@ services:
       - NYCARES_AWS_SF_APPROVALSECRET=test-secret
     command: >
       sh -c "go mod download &&
-             cdklocal bootstrap --force &&
+             cdklocal bootstrap &&
              cdklocal deploy --require-approval never --all"
     extra_hosts:
       - "cdk-hnb659fds-assets-000000000000-us-east-1.s3.localstack:10.5.0.5"
@@ -111,6 +113,9 @@ services:
     entrypoint: /bin/sh
     command: >
       -c "FILES_DIR=/seed/s3Items /seed/seed_s3.sh"
+
+volumes:
+  go-mod-cache:
 
 networks:
   localstack-network:
