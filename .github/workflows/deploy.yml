@@ -20,6 +20,8 @@ jobs:
           go-version-file: go.mod
 
       - name: Start infrastructure
+        env:
+          LAMBDA_GOARCH: amd64
         run: docker compose up -d --wait
         timeout-minutes: 10
 

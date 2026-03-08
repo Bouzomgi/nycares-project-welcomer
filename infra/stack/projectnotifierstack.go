@@ -26,6 +26,13 @@ type LambdaStackProps struct {
 	MockServerUrl *string
 }
 
+func lambdaArchitecture() awslambda.Architecture {
+	if os.Getenv("NYCARES_LAMBDA_ARCH") == "amd64" {
+		return awslambda.Architecture_X86_64()
+	}
+	return awslambda.Architecture_ARM_64()
+}
+
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
@@ -123,7 +130,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 				nil,
 			),
 			FunctionName: jsii.String(kebabName),
-			Architecture: awslambda.Architecture_ARM_64(),
+			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
 			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
@@ -174,7 +181,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Handler:      jsii.String("bootstrap"),
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), nil),
 		FunctionName: jsii.String("approval-callback"),
-		Architecture: awslambda.Architecture_ARM_64(),
+		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
 		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
