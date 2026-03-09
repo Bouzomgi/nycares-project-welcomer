@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/middleware"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/routes/mockresponses"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/utils"
 	"github.com/gorilla/mux"
 )
+
+var lastSentMessage string
 
 // Master function to register all MessageService mock routes
 func RegisterMessageRoutes(r *mux.Router) {
@@ -76,6 +79,8 @@ func registerSendMessageRoute(r *mux.Router) {
 			return
 		}
 
+		lastSentMessage = message
+
 		resp := mockresponses.MockSendMessageResponse()
 
 		w.WriteHeader(http.StatusCreated)
@@ -102,6 +107,23 @@ func registerPinMessageRoute(r *mux.Router) {
 			fmt.Fprintln(w, "cannot read body")
 			return
 		}
+
+		msgType := "reminder"
+		if strings.Contains(strings.ToLower(lastSentMessage), "welcome") {
+			msgType = "welcome"
+		}
+
+		projectName := campaignId
+		projectDate := ""
+		for _, p := range GetAdminProjects() {
+			if p.Id == campaignId {
+				projectName = p.Name
+				projectDate = p.Date.Format("2006-01-02")
+				break
+			}
+		}
+
+		fmt.Printf("[mock] published and pinned: project=%q date=%s type=%s\n", projectName, projectDate, msgType)
 
 		resp := mockresponses.MockPostPinResponse()
 
