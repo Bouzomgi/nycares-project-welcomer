@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsevents"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awseventstargets"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
@@ -234,6 +236,20 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	for _, name := range lambdaNames {
 		lambdaFns[name].GrantInvoke(stateMachine)
 	}
+
+	// --- Daily trigger at noon EST (17:00 UTC) ---
+
+	awsevents.NewRule(stack, jsii.String("DailyNoonTrigger"), &awsevents.RuleProps{
+		RuleName:    jsii.String("nycares-daily-noon-trigger"),
+		Description: jsii.String("Triggers project-notifier-workflow daily at noon EST"),
+		Schedule: awsevents.Schedule_Cron(&awsevents.CronOptions{
+			Hour:   jsii.String("17"),
+			Minute: jsii.String("0"),
+		}),
+		Targets: &[]awsevents.IRuleTarget{
+			awseventstargets.NewSfnStateMachine(stateMachine, nil),
+		},
+	})
 
 	return stack
 }
