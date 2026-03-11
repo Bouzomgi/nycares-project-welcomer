@@ -60,7 +60,7 @@ jobs:
         timeout-minutes: 5
         run: |
           echo '{}' > /tmp/payload.json
-          for fn in login fetch-projects compute-message-to-send request-approval-to-send send-and-pin-message record-message notify-completion dlq-notifier approval-callback; do
+          for fn in login fetch-projects compute-message-to-send request-approval-to-send send-and-pin-message record-message notify-completion dlq-notifier approval-callback ses-forwarder; do
             aws --endpoint-url=http://localhost:4566 --region us-east-1 \
               lambda invoke --function-name "$fn" --payload file:///tmp/payload.json \
               /tmp/warmup-$fn.json &

@@ -38,7 +38,7 @@ jobs:
       - name: Build Lambdas
         run: |
           export CGO_ENABLED=0 GOOS=linux GOARCH=arm64
-          for dir in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback; do
+          for dir in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
             mkdir -p lambda-build/$dir
             go build -o lambda-build/$dir/bootstrap ./lambda/$dir
           done
@@ -61,6 +61,8 @@ jobs:
           CDK_DEFAULT_REGION: ${{ vars.AWS_REGION }}
           NYCARES_MOCK_SENDMESSAGE: ${{ vars.DEPLOY_MOCKSERVER }}
           NYCARES_API_BASE_URL: ${{ vars.NYCARES_API_BASE_URL }}
+          NYCARES_AWS_SES_SENDER: ${{ vars.NYCARES_AWS_SES_SENDER }}
+          NYCARES_AWS_SES_RECIPIENT: ${{ vars.NYCARES_AWS_SES_RECIPIENT }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           go mod download

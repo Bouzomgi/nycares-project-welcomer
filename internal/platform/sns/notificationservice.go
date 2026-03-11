@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	snstypes "github.com/aws/aws-sdk-go-v2/service/sns/types"
 )
 
 type NotificationService interface {
@@ -43,8 +44,9 @@ func (s *SNSService) PublishNotification(ctx context.Context, message, subject s
 	return messageID, nil
 }
 
-// PublishHTMLEmailNotification publishes a JSON-structured message to the SNS topic,
-// sending HTML to email subscribers and plain text to all other protocols.
+// PublishHTMLEmailNotification publishes an HTML email notification to the SNS topic.
+// The message body is a JSON object with "htmlBody" and "plainText" fields.
+// A "format: html" message attribute signals the SES forwarder Lambda to send HTML email.
 func (s *SNSService) PublishHTMLEmailNotification(ctx context.Context, plainText, htmlBody, subject string) (string, error) {
 	if s.topicARN == "" {
 		return "", fmt.Errorf("topicARN cannot be empty")
@@ -57,18 +59,23 @@ func (s *SNSService) PublishHTMLEmailNotification(ctx context.Context, plainText
 	}
 
 	msgJSON, err := json.Marshal(map[string]string{
-		"default": plainText,
-		"email":   htmlBody,
+		"htmlBody":  htmlBody,
+		"plainText": plainText,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal SNS message: %w", err)
 	}
 
 	input := &sns.PublishInput{
-		TopicArn:         aws.String(s.topicARN),
-		Message:          aws.String(string(msgJSON)),
-		Subject:          aws.String(subject),
-		MessageStructure: aws.String("json"),
+		TopicArn: aws.String(s.topicARN),
+		Message:  aws.String(string(msgJSON)),
+		Subject:  aws.String(subject),
+		MessageAttributes: map[string]snstypes.MessageAttributeValue{
+			"format": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("html"),
+			},
+		},
 	}
 
 	output, err := s.client.Publish(ctx, input)

@@ -98,6 +98,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_ACCOUNT_USERNAME",
 		"NYCARES_ACCOUNT_PASSWORD",
 		"NYCARES_AWS_SF_APPROVALSECRET",
+		"NYCARES_AWS_SES_SENDER",
+		"NYCARES_AWS_SES_RECIPIENT",
 	}
 	for _, key := range passthroughEnvVars {
 		if val := os.Getenv(key); val != "" {
@@ -217,6 +219,26 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		api.Url(),
 		nil,
 	)
+
+	// --- SES Forwarder Lambda ---
+
+	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
+		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
+		Handler:      jsii.String("bootstrap"),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), nil),
+		FunctionName: jsii.String("ses-forwarder"),
+		Architecture: lambdaArchitecture(),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+		Environment:  sharedEnv,
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
+	})
+
+	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("ses:SendEmail"),
+		Resources: jsii.Strings("*"),
+	}))
+
+	topic.AddSubscription(awssnssubscriptions.NewLambdaSubscription(sesForwarderFn, nil))
 
 	// --- Step Functions State Machine ---
 
