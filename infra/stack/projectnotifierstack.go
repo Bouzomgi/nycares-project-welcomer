@@ -117,6 +117,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 		})
 
+		_ = logGroup
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -128,7 +130,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogGroup:     logGroup,
 		})
 
 		lambdaFns[name] = fn
@@ -177,6 +178,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 	})
 
+	_ = approvalCallbackLogGroup
+
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
@@ -185,7 +188,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     approvalCallbackLogGroup,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -225,6 +227,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 	})
 
+	_ = sesForwarderLogGroup
+
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
@@ -233,7 +237,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     sesForwarderLogGroup,
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
