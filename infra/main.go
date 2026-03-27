@@ -25,7 +25,7 @@ func main() {
 		mockServerUrl = url
 	}
 
-	stack.ProjectNotifierStack(app, "NycaresWelcomerLambdaStack", &stack.LambdaStackProps{
+	stack.ProjectNotifierStack(app, "NYCaresLambdaStack", &stack.LambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env,
 		},
