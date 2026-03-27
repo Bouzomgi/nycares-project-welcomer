@@ -27,6 +27,10 @@ func MockServerStack(scope constructs.Construct, id string, props *awscdk.StackP
 					"sh", "-c",
 					"CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /asset-output/bootstrap ./internal/mockserver",
 				),
+				Environment: &map[string]*string{
+					"GOCACHE": jsii.String("/tmp/go-cache"),
+					"GOPATH":  jsii.String("/tmp/go"),
+				},
 				OutputType: awscdk.BundlingOutput_NOT_ARCHIVED,
 			},
 		}),
