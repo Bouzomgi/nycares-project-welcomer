@@ -138,7 +138,12 @@
                 "Next": "ProjectDLQNotifierFailed"
               }
             ],
-            "End": true
+            "Next": "ProjectWorkflowFailed"
+          },
+          "ProjectWorkflowFailed": {
+            "Type": "Fail",
+            "Error": "ProjectWorkflowFailed",
+            "Cause": "A project workflow step failed and was reported to the DLQ notifier"
           },
           "ProjectDLQNotifierFailed": {
             "Type": "Fail",
@@ -175,7 +180,12 @@
           "Next": "DLQNotifierFailed"
         }
       ],
-      "End": true
+      "Next": "WorkflowFailed"
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "Error": "WorkflowFailed",
+      "Cause": "A workflow step failed and was reported to the DLQ notifier"
     },
     "DLQNotifierFailed": {
       "Type": "Fail",
