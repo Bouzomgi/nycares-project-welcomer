@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/akrylysov/algnhsa"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/routes"
 	"github.com/gorilla/mux"
 )
@@ -22,8 +24,14 @@ func main() {
 		fmt.Fprintln(w, "ok")
 	}).Methods("GET")
 
-	fmt.Println("Mock server running on http://localhost:3001")
-	if err := http.ListenAndServe(":3001", r); err != nil {
-		panic(err)
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		// Lambda mode: Function URL sends APIGatewayV2 payloads; algnhsa auto-detects
+		algnhsa.ListenAndServe(r, nil)
+	} else {
+		// Local/Docker mode: unchanged
+		fmt.Println("Mock server running on http://localhost:3001")
+		if err := http.ListenAndServe(":3001", r); err != nil {
+			panic(err)
+		}
 	}
 }

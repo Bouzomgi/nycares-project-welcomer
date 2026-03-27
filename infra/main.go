@@ -21,11 +21,11 @@ func main() {
 
 	var mockServerUrl *string
 	if os.Getenv("DEPLOY_MOCKSERVER") == "true" {
-		_, url := stack.MockServerStack(app, "MockServerStack", &awscdk.StackProps{Env: env})
+		_, url := stack.MockServerStack(app, "NYCaresMockServerStack", &awscdk.StackProps{Env: env})
 		mockServerUrl = url
 	}
 
-	stack.ProjectNotifierStack(app, "LambdaStack", &stack.LambdaStackProps{
+	stack.ProjectNotifierStack(app, "NycaresWelcomerLambdaStack", &stack.LambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env,
 		},
