@@ -10,9 +10,9 @@ type ProjectNotification struct {
 	Name             string    `json:"name"`
 	Date             time.Time `json:"date"`
 	Id               string    `json:"id"`
-	HasSentWelcome   bool   `json:"hasSentWelcome"`
-	HasSentReminder  bool   `json:"hasSentReminder"`
-	ShouldStopNotify bool   `json:"shouldStopNotify"`
+	HasSentWelcome   bool      `json:"hasSentWelcome"`
+	HasSentReminder  bool      `json:"hasSentReminder"`
+	ShouldStopNotify bool      `json:"shouldStopNotify"`
 }
 
 type NotificationType int

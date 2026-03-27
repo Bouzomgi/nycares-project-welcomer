@@ -89,7 +89,7 @@ func TestIsValidS3URI(t *testing.T) {
 	}{
 		{"s3://my-bucket/path/to/file.md", true},
 		{"s3://bucket123/file", true},
-		{"s3://ab/file", false},   // bucket name too short
+		{"s3://ab/file", false}, // bucket name too short
 		{"http://bucket/file", false},
 		{"s3:///file", false},
 		{"", false},
@@ -137,11 +137,11 @@ func TestComputeNotificationType(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		now          time.Time
-		existing     *domain.ProjectNotification
-		wantType     domain.NotificationType
-		wantErrType  error
+		name        string
+		now         time.Time
+		existing    *domain.ProjectNotification
+		wantType    domain.NotificationType
+		wantErrType error
 	}{
 		{
 			name:        "project date has passed",
