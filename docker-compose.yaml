@@ -2,7 +2,7 @@ name: nycares-project-welcomer
 
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8
     ports:
       - "4566:4566"
     networks:
@@ -45,6 +45,7 @@ services:
       - ./:/repo
       - ./lambda-build:/output
       - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     working_dir: /repo
     command: >
       sh -c "go mod download &&
@@ -67,6 +68,8 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
+      seed-dynamo:
+        condition: service_completed_successfully
       build-lambdas:
         condition: service_completed_successfully
       mockserver:
@@ -98,6 +101,24 @@ services:
     extra_hosts:
       - "cdk-hnb659fds-assets-000000000000-us-east-1.s3.localstack:10.5.0.5"
 
+  seed-dynamo:
+    image: amazon/aws-cli:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - localstack-network
+    volumes:
+      - ./seed:/seed
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    entrypoint: /bin/sh
+    command: >
+      -c "/seed/seed_dynamo.sh"
+
   seed-s3:
     image: amazon/aws-cli:latest
     depends_on:
@@ -118,6 +139,7 @@ services:
 
 volumes:
   go-mod-cache:
+  go-build-cache:
 
 networks:
   localstack-network:

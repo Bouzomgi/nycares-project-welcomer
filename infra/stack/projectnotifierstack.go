@@ -111,6 +111,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
+		logGroup := awslogs.NewLogGroup(stack, jsii.String(name+"LogGroup"), &awslogs.LogGroupProps{
+			LogGroupName:  jsii.String("/aws/lambda/" + kebabName),
+			Retention:     awslogs.RetentionDays_THREE_MONTHS,
+			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+		})
+
+		_ = logGroup
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -122,7 +130,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 		})
 
 		lambdaFns[name] = fn
@@ -165,6 +172,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- Approval Callback Lambda (outside loop — needs API Gateway wiring) ---
 
+	approvalCallbackLogGroup := awslogs.NewLogGroup(stack, jsii.String("ApprovalCallbackLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/lambda/approval-callback"),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
+	_ = approvalCallbackLogGroup
+
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
@@ -173,7 +188,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -207,6 +221,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- SES Forwarder Lambda ---
 
+	sesForwarderLogGroup := awslogs.NewLogGroup(stack, jsii.String("SESForwarderLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/lambda/ses-forwarder"),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
+	_ = sesForwarderLogGroup
+
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
@@ -215,7 +237,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
