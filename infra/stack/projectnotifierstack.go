@@ -44,24 +44,9 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- AWS Resources ---
 
-	table := awsdynamodb.NewTable(stack, jsii.String("SentNotifications"), &awsdynamodb.TableProps{
-		TableName: jsii.String("nycares-project-welcomer-notifications"),
-		PartitionKey: &awsdynamodb.Attribute{
-			Name: jsii.String("ProjectName"),
-			Type: awsdynamodb.AttributeType_STRING,
-		},
-		SortKey: &awsdynamodb.Attribute{
-			Name: jsii.String("ProjectDate"),
-			Type: awsdynamodb.AttributeType_STRING,
-		},
-		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
-		RemovalPolicy: awscdk.RemovalPolicy_RETAIN,
-	})
+	table := awsdynamodb.Table_FromTableName(stack, jsii.String("SentNotifications"), jsii.String("nycares-project-welcomer-notifications"))
 
-	bucket := awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
-		BucketName:    jsii.String("nycares-project-welcomer-messages"),
-		RemovalPolicy: awscdk.RemovalPolicy_RETAIN,
-	})
+	bucket := awss3.Bucket_FromBucketName(stack, jsii.String("MessageTemplates"), jsii.String("nycares-project-welcomer-messages"))
 
 	topic := awssns.NewTopic(stack, jsii.String("NotificationTopic"), &awssns.TopicProps{
 		TopicName: jsii.String("nycares-notifications"),
