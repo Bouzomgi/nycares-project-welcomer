@@ -2,7 +2,7 @@ name: nycares-project-welcomer
 
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:3.8
     ports:
       - "4566:4566"
     networks:
@@ -45,6 +45,7 @@ services:
       - ./:/repo
       - ./lambda-build:/output
       - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     working_dir: /repo
     command: >
       sh -c "go mod download &&
@@ -140,6 +141,7 @@ services:
 
 volumes:
   go-mod-cache:
+  go-build-cache:
 
 networks:
   localstack-network:
