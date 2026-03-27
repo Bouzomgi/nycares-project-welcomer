@@ -14,7 +14,7 @@ NYC Cares Project Welcomer — a serverless notification system that sends welco
 ```bash
 docker compose up --build
 ```
-This compiles all 8 Lambda functions in parallel via Docker (`CGO_ENABLED=0 GOOS=linux GOARCH=arm64`). Output goes to `lambda-build/`.
+This compiles all 10 Lambda functions in parallel via Docker (`CGO_ENABLED=0 GOOS=linux GOARCH=arm64`). Output goes to `lambda-build/`.
 
 ### Run tests
 ```bash
@@ -43,13 +43,18 @@ A Step Functions state machine orchestrates 8 Lambda functions per project:
 7. **NotifyCompletion** → SNS success notification
 8. **DLQNotifier** → error handler (catch blocks route here)
 
+Two additional Lambdas support the workflow outside the state machine:
+
+- **ApprovalCallback** → API Gateway endpoint that receives the human approval decision and resumes the state machine via `SendTaskSuccess`/`SendTaskFailure`
+- **SESForwarder** → subscribed to the SNS notifications topic; forwards messages as HTML email via SES
+
 ### Layered Structure
 - **`internal/domain/`** — Domain models: `Auth`, `Project`, `ProjectNotification`
 - **`internal/app/`** — Use cases per workflow step (one package per Lambda)
 - **`internal/platform/`** — AWS service integrations (S3, DynamoDB, SNS, HTTP with cookie jar)
 - **`internal/models/`** — Lambda I/O models for Step Functions serialization
 - **`internal/config/`** — YAML config locally, env vars (`NYCARES_` prefix) in Lambda
-- **`lambda/`** — 8 entry points, each with `main.go` (init) + `handler.go` (logic)
+- **`lambda/`** — 10 entry points, each with `main.go` (init) + `handler.go` (logic)
 - **`infra/`** — AWS CDK stack in Go + Step Functions workflow JSON
 
 ### Data Flow
@@ -66,7 +71,7 @@ Config loads from `config.yaml` locally or environment variables in Lambda (auto
 ## Key Dependencies
 
 - `aws-lambda-go` — Lambda runtime
-- `aws-sdk-go-v2` — S3, DynamoDB, SNS clients
+- `aws-sdk-go-v2` — S3, DynamoDB, SNS, SES, SSM, Step Functions clients
 - `aws-cdk-go` — Infrastructure as code
 - `spf13/viper` — Config management
 - `gorilla/mux` — Mock server routing

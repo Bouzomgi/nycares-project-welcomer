@@ -237,6 +237,10 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Actions:   jsii.Strings("ses:SendEmail"),
 		Resources: jsii.Strings("*"),
 	}))
+	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("ssm:GetParametersByPath"),
+		Resources: jsii.Strings(ssmArn),
+	}))
 
 	topic.AddSubscription(awssnssubscriptions.NewLambdaSubscription(sesForwarderFn, nil))
 
@@ -248,10 +252,21 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		definitionSubs[name+"LambdaArn"] = lambdaFns[name].FunctionArn()
 	}
 
+	stateMachineLogGroup := awslogs.NewLogGroup(stack, jsii.String("ProjectNotifierStateMachineLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/states/project-notifier-workflow"),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
 	stateMachine := awsstepfunctions.NewStateMachine(stack, jsii.String("ProjectNotifierStateMachine"), &awsstepfunctions.StateMachineProps{
 		StateMachineName:        jsii.String("project-notifier-workflow"),
 		DefinitionBody:          awsstepfunctions.DefinitionBody_FromFile(jsii.String("DailyProjectNotificationWorkflow.json"), nil),
 		DefinitionSubstitutions: &definitionSubs,
+		Logs: &awsstepfunctions.LogOptions{
+			Destination:          stateMachineLogGroup,
+			Level:                awsstepfunctions.LogLevel_ALL,
+			IncludeExecutionData: jsii.Bool(true),
+		},
 	})
 
 	// Grant the state machine permission to invoke all workflow lambdas
