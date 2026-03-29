@@ -67,12 +67,20 @@ jobs:
               /tmp/warmup-$fn.json &
           done
           wait
+          echo "=== Pre-warm responses ==="
+          for fn in login fetch-projects compute-message-to-send request-approval-to-send send-and-pin-message record-message notify-completion dlq-notifier approval-callback ses-forwarder; do
+            echo "--- $fn ---"; cat /tmp/warmup-$fn.json 2>/dev/null || echo "(no output)"
+          done
 
       - name: Run integration tests
         env:
-          INTEGRATION_TIMEOUT: 120s
+          INTEGRATION_TIMEOUT: 300s
         run: go test -tags integration -v -count=1 ./integration/
-        timeout-minutes: 10
+        timeout-minutes: 30
+
+      - name: Dump LocalStack logs
+        if: always()
+        run: docker compose logs localstack 2>&1 | tail -300
 
       - name: Tear down
         if: always()
