@@ -9,6 +9,7 @@ services:
       localstack-network:
         ipv4_address: 10.5.0.5
     environment:
+      - LOCALSTACK_HOST=localstack:4566
       - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=120
       - LAMBDA_DOCKER_NETWORK=nycares-project-welcomer_localstack-network
       - DEBUG=1
