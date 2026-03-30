@@ -32,7 +32,7 @@ jobs:
         run: |
           DIFF=$(cat /tmp/pr.diff)
 
-          curl -sf https://api.anthropic.com/v1/messages \
+          RESPONSE=$(curl -sf https://api.anthropic.com/v1/messages \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -H "content-type: application/json" \
@@ -46,8 +46,15 @@ jobs:
                   role: "user",
                   content: ("Review this pull request.\n\nTitle: " + $title + "\n\nFocus on:\n- Bugs or logic errors\n- Security issues\n- Missing error handling at system boundaries\n- Anything that would break in production\n\nSkip style nitpicks unless they affect correctness. Be concise. Use markdown.\n\nDiff:\n```diff\n" + $diff + "\n```")
                 }]
-              }')" \
-            | jq -r '.content[0].text' > /tmp/review.md
+              }')")
+
+          echo "$RESPONSE" | jq -r '.content[0].text' > /tmp/review.md
+
+          if [ ! -s /tmp/review.md ] || [ "$(cat /tmp/review.md)" = "null" ]; then
+            echo "Claude API returned empty response. Full response:"
+            echo "$RESPONSE"
+            exit 1
+          fi
 
       - name: Post review comment
         env:
@@ -56,4 +63,4 @@ jobs:
           gh pr review ${{ github.event.pull_request.number }} \
             --repo ${{ github.repository }} \
             --comment \
-            --body "$(cat /tmp/review.md)"
+            --body-file /tmp/review.md
