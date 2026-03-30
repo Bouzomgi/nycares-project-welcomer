@@ -20,7 +20,7 @@ jobs:
           NOW=$(date +%s)
           CUTOFF=$((NOW - 86400))
 
-          for STACK in NYCaresLambdaStack-ci NYCaresMockServerStack-ci; do
+          for STACK in NYCaresLambdaStack-ci; do
             # Use LastUpdatedTime if present, else CreationTime
             STACK_TIME=$(aws cloudformation describe-stacks \
               --stack-name "$STACK" \
