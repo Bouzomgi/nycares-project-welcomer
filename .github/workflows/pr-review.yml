@@ -32,7 +32,8 @@ jobs:
         run: |
           DIFF=$(cat /tmp/pr.diff)
 
-          RESPONSE=$(curl -sf https://api.anthropic.com/v1/messages \
+          # Use -s only (not -f) so we capture the response body even on HTTP errors
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -H "content-type: application/json" \
@@ -51,7 +52,7 @@ jobs:
           echo "$RESPONSE" | jq -r '.content[0].text' > /tmp/review.md
 
           if [ ! -s /tmp/review.md ] || [ "$(cat /tmp/review.md)" = "null" ]; then
-            echo "Claude API returned empty response. Full response:"
+            echo "Claude API error. Full response:"
             echo "$RESPONSE"
             exit 1
           fi
