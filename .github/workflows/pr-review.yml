@@ -1,0 +1,59 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: |
+          git diff origin/main...HEAD > /tmp/pr.diff
+          # Truncate to 100KB to stay well within context limits
+          if [ $(wc -c < /tmp/pr.diff) -gt 102400 ]; then
+            head -c 102400 /tmp/pr.diff > /tmp/pr.diff.tmp
+            echo -e "\n\n[diff truncated at 100KB]" >> /tmp/pr.diff.tmp
+            mv /tmp/pr.diff.tmp /tmp/pr.diff
+          fi
+
+      - name: Review with Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          DIFF=$(cat /tmp/pr.diff)
+
+          curl -sf https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "$(jq -n \
+              --arg diff "$DIFF" \
+              --arg title "${{ github.event.pull_request.title }}" \
+              '{
+                model: "claude-sonnet-4-6",
+                max_tokens: 4096,
+                messages: [{
+                  role: "user",
+                  content: ("Review this pull request.\n\nTitle: " + $title + "\n\nFocus on:\n- Bugs or logic errors\n- Security issues\n- Missing error handling at system boundaries\n- Anything that would break in production\n\nSkip style nitpicks unless they affect correctness. Be concise. Use markdown.\n\nDiff:\n```diff\n" + $diff + "\n```")
+                }]
+              }')" \
+            | jq -r '.content[0].text' > /tmp/review.md
+
+      - name: Post review comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --comment \
+            --body "$(cat /tmp/review.md)"
