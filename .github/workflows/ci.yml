@@ -101,6 +101,19 @@ jobs:
             --output text)
           echo "mockserver_url=$MOCKSERVER_URL" >> $GITHUB_OUTPUT
 
+      - name: Pre-warm lambdas
+        env:
+          MOCKSERVER_URL: ${{ steps.env-outputs.outputs.mockserver_url }}
+        run: |
+          # Warm up the mock server lambda (avoids cold-start timeout on first test)
+          curl -sf "${MOCKSERVER_URL%/}/" || true
+          # Warm up workflow lambdas by invoking the state machine with a no-op and immediately stopping it
+          EXEC_ARN=$(aws stepfunctions start-execution \
+            --state-machine-arn arn:aws:states:us-east-1:${{ steps.account.outputs.id }}:stateMachine:project-notifier-workflow-ci \
+            --query executionArn --output text)
+          sleep 5
+          aws stepfunctions stop-execution --execution-arn "$EXEC_ARN" || true
+
       - name: Run integration tests
         env:
           STATE_MACHINE_ARN: arn:aws:states:us-east-1:${{ steps.account.outputs.id }}:stateMachine:project-notifier-workflow-ci

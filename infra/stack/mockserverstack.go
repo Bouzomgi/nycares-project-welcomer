@@ -24,6 +24,7 @@ func MockServerStack(scope constructs.Construct, id string, props *awscdk.StackP
 		Architecture: lambdaArchitecture(),
 		FunctionName: jsii.String("mock-server" + suffix),
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/mockserver"), nil),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 	})
 
 	fnUrl := awslambda.NewFunctionUrl(stack, jsii.String("MockServerUrl"), &awslambda.FunctionUrlProps{
