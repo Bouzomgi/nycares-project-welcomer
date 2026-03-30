@@ -20,10 +20,11 @@ import (
 	sfntypes "github.com/aws/aws-sdk-go-v2/service/sfn/types"
 )
 
-const (
-	stateMachineARN = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
-	dynamoTableName = "nycares-project-welcomer-notifications"
-	pollInterval    = 2 * time.Second
+const pollInterval = 2 * time.Second
+
+var (
+	stateMachineARN = getEnvOrDefault("STATE_MACHINE_ARN", "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow")
+	dynamoTableName = getEnvOrDefault("DYNAMO_TABLE_NAME", "nycares-project-welcomer-notifications")
 )
 
 var executionTimeout = func() time.Duration {

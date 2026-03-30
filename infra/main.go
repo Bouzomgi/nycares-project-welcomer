@@ -19,17 +19,20 @@ func main() {
 		Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
 	}
 
+	suffix := os.Getenv("ENV_SUFFIX")
+
 	var mockServerUrl *string
 	if os.Getenv("DEPLOY_MOCKSERVER") == "true" {
-		_, url := stack.MockServerStack(app, "NYCaresMockServerStack", &awscdk.StackProps{Env: env})
+		_, url := stack.MockServerStack(app, "NYCaresMockServerStack"+suffix, &awscdk.StackProps{Env: env})
 		mockServerUrl = url
 	}
 
-	stack.ProjectNotifierStack(app, "NYCaresLambdaStack", &stack.LambdaStackProps{
+	stack.ProjectNotifierStack(app, "NYCaresLambdaStack"+suffix, &stack.LambdaStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env,
 		},
 		MockServerUrl: mockServerUrl,
+		EnvSuffix:     suffix,
 	})
 
 	app.Synth(nil)

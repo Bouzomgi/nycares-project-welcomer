@@ -32,6 +32,8 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     needs: lint-and-test
+    env:
+      ENV_SUFFIX: -pr-${{ github.event.number }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,40 +41,60 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Pre-pull Lambda runtime image
-        run: docker pull public.ecr.aws/lambda/provided:al2023-x86_64
-        timeout-minutes: 5
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      - name: Start infrastructure
-        env:
-          LAMBDA_GOARCH: amd64
-        run: docker compose up -d --wait
-        timeout-minutes: 10
-
-      - name: Wait for seed-s3 to complete
-        run: docker compose wait seed-s3
-        timeout-minutes: 5
-
-      - name: Pre-warm Lambda containers
-        env:
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-        timeout-minutes: 5
+      - name: Build lambdas
         run: |
-          echo '{}' > /tmp/payload.json
-          for fn in login fetch-projects compute-message-to-send request-approval-to-send send-and-pin-message record-message notify-completion dlq-notifier approval-callback ses-forwarder; do
-            aws --endpoint-url=http://localhost:4566 --region us-east-1 \
-              lambda invoke --function-name "$fn" --payload file:///tmp/payload.json \
-              /tmp/warmup-$fn.json &
+          for pkg in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
+            mkdir -p lambda-build/$pkg
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/$pkg/bootstrap ./lambda/$pkg &
           done
+          mkdir -p lambda-build/mockserver
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/mockserver/bootstrap ./internal/mockserver &
           wait
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: Deploy PR environment
+        env:
+          DEPLOY_MOCKSERVER: "true"
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: us-east-1
+          NYCARES_LAMBDA_ARCH: amd64
+          NYCARES_ACCOUNT_USERNAME: test
+          NYCARES_ACCOUNT_PASSWORD: test
+          NYCARES_AWS_SF_APPROVALSECRET: test-secret
+        run: |
+          cd infra
+          go mod download
+          cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/us-east-1
+          cdk deploy --require-approval never --all
+
+      - name: Seed S3
+        env:
+          S3_BUCKET_NAME: nycares-project-welcomer-messages${{ env.ENV_SUFFIX }}
+        run: FILES_DIR=seed/s3Items bash seed/seed_s3.sh
+
+      - name: Get MockServer URL
+        id: env-outputs
+        run: |
+          MOCKSERVER_URL=$(aws cloudformation describe-stacks \
+            --stack-name NYCaresMockServerStack${{ env.ENV_SUFFIX }} \
+            --query "Stacks[0].Outputs[?OutputKey=='MockServerUrlOutput'].OutputValue" \
+            --output text)
+          echo "mockserver_url=$MOCKSERVER_URL" >> $GITHUB_OUTPUT
 
       - name: Run integration tests
         env:
-          INTEGRATION_TIMEOUT: 60s
+          STATE_MACHINE_ARN: arn:aws:states:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:stateMachine:project-notifier-workflow${{ env.ENV_SUFFIX }}
+          DYNAMO_TABLE_NAME: nycares-project-welcomer-notifications${{ env.ENV_SUFFIX }}
+          MOCKSERVER_URL: ${{ steps.env-outputs.outputs.mockserver_url }}
+          INTEGRATION_TIMEOUT: 300s
         run: go test -tags integration -v -count=1 ./integration/
         timeout-minutes: 10
-
-      - name: Tear down
-        if: always()
-        run: docker compose down
