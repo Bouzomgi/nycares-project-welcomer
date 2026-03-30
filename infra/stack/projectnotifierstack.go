@@ -26,7 +26,7 @@ import (
 type LambdaStackProps struct {
 	awscdk.StackProps
 	MockServerUrl *string
-	EnvSuffix     string // e.g. "-pr-42"; empty for LocalStack/production
+	EnvSuffix     string // e.g. "-ci"; empty for LocalStack/production
 }
 
 func lambdaArchitecture() awslambda.Architecture {
@@ -169,13 +169,9 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lambdaFns[name] = fn
 	}
 
-	// Override API base URL for SendAndPinMessage in dry-run mode
+	// When a mock server is provided, all lambdas use it as the API base URL
 	if props != nil && props.MockServerUrl != nil {
-		lambdaFns["SendAndPinMessage"].AddEnvironment(
-			jsii.String("NYCARES_API_BASE_URL"),
-			props.MockServerUrl,
-			nil,
-		)
+		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
 	}
 
 	// --- IAM Permissions ---
