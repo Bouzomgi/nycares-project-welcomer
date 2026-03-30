@@ -13,7 +13,7 @@ integration:
 	go test -tags integration -v -count=1 ./integration/
 
 build:
-	docker compose up build-lambdas
+	docker compose up --build build-lambdas
 
 clean:
 	rm -rf lambda-build/

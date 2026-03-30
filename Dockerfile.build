@@ -1,0 +1,30 @@
+FROM golang:1.25-alpine
+
+ARG LAMBDA_GOARCH=arm64
+
+WORKDIR /repo
+
+# Layer 1: deps — only re-runs when go.mod/go.sum change
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
+
+# Layer 2: source + parallel build — only re-runs when source changes
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go/build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=${LAMBDA_GOARCH} \
+    sh -c 'mkdir -p /build/login /build/fetchprojects /build/computemessagetosend \
+                    /build/requestapprovaltosend /build/sendandpinmessage /build/recordmessage \
+                    /build/notifycompletion /build/dlqnotifier /build/approvalcallback /build/sesforwarder && \
+           go build -o /build/login/bootstrap ./lambda/login & \
+           go build -o /build/fetchprojects/bootstrap ./lambda/fetchprojects & \
+           go build -o /build/computemessagetosend/bootstrap ./lambda/computemessagetosend & \
+           go build -o /build/requestapprovaltosend/bootstrap ./lambda/requestapprovaltosend & \
+           go build -o /build/sendandpinmessage/bootstrap ./lambda/sendandpinmessage & \
+           go build -o /build/recordmessage/bootstrap ./lambda/recordmessage & \
+           go build -o /build/notifycompletion/bootstrap ./lambda/notifycompletion & \
+           go build -o /build/dlqnotifier/bootstrap ./lambda/dlqnotifier & \
+           go build -o /build/approvalcallback/bootstrap ./lambda/approvalcallback & \
+           go build -o /build/sesforwarder/bootstrap ./lambda/sesforwarder & \
+           wait $(jobs -p) || exit 1'
