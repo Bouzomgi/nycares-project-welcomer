@@ -76,6 +76,12 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			BucketName:    jsii.String(bucketName),
 			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 		})
+
+		// Grant the GHA deployer role access to seed the bucket
+		if ghaRoleArn := os.Getenv("GHA_ROLE_ARN"); ghaRoleArn != "" {
+			ghaRole := awsiam.Role_FromRoleArn(stack, jsii.String("GHARole"), jsii.String(ghaRoleArn), nil)
+			bucket.GrantReadWrite(ghaRole, nil)
+		}
 	} else {
 		// Import pre-existing resources (LocalStack / production without suffix)
 		table = awsdynamodb.Table_FromTableName(stack, jsii.String("SentNotifications"), jsii.String(tableName))
