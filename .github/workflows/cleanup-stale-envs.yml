@@ -1,4 +1,4 @@
-name: Cleanup Stale PR Environments
+name: Cleanup Stale Test Environment
 
 on:
   schedule:
@@ -15,35 +15,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Delete stacks older than 24 hours
+      - name: Delete test environment if older than 24 hours
         run: |
           NOW=$(date +%s)
           CUTOFF=$((NOW - 86400))
 
-          # Delete Lambda stacks first (they reference MockServer stack outputs)
-          aws cloudformation list-stacks \
-            --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-            --query "StackSummaries[?starts_with(StackName, 'NYCaresLambdaStack-pr-')].[StackName,CreationTime]" \
-            --output text | while read STACK_NAME CREATION_TIME; do
-              [ -z "$STACK_NAME" ] && continue
-              CREATE_EPOCH=$(date -d "$CREATION_TIME" +%s 2>/dev/null) || continue
-              if [ "$CREATE_EPOCH" -lt "$CUTOFF" ]; then
-                echo "Deleting stale stack: $STACK_NAME (created $CREATION_TIME)"
-                aws cloudformation delete-stack --stack-name "$STACK_NAME" || true
-                aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" 2>/dev/null || true
-              fi
-            done
+          for STACK in NYCaresLambdaStack-ci NYCaresMockServerStack-ci; do
+            # Use LastUpdatedTime if present, else CreationTime
+            STACK_TIME=$(aws cloudformation describe-stacks \
+              --stack-name "$STACK" \
+              --query "Stacks[0].LastUpdatedTime || Stacks[0].CreationTime" \
+              --output text 2>/dev/null) || continue
 
-          # Then delete MockServer stacks
-          aws cloudformation list-stacks \
-            --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-            --query "StackSummaries[?starts_with(StackName, 'NYCaresMockServerStack-pr-')].[StackName,CreationTime]" \
-            --output text | while read STACK_NAME CREATION_TIME; do
-              [ -z "$STACK_NAME" ] && continue
-              CREATE_EPOCH=$(date -d "$CREATION_TIME" +%s 2>/dev/null) || continue
-              if [ "$CREATE_EPOCH" -lt "$CUTOFF" ]; then
-                echo "Deleting stale stack: $STACK_NAME (created $CREATION_TIME)"
-                aws cloudformation delete-stack --stack-name "$STACK_NAME" || true
-                aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME" 2>/dev/null || true
-              fi
-            done
+            STACK_EPOCH=$(date -d "$STACK_TIME" +%s 2>/dev/null) || continue
+
+            if [ "$STACK_EPOCH" -lt "$CUTOFF" ]; then
+              echo "Deleting stale stack: $STACK (last updated $STACK_TIME)"
+              aws cloudformation delete-stack --stack-name "$STACK" || true
+              aws cloudformation wait stack-delete-complete --stack-name "$STACK" 2>/dev/null || true
+            else
+              echo "Stack $STACK is fresh, skipping"
+            fi
+          done
