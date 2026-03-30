@@ -68,6 +68,10 @@ Auth cookies, project metadata, message type, and task tokens are passed through
 
 Config loads from `config.yaml` locally or environment variables in Lambda (auto-detected). See `config.template.yaml` for structure. Key sections: `aws` (dynamo, s3, sns endpoints), `account` (credentials).
 
+## Development Workflow
+
+Always run `gofmt -w .` from both the repo root and `infra/` before every commit.
+
 ## Key Dependencies
 
 - `aws-lambda-go` — Lambda runtime
