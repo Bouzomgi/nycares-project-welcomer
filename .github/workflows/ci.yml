@@ -36,6 +36,9 @@ jobs:
     concurrency:
       group: integration
       cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: read
     env:
       ENV_SUFFIX: -ci
     steps:
@@ -48,9 +51,12 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
+
+      - name: Get AWS account ID
+        id: account
+        run: echo "id=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
 
       - name: Build lambdas
         run: |
@@ -68,16 +74,16 @@ jobs:
       - name: Deploy test environment
         env:
           DEPLOY_MOCKSERVER: "true"
-          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.id }}
           CDK_DEFAULT_REGION: us-east-1
           NYCARES_LAMBDA_ARCH: amd64
-          NYCARES_ACCOUNT_USERNAME: test
-          NYCARES_ACCOUNT_PASSWORD: test
-          NYCARES_AWS_SF_APPROVALSECRET: test-secret
+          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
+          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
+          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
         run: |
           cd infra
           go mod download
-          cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/us-east-1
+          cdk bootstrap aws://${{ steps.account.outputs.id }}/us-east-1
           cdk deploy --require-approval never --all
 
       - name: Seed S3
@@ -96,7 +102,7 @@ jobs:
 
       - name: Run integration tests
         env:
-          STATE_MACHINE_ARN: arn:aws:states:us-east-1:${{ secrets.AWS_ACCOUNT_ID }}:stateMachine:project-notifier-workflow-ci
+          STATE_MACHINE_ARN: arn:aws:states:us-east-1:${{ steps.account.outputs.id }}:stateMachine:project-notifier-workflow-ci
           DYNAMO_TABLE_NAME: nycares-project-welcomer-notifications-ci
           MOCKSERVER_URL: ${{ steps.env-outputs.outputs.mockserver_url }}
           INTEGRATION_TIMEOUT: 300s
