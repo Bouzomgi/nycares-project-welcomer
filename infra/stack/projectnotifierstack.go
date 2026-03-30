@@ -77,11 +77,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 		})
 
-		// Grant the GHA deployer role access to seed the bucket
-		if ghaRoleArn := os.Getenv("GHA_ROLE_ARN"); ghaRoleArn != "" {
-			ghaRole := awsiam.Role_FromRoleArn(stack, jsii.String("GHARole"), jsii.String(ghaRoleArn), nil)
-			bucket.GrantReadWrite(ghaRole, nil)
-		}
 	} else {
 		// Import pre-existing resources (LocalStack / production without suffix)
 		table = awsdynamodb.Table_FromTableName(stack, jsii.String("SentNotifications"), jsii.String(tableName))
@@ -329,6 +324,25 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			awseventstargets.NewSfnStateMachine(stateMachine, nil),
 		},
 	})
+
+	// Grant the GHA deployer role permissions needed to seed resources and run integration tests
+	if suffix != "" {
+		if ghaRoleArn := os.Getenv("GHA_ROLE_ARN"); ghaRoleArn != "" {
+			ghaRole := awsiam.Role_FromRoleArn(stack, jsii.String("GHARole"), jsii.String(ghaRoleArn), nil)
+			bucket.GrantReadWrite(ghaRole, nil)
+			table.GrantReadWriteData(ghaRole)
+			ghaRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Actions: jsii.Strings(
+					"states:StartExecution",
+					"states:DescribeExecution",
+					"states:GetExecutionHistory",
+					"states:SendTaskSuccess",
+					"states:SendTaskFailure",
+				),
+				Resources: jsii.Strings(*stateMachine.StateMachineArn(), "*"),
+			}))
+		}
+	}
 
 	return stack
 }
