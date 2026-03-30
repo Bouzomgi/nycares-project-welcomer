@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -51,7 +52,7 @@ func getEnvOrDefault(key, fallback string) string {
 
 func initTestClients() (*testClients, error) {
 	awsEndpoint := os.Getenv("AWS_ENDPOINT_URL") // empty = use real AWS
-	mockServerURL := getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001")
+	mockServerURL := strings.TrimRight(getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001"), "/")
 
 	ctx := context.Background()
 
