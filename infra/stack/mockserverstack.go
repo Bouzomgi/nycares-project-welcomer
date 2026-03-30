@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -26,6 +27,19 @@ func MockServerStack(scope constructs.Construct, id string, props *awscdk.StackP
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/mockserver"), nil),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 	})
+
+	mockStateTableName := "nycares-mock-state" + suffix
+	mockStateTable := awsdynamodb.NewTable(stack, jsii.String("MockStateTable"), &awsdynamodb.TableProps{
+		TableName: jsii.String(mockStateTableName),
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("MockKey"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+	mockStateTable.GrantReadWriteData(fn)
+	fn.AddEnvironment(jsii.String("MOCK_STATE_TABLE"), jsii.String(mockStateTableName), nil)
 
 	fnUrl := awslambda.NewFunctionUrl(stack, jsii.String("MockServerUrl"), &awslambda.FunctionUrlProps{
 		Function: fn,
