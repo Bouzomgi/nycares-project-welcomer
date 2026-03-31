@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"sync"
@@ -51,9 +52,11 @@ func initDynamo() {
 
 func GetAdminProjects() ([]mockresponses.ProjectConfig, error) {
 	tableName := os.Getenv("MOCK_STATE_TABLE")
+	slog.Info("GetAdminProjects called", "tableName", tableName)
 	if tableName == "" {
 		adminMu.RLock()
 		defer adminMu.RUnlock()
+		slog.Info("GetAdminProjects: using in-memory fallback", "count", len(adminProjects))
 		return adminProjects, nil
 	}
 
@@ -67,8 +70,10 @@ func GetAdminProjects() ([]mockresponses.ProjectConfig, error) {
 		},
 	})
 	if err != nil {
+		slog.Error("GetAdminProjects: DynamoDB GetItem failed", "error", err)
 		return nil, fmt.Errorf("GetAdminProjects: DynamoDB GetItem failed: %w", err)
 	}
+	slog.Info("GetAdminProjects: GetItem result", "itemIsNil", result.Item == nil)
 	if result.Item == nil {
 		return nil, nil
 	}
@@ -105,6 +110,7 @@ func GetAdminProjects() ([]mockresponses.ProjectConfig, error) {
 
 func SetAdminProjects(projects []mockresponses.ProjectConfig) error {
 	tableName := os.Getenv("MOCK_STATE_TABLE")
+	slog.Info("SetAdminProjects called", "tableName", tableName, "count", len(projects))
 	if tableName == "" {
 		adminMu.Lock()
 		defer adminMu.Unlock()
@@ -136,8 +142,10 @@ func SetAdminProjects(projects []mockresponses.ProjectConfig) error {
 		},
 	})
 	if err != nil {
+		slog.Error("SetAdminProjects: DynamoDB PutItem failed", "error", err)
 		return fmt.Errorf("SetAdminProjects: DynamoDB PutItem failed: %w", err)
 	}
+	slog.Info("SetAdminProjects: PutItem succeeded", "tableName", tableName)
 	return nil
 }
 
