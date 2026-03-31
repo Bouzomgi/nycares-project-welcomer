@@ -127,6 +127,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		}
 	}
 
+	// When a mock server URL is provided, override the API base URL so all
+	// lambdas call the mock server instead of the real NYC Cares API.
+	// Must be set BEFORE Lambda functions are created — CDK/JSII serializes
+	// the environment map at construction time.
+	if props != nil && props.MockServerUrl != nil {
+		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
+	}
+
 	// --- Lambda Functions ---
 
 	lambdaNames := []string{
@@ -168,11 +176,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		})
 
 		lambdaFns[name] = fn
-	}
-
-	// When a mock server is provided, all lambdas use it as the API base URL
-	if props != nil && props.MockServerUrl != nil {
-		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
 	}
 
 	// --- IAM Permissions ---
