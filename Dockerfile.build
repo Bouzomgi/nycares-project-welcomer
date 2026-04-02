@@ -16,7 +16,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux GOARCH=${LAMBDA_GOARCH} \
     sh -c 'mkdir -p /build/login /build/fetchprojects /build/computemessagetosend \
                     /build/requestapprovaltosend /build/sendandpinmessage /build/recordmessage \
-                    /build/notifycompletion /build/dlqnotifier /build/approvalcallback /build/sesforwarder && \
+                    /build/notifycompletion /build/dlqnotifier /build/approvalcallback /build/sesforwarder \
+                    /build/mockserver && \
            go build -o /build/login/bootstrap ./lambda/login & \
            go build -o /build/fetchprojects/bootstrap ./lambda/fetchprojects & \
            go build -o /build/computemessagetosend/bootstrap ./lambda/computemessagetosend & \
@@ -27,4 +28,5 @@ RUN --mount=type=cache,target=/go/pkg/mod \
            go build -o /build/dlqnotifier/bootstrap ./lambda/dlqnotifier & \
            go build -o /build/approvalcallback/bootstrap ./lambda/approvalcallback & \
            go build -o /build/sesforwarder/bootstrap ./lambda/sesforwarder & \
+           go build -o /build/mockserver/bootstrap ./internal/mockserver & \
            wait $(jobs -p) || exit 1'

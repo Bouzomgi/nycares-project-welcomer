@@ -20,7 +20,12 @@ func RegisterScheduleRoute(r *mux.Router) {
 			return
 		}
 
-		projects := GetAdminProjects()
+		projects, err := GetAdminProjects()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			return
+		}
 		resp := mockresponses.MockScheduleResponse(projects)
 
 		w.WriteHeader(http.StatusOK)

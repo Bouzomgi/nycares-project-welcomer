@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -20,10 +21,11 @@ import (
 	sfntypes "github.com/aws/aws-sdk-go-v2/service/sfn/types"
 )
 
-const (
-	stateMachineARN = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
-	dynamoTableName = "nycares-project-welcomer-notifications"
-	pollInterval    = 2 * time.Second
+const pollInterval = 2 * time.Second
+
+var (
+	stateMachineARN = getEnvOrDefault("STATE_MACHINE_ARN", "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow")
+	dynamoTableName = getEnvOrDefault("DYNAMO_TABLE_NAME", "nycares-project-welcomer-notifications")
 )
 
 var executionTimeout = func() time.Duration {
@@ -49,25 +51,38 @@ func getEnvOrDefault(key, fallback string) string {
 }
 
 func initTestClients() (*testClients, error) {
-	endpoint := getEnvOrDefault("AWS_ENDPOINT_URL", "http://localhost:4566")
-	mockServerURL := getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001")
+	awsEndpoint := os.Getenv("AWS_ENDPOINT_URL") // empty = use real AWS
+	mockServerURL := strings.TrimRight(getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001"), "/")
 
 	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion("us-east-1"),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "")),
-	)
+
+	var cfgOpts []func(*config.LoadOptions) error
+	cfgOpts = append(cfgOpts, config.WithRegion("us-east-1"))
+	if awsEndpoint != "" {
+		// LocalStack: use static test credentials
+		cfgOpts = append(cfgOpts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider("test", "test", ""),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, cfgOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	sfnClient := sfn.NewFromConfig(cfg, func(o *sfn.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
-	})
+	var sfnOpts []func(*sfn.Options)
+	var dynamoOpts []func(*dynamodb.Options)
+	if awsEndpoint != "" {
+		sfnOpts = append(sfnOpts, func(o *sfn.Options) {
+			o.BaseEndpoint = aws.String(awsEndpoint)
+		})
+		dynamoOpts = append(dynamoOpts, func(o *dynamodb.Options) {
+			o.BaseEndpoint = aws.String(awsEndpoint)
+		})
+	}
 
-	dynamoClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
-	})
+	sfnClient := sfn.NewFromConfig(cfg, sfnOpts...)
+	dynamoClient := dynamodb.NewFromConfig(cfg, dynamoOpts...)
 
 	return &testClients{
 		sfnClient:     sfnClient,

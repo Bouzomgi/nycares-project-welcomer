@@ -1,9 +1,11 @@
 package stack
 
 import (
+	"os"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -15,30 +17,39 @@ func MockServerStack(scope constructs.Construct, id string, props *awscdk.StackP
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	suffix := os.Getenv("ENV_SUFFIX")
+
 	fn := awslambda.NewFunction(stack, jsii.String("MockServer"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
-		Architecture: awslambda.Architecture_ARM_64(),
-		FunctionName: jsii.String("mock-server"),
-		Code: awslambda.Code_FromAsset(jsii.String("../"), &awss3assets.AssetOptions{
-			Bundling: &awscdk.BundlingOptions{
-				Image: awscdk.DockerImage_FromRegistry(jsii.String("golang:1.25-alpine")),
-				Command: jsii.Strings(
-					"sh", "-c",
-					"CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /asset-output/bootstrap ./internal/mockserver",
-				),
-				Environment: &map[string]*string{
-					"GOCACHE": jsii.String("/tmp/go-cache"),
-					"GOPATH":  jsii.String("/tmp/go"),
-				},
-				OutputType: awscdk.BundlingOutput_NOT_ARCHIVED,
-			},
-		}),
+		Architecture: lambdaArchitecture(),
+		FunctionName: jsii.String("mock-server" + suffix),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/mockserver"), nil),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 	})
+
+	mockStateTableName := "nycares-mock-state" + suffix
+	mockStateTable := awsdynamodb.NewTable(stack, jsii.String("MockStateTable"), &awsdynamodb.TableProps{
+		TableName: jsii.String(mockStateTableName),
+		PartitionKey: &awsdynamodb.Attribute{
+			Name: jsii.String("MockKey"),
+			Type: awsdynamodb.AttributeType_STRING,
+		},
+		BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+	mockStateTable.GrantReadWriteData(fn)
+	fn.AddEnvironment(jsii.String("MOCK_STATE_TABLE"), jsii.String(mockStateTableName), nil)
 
 	fnUrl := awslambda.NewFunctionUrl(stack, jsii.String("MockServerUrl"), &awslambda.FunctionUrlProps{
 		Function: fn,
 		AuthType: awslambda.FunctionUrlAuthType_NONE,
+	})
+
+	awscdk.NewCfnOutput(stack, jsii.String("MockServerUrlOutput"), &awscdk.CfnOutputProps{
+		Value:       fnUrl.Url(),
+		Description: jsii.String("Mock server function URL"),
+		ExportName:  jsii.String("MockServerUrl" + suffix),
 	})
 
 	return stack, fnUrl.Url()

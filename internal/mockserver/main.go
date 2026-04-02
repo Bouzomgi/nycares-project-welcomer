@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/akrylysov/algnhsa"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/routes"
+	"github.com/akrylysov/algnhsa"
 	"github.com/gorilla/mux"
 )
 
