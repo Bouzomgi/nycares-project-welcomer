@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
@@ -11,7 +12,8 @@ type Auth struct {
 }
 
 type LoginInput struct {
-	ExecutionId string `json:"executionId"`
+	ExecutionId string          `json:"executionId"`
+	Context     json.RawMessage `json:"context,omitempty"`
 }
 
 type LoginOutput struct {

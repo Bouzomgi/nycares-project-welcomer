@@ -115,7 +115,7 @@ func registerPinMessageRoute(r *mux.Router) {
 
 		projectName := campaignId
 		projectDate := ""
-		adminProjects, _ := GetAdminProjects()
+		adminProjects, _ := GetProjectsFromCookie(r)
 		for _, p := range adminProjects {
 			if p.Id == campaignId {
 				projectName = p.Name

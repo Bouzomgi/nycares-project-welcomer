@@ -3,13 +3,10 @@
 package integration
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -38,9 +35,8 @@ var executionTimeout = func() time.Duration {
 }()
 
 type testClients struct {
-	sfnClient     *sfn.Client
-	dynamoClient  *dynamodb.Client
-	mockServerURL string
+	sfnClient    *sfn.Client
+	dynamoClient *dynamodb.Client
 }
 
 func getEnvOrDefault(key, fallback string) string {
@@ -52,8 +48,6 @@ func getEnvOrDefault(key, fallback string) string {
 
 func initTestClients() (*testClients, error) {
 	awsEndpoint := os.Getenv("AWS_ENDPOINT_URL") // empty = use real AWS
-	mockServerURL := strings.TrimRight(getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001"), "/")
-
 	ctx := context.Background()
 
 	var cfgOpts []func(*config.LoadOptions) error
@@ -85,9 +79,8 @@ func initTestClients() (*testClients, error) {
 	dynamoClient := dynamodb.NewFromConfig(cfg, dynamoOpts...)
 
 	return &testClients{
-		sfnClient:     sfnClient,
-		dynamoClient:  dynamoClient,
-		mockServerURL: mockServerURL,
+		sfnClient:    sfnClient,
+		dynamoClient: dynamoClient,
 	}, nil
 }
 
@@ -98,31 +91,15 @@ type projectInput struct {
 	CampaignId string `json:"campaignId"`
 }
 
-func (tc *testClients) setMockProjects(projects []projectInput) error {
-	body, err := json.Marshal(map[string]interface{}{
-		"projects": projects,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal projects: %w", err)
-	}
-
-	resp, err := http.Post(tc.mockServerURL+"/admin/set-projects", "application/json", bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("failed to set mock projects: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("set-projects returned status %d", resp.StatusCode)
-	}
-	return nil
-}
-
-func (tc *testClients) startExecution() (string, error) {
+func (tc *testClients) startExecutionWithProjects(projects []projectInput) (string, error) {
 	ctx := context.Background()
+	input, err := json.Marshal(map[string]interface{}{"mockProjects": projects})
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal projects: %w", err)
+	}
 	result, err := tc.sfnClient.StartExecution(ctx, &sfn.StartExecutionInput{
 		StateMachineArn: aws.String(stateMachineARN),
-		Input:           aws.String("{}"),
+		Input:           aws.String(string(input)),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to start execution: %w", err)

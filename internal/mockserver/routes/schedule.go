@@ -20,7 +20,7 @@ func RegisterScheduleRoute(r *mux.Router) {
 			return
 		}
 
-		projects, err := GetAdminProjects()
+		projects, err := GetProjectsFromCookie(r)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})

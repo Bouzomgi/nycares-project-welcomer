@@ -13,7 +13,6 @@ import (
 func main() {
 	r := mux.NewRouter()
 
-	routes.RegisterAdminRoutes(r)
 	routes.RegisterLoginRoute(r)
 	routes.RegisterMessageRoutes(r)
 	routes.RegisterScheduleRoute(r)

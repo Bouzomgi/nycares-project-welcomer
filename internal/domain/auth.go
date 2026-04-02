@@ -1,10 +1,14 @@
 package domain
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 type Credentials struct {
-	Username string
-	Password string
+	Username         string
+	Password         string
+	MockProjectsJSON json.RawMessage
 }
 
 type Auth struct {

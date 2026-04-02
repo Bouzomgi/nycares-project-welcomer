@@ -3,6 +3,7 @@ package httpservice
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"mime/multipart"
@@ -90,6 +91,11 @@ func (s *HttpService) buildLoginRequest(creds domain.Credentials) (*http.Request
 	writer.WriteField("form_id", "user_login_form")
 	writer.WriteField("name", creds.Username)
 	writer.WriteField("pass", creds.Password)
+	// mock_projects is read by the mock server to return per-execution project config
+	// via the session cookie. Empty in production — the real API ignores unknown fields.
+	if len(creds.MockProjectsJSON) > 0 {
+		writer.WriteField("mock_projects", base64.StdEncoding.EncodeToString(creds.MockProjectsJSON))
+	}
 	writer.Close()
 
 	loginURL := endpoints.JoinPaths(s.baseUrl, endpoints.LoginPath)

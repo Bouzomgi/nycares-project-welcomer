@@ -25,9 +25,13 @@ func RegisterLoginRoute(r *mux.Router) {
 			return
 		}
 
+		cookieValue := "mock-session-id"
+		if mp := r.FormValue("mock_projects"); mp != "" {
+			cookieValue = "mock-session:" + mp
+		}
 		http.SetCookie(w, &http.Cookie{
 			Name:     "session",
-			Value:    "mock-session-id",
+			Value:    cookieValue,
 			Path:     "/",
 			HttpOnly: true,
 			MaxAge:   3600, // 1 hour
