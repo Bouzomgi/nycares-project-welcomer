@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -23,9 +24,15 @@ func NewLoginHandler(u *login.LoginUseCase, cfg *login.Config) *LoginHandler {
 func (h *LoginHandler) Handle(ctx context.Context, input models.LoginInput) (models.LoginOutput, error) {
 	slog.Info("login handler invoked", "executionId", input.ExecutionId)
 
+	var execInput struct {
+		MockProjects json.RawMessage `json:"mockProjects,omitempty"`
+	}
+	json.Unmarshal(input.Context, &execInput)
+
 	creds := domain.Credentials{
-		Username: h.cfg.Account.Username,
-		Password: h.cfg.Account.Password,
+		Username:         h.cfg.Account.Username,
+		Password:         h.cfg.Account.Password,
+		MockProjectsJSON: execInput.MockProjects,
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)

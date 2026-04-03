@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/akrylysov/algnhsa"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/routes"
+	"github.com/akrylysov/algnhsa"
 	"github.com/gorilla/mux"
 )
 
 func main() {
 	r := mux.NewRouter()
 
-	routes.RegisterAdminRoutes(r)
 	routes.RegisterLoginRoute(r)
 	routes.RegisterMessageRoutes(r)
 	routes.RegisterScheduleRoute(r)

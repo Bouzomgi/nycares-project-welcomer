@@ -26,6 +26,7 @@ import (
 type LambdaStackProps struct {
 	awscdk.StackProps
 	MockServerUrl *string
+	EnvSuffix     string // e.g. "-ci"; empty for LocalStack/production
 }
 
 func lambdaArchitecture() awslambda.Architecture {
@@ -42,18 +43,52 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	suffix := ""
+	if props != nil {
+		suffix = props.EnvSuffix
+	}
+
 	// --- AWS Resources ---
 
-	table := awsdynamodb.Table_FromTableName(stack, jsii.String("SentNotifications"), jsii.String("nycares-project-welcomer-notifications"))
+	tableName := "nycares-project-welcomer-notifications" + suffix
+	bucketName := "nycares-project-welcomer-messages" + suffix
 
-	bucket := awss3.Bucket_FromBucketName(stack, jsii.String("MessageTemplates"), jsii.String("nycares-project-welcomer-messages"))
+	var table awsdynamodb.ITable
+	var bucket awss3.IBucket
+
+	if suffix != "" {
+		// Create owned resources for ephemeral PR environments
+		table = awsdynamodb.NewTable(stack, jsii.String("SentNotifications"), &awsdynamodb.TableProps{
+			TableName: jsii.String(tableName),
+			PartitionKey: &awsdynamodb.Attribute{
+				Name: jsii.String("ProjectName"),
+				Type: awsdynamodb.AttributeType_STRING,
+			},
+			SortKey: &awsdynamodb.Attribute{
+				Name: jsii.String("ProjectDate"),
+				Type: awsdynamodb.AttributeType_STRING,
+			},
+			BillingMode:   awsdynamodb.BillingMode_PAY_PER_REQUEST,
+			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+		})
+
+		bucket = awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
+			BucketName:    jsii.String(bucketName),
+			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+		})
+
+	} else {
+		// Import pre-existing resources (LocalStack / production without suffix)
+		table = awsdynamodb.Table_FromTableName(stack, jsii.String("SentNotifications"), jsii.String(tableName))
+		bucket = awss3.Bucket_FromBucketName(stack, jsii.String("MessageTemplates"), jsii.String(bucketName))
+	}
 
 	topic := awssns.NewTopic(stack, jsii.String("NotificationTopic"), &awssns.TopicProps{
-		TopicName: jsii.String("nycares-notifications"),
+		TopicName: jsii.String("nycares-notifications" + suffix),
 	})
 
 	debugQueue := awssqs.NewQueue(stack, jsii.String("DebugNotificationQueue"), &awssqs.QueueProps{
-		QueueName: jsii.String("nycares-notifications-debug"),
+		QueueName: jsii.String("nycares-notifications-debug" + suffix),
 	})
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(debugQueue, nil))
 
@@ -63,9 +98,9 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	const ssmPath = "/nycares-project-welcomer/"
 
 	sharedEnv := &map[string]*string{
-		"NYCARES_AWS_DYNAMO_TABLENAME": table.TableName(),
+		"NYCARES_AWS_DYNAMO_TABLENAME": jsii.String(tableName),
 		"NYCARES_AWS_DYNAMO_REGION":    stack.Region(),
-		"NYCARES_AWS_S3_BUCKETNAME":    bucket.BucketName(),
+		"NYCARES_AWS_S3_BUCKETNAME":    jsii.String(bucketName),
 		"NYCARES_AWS_SNS_TOPICARN":     topic.TopicArn(),
 		"NYCARES_SSM_PATH":             jsii.String(ssmPath),
 	}
@@ -92,6 +127,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		}
 	}
 
+	// When a mock server URL is provided, override the API base URL so all
+	// lambdas call the mock server instead of the real NYC Cares API.
+	// Must be set BEFORE Lambda functions are created — CDK/JSII serializes
+	// the environment map at construction time.
+	if props != nil && props.MockServerUrl != nil {
+		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
+	}
+
 	// --- Lambda Functions ---
 
 	lambdaNames := []string{
@@ -111,6 +154,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
+		logGroup := awslogs.NewLogGroup(stack, jsii.String(name+"LogGroup"), &awslogs.LogGroupProps{
+			LogGroupName:  jsii.String("/aws/lambda/" + kebabName + suffix),
+			Retention:     awslogs.RetentionDays_THREE_MONTHS,
+			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+		})
+
+		_ = logGroup
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -118,23 +169,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 				jsii.String("../lambda-build/"+lowerName),
 				nil,
 			),
-			FunctionName: jsii.String(kebabName),
+			FunctionName: jsii.String(kebabName + suffix),
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 		})
 
 		lambdaFns[name] = fn
-	}
-
-	// Override API base URL for SendAndPinMessage in dry-run mode
-	if props != nil && props.MockServerUrl != nil {
-		lambdaFns["SendAndPinMessage"].AddEnvironment(
-			jsii.String("NYCARES_API_BASE_URL"),
-			props.MockServerUrl,
-			nil,
-		)
 	}
 
 	// --- IAM Permissions ---
@@ -165,15 +206,22 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- Approval Callback Lambda (outside loop — needs API Gateway wiring) ---
 
+	approvalCallbackLogGroup := awslogs.NewLogGroup(stack, jsii.String("ApprovalCallbackLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/lambda/approval-callback" + suffix),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
+	_ = approvalCallbackLogGroup
+
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), nil),
-		FunctionName: jsii.String("approval-callback"),
+		FunctionName: jsii.String("approval-callback" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -188,7 +236,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// --- API Gateway ---
 
 	api := awsapigateway.NewRestApi(stack, jsii.String("ApprovalCallbackApi"), &awsapigateway.RestApiProps{
-		RestApiName: jsii.String("approval-callback-api"),
+		RestApiName: jsii.String("approval-callback-api" + suffix),
 	})
 
 	callbackResource := api.Root().AddResource(jsii.String("callback"), nil)
@@ -207,15 +255,22 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- SES Forwarder Lambda ---
 
+	sesForwarderLogGroup := awslogs.NewLogGroup(stack, jsii.String("SESForwarderLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/lambda/ses-forwarder" + suffix),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
+	_ = sesForwarderLogGroup
+
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
 		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), nil),
-		FunctionName: jsii.String("ses-forwarder"),
+		FunctionName: jsii.String("ses-forwarder" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -238,13 +293,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	}
 
 	stateMachineLogGroup := awslogs.NewLogGroup(stack, jsii.String("ProjectNotifierStateMachineLogGroup"), &awslogs.LogGroupProps{
-		LogGroupName:  jsii.String("/aws/states/project-notifier-workflow"),
+		LogGroupName:  jsii.String("/aws/states/project-notifier-workflow" + suffix),
 		Retention:     awslogs.RetentionDays_THREE_MONTHS,
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 	})
 
 	stateMachine := awsstepfunctions.NewStateMachine(stack, jsii.String("ProjectNotifierStateMachine"), &awsstepfunctions.StateMachineProps{
-		StateMachineName:        jsii.String("project-notifier-workflow"),
+		StateMachineName:        jsii.String("project-notifier-workflow" + suffix),
 		DefinitionBody:          awsstepfunctions.DefinitionBody_FromFile(jsii.String("DailyProjectNotificationWorkflow.json"), nil),
 		DefinitionSubstitutions: &definitionSubs,
 		Logs: &awsstepfunctions.LogOptions{
@@ -262,7 +317,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// --- Daily trigger at noon EST (17:00 UTC) ---
 
 	awsevents.NewRule(stack, jsii.String("DailyNoonTrigger"), &awsevents.RuleProps{
-		RuleName:    jsii.String("nycares-daily-noon-trigger"),
+		RuleName:    jsii.String("nycares-daily-noon-trigger" + suffix),
 		Description: jsii.String("Triggers project-notifier-workflow daily at noon EST"),
 		Schedule: awsevents.Schedule_Cron(&awsevents.CronOptions{
 			Hour:   jsii.String("17"),
@@ -272,6 +327,25 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			awseventstargets.NewSfnStateMachine(stateMachine, nil),
 		},
 	})
+
+	// Grant the GHA deployer role permissions needed to seed resources and run integration tests
+	if suffix != "" {
+		if ghaRoleArn := os.Getenv("GHA_ROLE_ARN"); ghaRoleArn != "" {
+			ghaRole := awsiam.Role_FromRoleArn(stack, jsii.String("GHARole"), jsii.String(ghaRoleArn), nil)
+			bucket.GrantReadWrite(ghaRole, nil)
+			table.GrantReadWriteData(ghaRole)
+			ghaRole.AddToPrincipalPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Actions: jsii.Strings(
+					"states:StartExecution",
+					"states:DescribeExecution",
+					"states:GetExecutionHistory",
+					"states:SendTaskSuccess",
+					"states:SendTaskFailure",
+				),
+				Resources: jsii.Strings(*stateMachine.StateMachineArn(), "*"),
+			}))
+		}
+	}
 
 	return stack
 }

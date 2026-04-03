@@ -1,0 +1,41 @@
+name: Cleanup Stale Test Environment
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Delete test environment if older than 24 hours
+        run: |
+          NOW=$(date +%s)
+          CUTOFF=$((NOW - 86400))
+
+          for STACK in NYCaresLambdaStack-ci; do
+            # Use LastUpdatedTime if present, else CreationTime
+            STACK_TIME=$(aws cloudformation describe-stacks \
+              --stack-name "$STACK" \
+              --query "Stacks[0].LastUpdatedTime || Stacks[0].CreationTime" \
+              --output text 2>/dev/null) || continue
+
+            STACK_EPOCH=$(date -d "$STACK_TIME" +%s 2>/dev/null) || continue
+
+            if [ "$STACK_EPOCH" -lt "$CUTOFF" ]; then
+              echo "Deleting stale stack: $STACK (last updated $STACK_TIME)"
+              aws cloudformation delete-stack --stack-name "$STACK" || true
+              aws cloudformation wait stack-delete-complete --stack-name "$STACK" 2>/dev/null || true
+            else
+              echo "Stack $STACK is fresh, skipping"
+            fi
+          done

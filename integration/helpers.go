@@ -3,11 +3,9 @@
 package integration
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -20,10 +18,11 @@ import (
 	sfntypes "github.com/aws/aws-sdk-go-v2/service/sfn/types"
 )
 
-const (
-	stateMachineARN = "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow"
-	dynamoTableName = "nycares-project-welcomer-notifications"
-	pollInterval    = 2 * time.Second
+const pollInterval = 2 * time.Second
+
+var (
+	stateMachineARN = getEnvOrDefault("STATE_MACHINE_ARN", "arn:aws:states:us-east-1:000000000000:stateMachine:project-notifier-workflow")
+	dynamoTableName = getEnvOrDefault("DYNAMO_TABLE_NAME", "nycares-project-welcomer-notifications")
 )
 
 var executionTimeout = func() time.Duration {
@@ -36,9 +35,8 @@ var executionTimeout = func() time.Duration {
 }()
 
 type testClients struct {
-	sfnClient     *sfn.Client
-	dynamoClient  *dynamodb.Client
-	mockServerURL string
+	sfnClient    *sfn.Client
+	dynamoClient *dynamodb.Client
 }
 
 func getEnvOrDefault(key, fallback string) string {
@@ -49,30 +47,40 @@ func getEnvOrDefault(key, fallback string) string {
 }
 
 func initTestClients() (*testClients, error) {
-	endpoint := getEnvOrDefault("AWS_ENDPOINT_URL", "http://localhost:4566")
-	mockServerURL := getEnvOrDefault("MOCKSERVER_URL", "http://localhost:3001")
-
+	awsEndpoint := os.Getenv("AWS_ENDPOINT_URL") // empty = use real AWS
 	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion("us-east-1"),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("test", "test", "")),
-	)
+
+	var cfgOpts []func(*config.LoadOptions) error
+	cfgOpts = append(cfgOpts, config.WithRegion("us-east-1"))
+	if awsEndpoint != "" {
+		// LocalStack: use static test credentials
+		cfgOpts = append(cfgOpts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider("test", "test", ""),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, cfgOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	sfnClient := sfn.NewFromConfig(cfg, func(o *sfn.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
-	})
+	var sfnOpts []func(*sfn.Options)
+	var dynamoOpts []func(*dynamodb.Options)
+	if awsEndpoint != "" {
+		sfnOpts = append(sfnOpts, func(o *sfn.Options) {
+			o.BaseEndpoint = aws.String(awsEndpoint)
+		})
+		dynamoOpts = append(dynamoOpts, func(o *dynamodb.Options) {
+			o.BaseEndpoint = aws.String(awsEndpoint)
+		})
+	}
 
-	dynamoClient := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
-		o.BaseEndpoint = aws.String(endpoint)
-	})
+	sfnClient := sfn.NewFromConfig(cfg, sfnOpts...)
+	dynamoClient := dynamodb.NewFromConfig(cfg, dynamoOpts...)
 
 	return &testClients{
-		sfnClient:     sfnClient,
-		dynamoClient:  dynamoClient,
-		mockServerURL: mockServerURL,
+		sfnClient:    sfnClient,
+		dynamoClient: dynamoClient,
 	}, nil
 }
 
@@ -83,31 +91,15 @@ type projectInput struct {
 	CampaignId string `json:"campaignId"`
 }
 
-func (tc *testClients) setMockProjects(projects []projectInput) error {
-	body, err := json.Marshal(map[string]interface{}{
-		"projects": projects,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal projects: %w", err)
-	}
-
-	resp, err := http.Post(tc.mockServerURL+"/admin/set-projects", "application/json", bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("failed to set mock projects: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("set-projects returned status %d", resp.StatusCode)
-	}
-	return nil
-}
-
-func (tc *testClients) startExecution() (string, error) {
+func (tc *testClients) startExecutionWithProjects(projects []projectInput) (string, error) {
 	ctx := context.Background()
+	input, err := json.Marshal(map[string]interface{}{"mockProjects": projects})
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal projects: %w", err)
+	}
 	result, err := tc.sfnClient.StartExecution(ctx, &sfn.StartExecutionInput{
 		StateMachineArn: aws.String(stateMachineARN),
-		Input:           aws.String("{}"),
+		Input:           aws.String(string(input)),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to start execution: %w", err)

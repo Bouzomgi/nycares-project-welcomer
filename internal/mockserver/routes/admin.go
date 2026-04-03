@@ -1,35 +1,15 @@
 package routes
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/routes/mockresponses"
-	"github.com/gorilla/mux"
 )
-
-var (
-	adminMu       sync.RWMutex
-	adminProjects []mockresponses.ProjectConfig
-)
-
-func GetAdminProjects() []mockresponses.ProjectConfig {
-	adminMu.RLock()
-	defer adminMu.RUnlock()
-	return adminProjects
-}
-
-func SetAdminProjects(projects []mockresponses.ProjectConfig) {
-	adminMu.Lock()
-	defer adminMu.Unlock()
-	adminProjects = projects
-}
-
-type setProjectsRequest struct {
-	Projects []projectInput `json:"projects"`
-}
 
 type projectInput struct {
 	Name       string `json:"name"`
@@ -38,33 +18,32 @@ type projectInput struct {
 	CampaignId string `json:"campaignId"`
 }
 
-func RegisterAdminRoutes(r *mux.Router) {
-	r.HandleFunc("/admin/set-projects", func(w http.ResponseWriter, r *http.Request) {
-		var req setProjectsRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-			return
+func GetProjectsFromCookie(r *http.Request) ([]mockresponses.ProjectConfig, error) {
+	cookie, err := r.Cookie("session")
+	if err != nil || !strings.HasPrefix(cookie.Value, "mock-session:") {
+		return nil, nil
+	}
+	b64 := strings.TrimPrefix(cookie.Value, "mock-session:")
+	data, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, fmt.Errorf("bad cookie: %w", err)
+	}
+	var stored []projectInput
+	if err := json.Unmarshal(data, &stored); err != nil {
+		return nil, fmt.Errorf("unmarshal cookie: %w", err)
+	}
+	projects := make([]mockresponses.ProjectConfig, 0, len(stored))
+	for _, p := range stored {
+		date, err := time.Parse("2006-01-02", p.Date)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date %q: %w", p.Date, err)
 		}
-
-		var projects []mockresponses.ProjectConfig
-		for _, p := range req.Projects {
-			date, err := time.Parse("2006-01-02", p.Date)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{"error": "invalid date: " + p.Date})
-				return
-			}
-			projects = append(projects, mockresponses.ProjectConfig{
-				Name:       p.Name,
-				Date:       date,
-				Id:         p.Id,
-				CampaignId: p.CampaignId,
-			})
-		}
-
-		SetAdminProjects(projects)
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-	}).Methods("POST")
+		projects = append(projects, mockresponses.ProjectConfig{
+			Name:       p.Name,
+			Date:       date,
+			Id:         p.Id,
+			CampaignId: p.CampaignId,
+		})
+	}
+	return projects, nil
 }

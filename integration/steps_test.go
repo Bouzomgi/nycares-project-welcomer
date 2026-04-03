@@ -11,11 +11,12 @@ import (
 
 // scenarioContext holds per-scenario state, reset between scenarios.
 type scenarioContext struct {
-	tc          *testClients
-	today       string
-	projectDate string
-	execArn     string
-	taskToken   string
+	tc           *testClients
+	today        string
+	projectDate  string
+	mockProjects []projectInput
+	execArn      string
+	taskToken    string
 }
 
 // --- Background ---
@@ -34,14 +35,11 @@ func (sc *scenarioContext) theNotificationSystemIsReady() error {
 
 func (sc *scenarioContext) aProjectScheduledDaysFromNow(name string, days int) error {
 	sc.projectDate = dateOffset(sc.today, days)
-
-	if err := sc.tc.deleteNotification(name, sc.projectDate); err != nil {
-		return err
+	sc.mockProjects = []projectInput{
+		{Name: name, Date: sc.projectDate, Id: testProjectId, CampaignId: testCampaignId},
 	}
 
-	return sc.tc.setMockProjects([]projectInput{
-		{Name: name, Date: sc.projectDate, Id: testProjectId, CampaignId: testCampaignId},
-	})
+	return sc.tc.deleteNotification(name, sc.projectDate)
 }
 
 func (sc *scenarioContext) aWelcomeHasAlreadyBeenSent() error {
@@ -55,7 +53,7 @@ func (sc *scenarioContext) bothWelcomeAndReminderHaveAlreadyBeenSent() error {
 // --- When ---
 
 func (sc *scenarioContext) theWorkflowRuns() error {
-	arn, err := sc.tc.startExecution()
+	arn, err := sc.tc.startExecutionWithProjects(sc.mockProjects)
 	if err != nil {
 		return err
 	}

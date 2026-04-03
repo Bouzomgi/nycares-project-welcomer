@@ -6,7 +6,8 @@
       "Type": "Task",
       "Resource": "${LoginLambdaArn}",
       "Parameters": {
-        "executionId.$": "$$.Execution.Id"
+        "executionId.$": "$$.Execution.Id",
+        "context.$": "$$.Execution.Input"
       },
       "ResultPath": "$",
       "Next": "FetchProjects",
