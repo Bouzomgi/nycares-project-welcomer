@@ -14,9 +14,18 @@
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],
-          "Next": "DLQNotifier"
+          "Next": "LoginFailed"
         }
       ]
+    },
+    "LoginFailed": {
+      "Type": "Pass",
+      "Parameters": {
+        "Error.$": "$.Error",
+        "Cause.$": "$.Cause",
+        "FailedStep": "Login"
+      },
+      "Next": "DLQNotifier"
     },
     "FetchProjects": {
       "Type": "Task",
@@ -27,9 +36,18 @@
       "Catch": [
         {
           "ErrorEquals": ["States.ALL"],
-          "Next": "DLQNotifier"
+          "Next": "FetchProjectsFailed"
         }
       ]
+    },
+    "FetchProjectsFailed": {
+      "Type": "Pass",
+      "Parameters": {
+        "Error.$": "$.Error",
+        "Cause.$": "$.Cause",
+        "FailedStep": "FetchProjects"
+      },
+      "Next": "DLQNotifier"
     },
     "ProcessEachProject": {
       "Type": "Map",
@@ -55,9 +73,18 @@
               },
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ProjectDLQNotifier"
+                "Next": "ComputeMessageToSendFailed"
               }
             ]
+          },
+          "ComputeMessageToSendFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "ComputeMessageToSend"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "RequestApprovalToSend": {
             "Type": "Task",
@@ -79,9 +106,18 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ProjectDLQNotifier"
+                "Next": "RequestApprovalToSendFailed"
               }
             ]
+          },
+          "RequestApprovalToSendFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "RequestApprovalToSend"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "SendAndPinMessage": {
             "Type": "Task",
@@ -92,9 +128,18 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ProjectDLQNotifier"
+                "Next": "SendAndPinMessageFailed"
               }
             ]
+          },
+          "SendAndPinMessageFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "SendAndPinMessage"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "RecordMessage": {
             "Type": "Task",
@@ -105,9 +150,18 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ProjectDLQNotifier"
+                "Next": "RecordMessageFailed"
               }
             ]
+          },
+          "RecordMessageFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "RecordMessage"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "NotifyCompletion": {
             "Type": "Task",
@@ -117,9 +171,18 @@
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ProjectDLQNotifier"
+                "Next": "NotifyCompletionFailed"
               }
             ]
+          },
+          "NotifyCompletionFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "NotifyCompletion"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "ProjectDLQNotifier": {
             "Type": "Task",
