@@ -17,7 +17,7 @@ Feature: Project notification workflow
     When the workflow runs
     And it requests approval
     And the message is denied
-    Then the execution should succeed
+    Then the execution should fail
     And the workflow should route to error handling
     And no notification should be recorded
 
