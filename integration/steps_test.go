@@ -94,6 +94,17 @@ func (sc *scenarioContext) theExecutionShouldSucceed() error {
 	return nil
 }
 
+func (sc *scenarioContext) theExecutionShouldFail() error {
+	status, err := sc.tc.waitForExecutionComplete(sc.execArn)
+	if err != nil {
+		return err
+	}
+	if status != sfntypes.ExecutionStatusFailed {
+		return fmt.Errorf("expected FAILED, got %s", status)
+	}
+	return nil
+}
+
 func (sc *scenarioContext) theProjectShouldBeSkipped() error {
 	skipped, err := sc.tc.executionEndedWithSkip(sc.execArn)
 	if err != nil {
@@ -179,6 +190,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 
 	// Then
 	ctx.Then(`^the execution should succeed$`, sc.theExecutionShouldSucceed)
+	ctx.Then(`^the execution should fail$`, sc.theExecutionShouldFail)
 	ctx.Then(`^the project should be skipped$`, sc.theProjectShouldBeSkipped)
 	ctx.Then(`^the workflow should route to error handling$`, sc.theWorkflowShouldRouteToErrorHandling)
 	ctx.Then(`^no notification should be recorded$`, sc.noNotificationShouldBeRecorded)
