@@ -37,3 +37,6 @@ go.work.sum
 # .idea/
 # .vscode/
 **/config.yaml
+
+# macOS
+.DS_Store
