@@ -37,6 +37,7 @@ func (h *RequestApprovalHandler) Handle(ctx context.Context, input models.Reques
 		input.ExistingProjectNotification.Date,
 		input.MessageToSend.Type,
 		input.MessageToSend.TemplateRef,
+		h.cfg.Mock.SendMessage,
 	)
 	if err != nil {
 		slog.Error("requestapproval failed", "executionId", input.ExecutionId, "error", err)

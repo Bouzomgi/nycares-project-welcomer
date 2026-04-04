@@ -24,7 +24,7 @@ func NewRequestApprovalUseCase(snsSrv snsservice.NotificationService, s3Srv s3se
 	}
 }
 
-func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef string) error {
+func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef string, mockMode bool) error {
 
 	if taskToken == "" {
 		return fmt.Errorf("taskToken must be defined")
@@ -38,7 +38,7 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
-	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink)
+	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, mockMode)
 
 	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {

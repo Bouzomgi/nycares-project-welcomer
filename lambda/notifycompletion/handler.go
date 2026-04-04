@@ -37,7 +37,7 @@ func (h *NotifyCompletionHandler) Handle(ctx context.Context, input models.Notif
 		return err
 	}
 
-	err = h.usecase.Execute(ctx, notificationType, domainProject)
+	err = h.usecase.Execute(ctx, notificationType, domainProject, h.cfg.Mock.SendMessage)
 	if err != nil {
 		slog.Error("notifycompletion failed", "executionId", input.ExecutionId, "error", err)
 		return err

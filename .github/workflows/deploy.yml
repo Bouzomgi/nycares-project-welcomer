@@ -42,6 +42,8 @@ jobs:
             mkdir -p lambda-build/$dir
             go build -o lambda-build/$dir/bootstrap ./lambda/$dir
           done
+          mkdir -p lambda-build/mockserver
+          go build -o lambda-build/mockserver/bootstrap ./internal/mockserver
 
       - name: Upsert SSM parameters
         env:
