@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/email"
 	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
 )
@@ -25,23 +26,13 @@ func (u *NotifyCompletionUseCase) Execute(
 	project domain.Project,
 ) error {
 
-	completionMessage := createCompletionMessage(notificationType, project)
-	subject := "Message Sent!"
+	projectDate := utils.DateToString(project.Date)
+	subject, plainText, htmlBody := email.Completion(notificationType.String(), project.Name, projectDate)
 
-	_, err := u.snsSrv.PublishNotification(ctx, completionMessage, subject)
+	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish completion notification: %w", err)
 	}
 
 	return nil
-}
-
-func createCompletionMessage(messageType domain.NotificationType, project domain.Project) string {
-	projectDate := utils.DateToString(project.Date)
-	return fmt.Sprintf(
-		"Successfully sent %s message to %s on %s!",
-		messageType.String(),
-		project.Name,
-		projectDate,
-	)
 }
