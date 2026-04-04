@@ -3,6 +3,7 @@ package requestapproval
 import (
 	"context"
 	"fmt"
+	"html"
 	"net/url"
 
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
@@ -23,7 +24,7 @@ func NewRequestApprovalUseCase(snsSrv snsservice.NotificationService, s3Srv s3se
 	}
 }
 
-func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef string) error {
+func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef string, mockMode bool) error {
 
 	if taskToken == "" {
 		return fmt.Errorf("taskToken must be defined")
@@ -37,13 +38,27 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
+	destination := "real NYC Cares platform"
+	if mockMode {
+		destination = "mock server"
+	}
+
 	plainText := fmt.Sprintf(
-		"Project: %s\nDate: %s\nMessage Type: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink,
+		"Project: %s\nDate: %s\nMessage Type: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nSending to: %s",
+		projectName, projectDate, messageType, messageContent, approveLink, rejectLink, destination,
 	)
 	htmlBody := fmt.Sprintf(
-		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p><p><strong>Message Content:</strong></p><pre>%s</pre><p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink,
+		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p>`+
+			`<p><strong>Message Content:</strong></p><pre>%s</pre>`+
+			`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`+
+			`<p><em>Sending to: %s</em></p>`,
+		html.EscapeString(projectName),
+		html.EscapeString(projectDate),
+		html.EscapeString(messageType),
+		html.EscapeString(messageContent),
+		approveLink,
+		rejectLink,
+		html.EscapeString(destination),
 	)
 
 	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, "Project Message Approval")
