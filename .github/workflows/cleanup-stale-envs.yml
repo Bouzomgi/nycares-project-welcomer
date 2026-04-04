@@ -1,8 +1,9 @@
-name: Cleanup Stale Test Environment
+name: Cleanup Stale CI Environments
 
 on:
   schedule:
-    - cron: '0 * * * *'  # every hour
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
 
 jobs:
   cleanup:
@@ -10,32 +11,93 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      ENV_SUFFIX: -ci
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Delete test environment if older than 24 hours
+      - name: Get AWS account ID
+        id: account
+        run: echo "id=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
+
+      - name: Check last CI run age
+        id: ci-check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          NOW=$(date +%s)
-          CUTOFF=$((NOW - 86400))
+          # Check for any CI runs that are currently active
+          active=$(gh run list --workflow=ci.yml --limit=5 --json status \
+            --jq '[.[] | select(.status == "in_progress" or .status == "queued")] | length')
+          if [ "$active" -gt 0 ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=A CI run is currently in_progress or queued — skipping destruction." >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
-          for STACK in NYCaresLambdaStack-ci; do
-            # Use LastUpdatedTime if present, else CreationTime
-            STACK_TIME=$(aws cloudformation describe-stacks \
-              --stack-name "$STACK" \
-              --query "Stacks[0].LastUpdatedTime || Stacks[0].CreationTime" \
-              --output text 2>/dev/null) || continue
+          # Find the most recent completed CI run
+          last_completed=$(gh run list --workflow=ci.yml --limit=10 --json status,updatedAt \
+            --jq '[.[] | select(.status == "completed")] | sort_by(.updatedAt) | last | .updatedAt')
 
-            STACK_EPOCH=$(date -d "$STACK_TIME" +%s 2>/dev/null) || continue
+          if [ -z "$last_completed" ] || [ "$last_completed" = "null" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=No completed CI runs found — skipping destruction." >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
-            if [ "$STACK_EPOCH" -lt "$CUTOFF" ]; then
-              echo "Deleting stale stack: $STACK (last updated $STACK_TIME)"
-              aws cloudformation delete-stack --stack-name "$STACK" || true
-              aws cloudformation wait stack-delete-complete --stack-name "$STACK" 2>/dev/null || true
-            else
-              echo "Stack $STACK is fresh, skipping"
-            fi
+          last_ts=$(date -d "$last_completed" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_completed" +%s)
+          now_ts=$(date +%s)
+          age_hours=$(( (now_ts - last_ts) / 3600 ))
+
+          echo "Last completed CI run: $last_completed (${age_hours}h ago)"
+
+          if [ "$age_hours" -lt 24 ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=Last CI run completed ${age_hours}h ago (< 24h) — skipping destruction." >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "reason=Last CI run completed ${age_hours}h ago (>= 24h) — proceeding with destruction." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log decision
+        run: echo "${{ steps.ci-check.outputs.reason }}"
+
+      - name: Build lambdas
+        if: steps.ci-check.outputs.skip == 'false'
+        run: |
+          for pkg in login fetchprojects computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
+            mkdir -p lambda-build/$pkg
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/$pkg/bootstrap ./lambda/$pkg &
           done
+          mkdir -p lambda-build/mockserver
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/mockserver/bootstrap ./internal/mockserver &
+          wait
+
+      - name: Install CDK
+        if: steps.ci-check.outputs.skip == 'false'
+        run: npm install -g aws-cdk
+
+      - name: Destroy CI environment
+        if: steps.ci-check.outputs.skip == 'false'
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.id }}
+          CDK_DEFAULT_REGION: us-east-1
+          NYCARES_LAMBDA_ARCH: amd64
+          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
+          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
+          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
+          GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          DEPLOY_MOCKSERVER: "true"
+        run: |
+          cd infra
+          go mod download
+          cdk destroy --force --all
