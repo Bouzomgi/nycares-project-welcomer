@@ -51,6 +51,13 @@ func lambdaAssetOptions() *awss3assets.AssetOptions {
 	return nil
 }
 
+// lambdaLogGroup imports a pre-existing log group by name.
+// Lambda auto-creates log groups on first invocation, so importing (rather than
+// creating) avoids CloudFormation conflicts when the group already exists.
+func lambdaLogGroup(scope constructs.Construct, constructId, logGroupName string) awslogs.ILogGroup {
+	return awslogs.LogGroup_FromLogGroupName(scope, jsii.String(constructId), jsii.String(logGroupName))
+}
+
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
@@ -181,7 +188,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
+			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
 		})
 
 		lambdaFns[name] = fn
@@ -232,7 +239,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
+		LogGroup:     lambdaLogGroup(stack, "ApprovalCallbackLogGroup", "/aws/lambda/approval-callback"+suffix),
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -274,7 +281,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
+		LogGroup:     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix),
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
