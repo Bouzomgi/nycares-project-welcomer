@@ -51,22 +51,6 @@ func lambdaAssetOptions() *awss3assets.AssetOptions {
 	return nil
 }
 
-// lambdaLogGroup returns a log group for a Lambda function.
-// For ephemeral environments (suffix != ""), it creates a managed log group with
-// retention and a DESTROY removal policy.
-// For production (suffix == ""), it imports the pre-existing log group by name to
-// avoid CloudFormation conflicts with auto-created log groups.
-func lambdaLogGroup(scope constructs.Construct, constructId, logGroupName, suffix string) awslogs.ILogGroup {
-	if suffix == "" {
-		return awslogs.LogGroup_FromLogGroupName(scope, jsii.String(constructId), jsii.String(logGroupName))
-	}
-	return awslogs.NewLogGroup(scope, jsii.String(constructId), &awslogs.LogGroupProps{
-		LogGroupName:  jsii.String(logGroupName),
-		Retention:     awslogs.RetentionDays_THREE_MONTHS,
-		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-	})
-}
-
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
@@ -197,7 +181,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix, suffix),
+			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 		})
 
 		lambdaFns[name] = fn
@@ -248,7 +232,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     lambdaLogGroup(stack, "ApprovalCallbackLogGroup", "/aws/lambda/approval-callback"+suffix, suffix),
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -290,7 +274,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix, suffix),
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
