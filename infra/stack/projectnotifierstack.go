@@ -127,11 +127,12 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		}
 	}
 
-	// When a mock server URL is provided, override the API base URL so all
-	// lambdas call the mock server instead of the real NYC Cares API.
-	// Must be set BEFORE Lambda functions are created — CDK/JSII serializes
-	// the environment map at construction time.
-	if props != nil && props.MockServerUrl != nil {
+	// When a mock server URL is provided AND this is an ephemeral environment (suffix != ""),
+	// override NYCARES_API_BASE_URL globally — integration tests mock the full API including
+	// Login and FetchProjects. In production (no suffix), only SendAndPinMessage should route
+	// to the mock server; Login/FetchProjects must hit the real NYC Cares API. The per-lambda
+	// override for production is applied after the lambda loop below.
+	if props != nil && props.MockServerUrl != nil && suffix != "" {
 		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
 	}
 
@@ -176,6 +177,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		})
 
 		lambdaFns[name] = fn
+	}
+
+	// Production mock mode (no suffix): only SendAndPinMessage routes to the mock server.
+	// Login and FetchProjects continue hitting the real NYC Cares API so that real project
+	// data and auth cookies are used.
+	if props != nil && props.MockServerUrl != nil && suffix == "" {
+		lambdaFns["SendAndPinMessage"].AddEnvironment(
+			jsii.String("NYCARES_API_BASE_URL"), props.MockServerUrl, nil,
+		)
 	}
 
 	// --- IAM Permissions ---

@@ -17,47 +17,40 @@ func main() {
 		os.Exit(1)
 	}
 
-	emails := []struct {
+	type entry struct {
 		name      string
 		subject   string
 		plainText string
 		htmlBody  string
-	}{
-		func() (r struct {
-			name, subject, plainText, htmlBody string
-		}) {
-			r.name = "workflow-failed"
-			r.subject, r.plainText, r.htmlBody = email.WorkflowFailed(
-				"SendAndPinMessage",
-				"connection to NYC Cares API timed out after 30s",
-			)
-			return
-		}(),
-		func() (r struct {
-			name, subject, plainText, htmlBody string
-		}) {
-			r.name = "approval-request"
-			r.subject, r.plainText, r.htmlBody = email.ApprovalRequest(
-				"Central Park Cleanup",
-				"2026-04-10",
-				"welcome",
-				"Hi volunteers! We're excited to have you join us for Central Park Cleanup on April 10th. Please arrive at the Visitor Center by 9am.",
-				"http://localhost:4566/callback?token=abc123&action=approve&secret=test-secret",
-				"http://localhost:4566/callback?token=abc123&action=reject&secret=test-secret",
-			)
-			return
-		}(),
-		func() (r struct {
-			name, subject, plainText, htmlBody string
-		}) {
-			r.name = "completion"
-			r.subject, r.plainText, r.htmlBody = email.Completion(
-				"reminder",
-				"Brooklyn Food Bank",
-				"2026-04-15",
-			)
-			return
-		}(),
+	}
+
+	var emails []entry
+
+	for _, mockMode := range []bool{false, true} {
+		suffix := ""
+		if mockMode {
+			suffix = "-mock"
+		}
+
+		s, p, h := email.WorkflowFailed(
+			"SendAndPinMessage",
+			"connection to NYC Cares API timed out after 30s",
+		)
+		emails = append(emails, entry{"workflow-failed" + suffix, s, p, h})
+
+		s, p, h = email.ApprovalRequest(
+			"Central Park Cleanup",
+			"2026-04-10",
+			"welcome",
+			"Hi volunteers! We're excited to have you join us for Central Park Cleanup on April 10th. Please arrive at the Visitor Center by 9am.",
+			"http://localhost:4566/callback?token=abc123&action=approve&secret=test-secret",
+			"http://localhost:4566/callback?token=abc123&action=reject&secret=test-secret",
+			mockMode,
+		)
+		emails = append(emails, entry{"approval-request" + suffix, s, p, h})
+
+		s, p, h = email.Completion("reminder", "Brooklyn Food Bank", "2026-04-15", mockMode)
+		emails = append(emails, entry{"completion" + suffix, s, p, h})
 	}
 
 	for _, e := range emails {

@@ -24,10 +24,11 @@ func (u *NotifyCompletionUseCase) Execute(
 	ctx context.Context,
 	notificationType domain.NotificationType,
 	project domain.Project,
+	mockMode bool,
 ) error {
 
 	projectDate := utils.DateToString(project.Date)
-	subject, plainText, htmlBody := email.Completion(notificationType.String(), project.Name, projectDate)
+	subject, plainText, htmlBody := email.Completion(notificationType.String(), project.Name, projectDate, mockMode)
 
 	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {

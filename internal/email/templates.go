@@ -25,22 +25,29 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 }
 
 // ApprovalRequest returns the subject, plain text, and HTML body for a message approval email.
-func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink string) (subject, plainText, htmlBody string) {
+// mockMode indicates whether send/pin requests will go to the mock server or the real NYC Cares platform.
+func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink string, mockMode bool) (subject, plainText, htmlBody string) {
 	subject = "Project Message Approval"
 
+	destination := "real NYC Cares platform"
+	if mockMode {
+		destination = "mock server"
+	}
+
 	plainText = fmt.Sprintf(
-		"Project: %s\nDate: %s\nMessage Type: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink,
+		"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
+		projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink,
 	)
 
 	htmlBody = fmt.Sprintf(
-		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p>`+
+		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
 			`<p><strong>Message Content:</strong></p>`+
 			`<pre>%s</pre>`+
 			`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
 		html.EscapeString(projectName),
 		html.EscapeString(projectDate),
 		html.EscapeString(messageType),
+		html.EscapeString(destination),
 		html.EscapeString(messageContent),
 		approveLink,
 		rejectLink,
@@ -50,19 +57,27 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 }
 
 // Completion returns the subject, plain text, and HTML body for a successful message send notification.
-func Completion(messageType, projectName, projectDate string) (subject, plainText, htmlBody string) {
+// mockMode indicates whether send/pin requests will go to the mock server or the real NYC Cares platform.
+func Completion(messageType, projectName, projectDate string, mockMode bool) (subject, plainText, htmlBody string) {
 	subject = "Message Sent!"
 
+	destination := "real NYC Cares platform"
+	if mockMode {
+		destination = "mock server"
+	}
+
 	plainText = fmt.Sprintf(
-		"Successfully sent %s message to %s on %s!",
-		messageType, projectName, projectDate,
+		"Successfully sent %s message to %s on %s!\n\nSending to: %s",
+		messageType, projectName, projectDate, destination,
 	)
 
 	htmlBody = fmt.Sprintf(
-		`<p>Successfully sent <strong>%s</strong> message to <strong>%s</strong> on %s!</p>`,
+		`<p>Successfully sent <strong>%s</strong> message to <strong>%s</strong> on %s!</p>`+
+			`<p><em>Sending to: %s</em></p>`,
 		html.EscapeString(messageType),
 		html.EscapeString(projectName),
 		html.EscapeString(projectDate),
+		html.EscapeString(destination),
 	)
 
 	return
