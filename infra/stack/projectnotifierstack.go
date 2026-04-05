@@ -51,20 +51,11 @@ func lambdaAssetOptions() *awss3assets.AssetOptions {
 	return nil
 }
 
-// lambdaLogGroup returns a log group for a Lambda function.
-// For ephemeral environments (suffix != ""), it creates a managed log group with
-// retention and a DESTROY removal policy.
-// For production (suffix == ""), it imports the pre-existing log group by name to
-// avoid CloudFormation conflicts with auto-created log groups.
-func lambdaLogGroup(scope constructs.Construct, constructId, logGroupName, suffix string) awslogs.ILogGroup {
-	if suffix == "" {
-		return awslogs.LogGroup_FromLogGroupName(scope, jsii.String(constructId), jsii.String(logGroupName))
-	}
-	return awslogs.NewLogGroup(scope, jsii.String(constructId), &awslogs.LogGroupProps{
-		LogGroupName:  jsii.String(logGroupName),
-		Retention:     awslogs.RetentionDays_THREE_MONTHS,
-		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-	})
+// lambdaLogGroup imports a pre-existing log group by name.
+// Lambda auto-creates log groups on first invocation, so importing (rather than
+// creating) avoids CloudFormation conflicts when the group already exists.
+func lambdaLogGroup(scope constructs.Construct, constructId, logGroupName string) awslogs.ILogGroup {
+	return awslogs.LogGroup_FromLogGroupName(scope, jsii.String(constructId), jsii.String(logGroupName))
 }
 
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
@@ -197,7 +188,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
-			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix, suffix),
+			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
 		})
 
 		lambdaFns[name] = fn
@@ -248,7 +239,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     lambdaLogGroup(stack, "ApprovalCallbackLogGroup", "/aws/lambda/approval-callback"+suffix, suffix),
+		LogGroup:     lambdaLogGroup(stack, "ApprovalCallbackLogGroup", "/aws/lambda/approval-callback"+suffix),
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -290,7 +281,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
-		LogGroup:     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix, suffix),
+		LogGroup:     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix),
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
