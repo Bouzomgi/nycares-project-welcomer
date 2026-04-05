@@ -35,23 +35,22 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 	}
 
 	plainText = fmt.Sprintf(
-		"Project: %s\nDate: %s\nMessage Type: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nSending to: %s",
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink, destination,
+		"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
+		projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink,
 	)
 
 	htmlBody = fmt.Sprintf(
-		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p>`+
+		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
 			`<p><strong>Message Content:</strong></p>`+
 			`<pre>%s</pre>`+
-			`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`+
-			`<p><em>Sending to: %s</em></p>`,
+			`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
 		html.EscapeString(projectName),
 		html.EscapeString(projectDate),
 		html.EscapeString(messageType),
+		html.EscapeString(destination),
 		html.EscapeString(messageContent),
 		approveLink,
 		rejectLink,
-		html.EscapeString(destination),
 	)
 
 	return
