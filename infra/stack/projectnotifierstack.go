@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
@@ -34,6 +35,20 @@ func lambdaArchitecture() awslambda.Architecture {
 		return awslambda.Architecture_X86_64()
 	}
 	return awslambda.Architecture_ARM_64()
+}
+
+// lambdaAssetOptions returns asset options that force a new upload on every CI deploy.
+// When COMMIT_SHA is set (i.e. in GitHub Actions), CDK uses it as a custom hash so
+// CloudFormation always sees a changed S3 key and updates the Lambda code.
+// Locally (no COMMIT_SHA), CDK falls back to its default content-hash behavior.
+func lambdaAssetOptions() *awss3assets.AssetOptions {
+	if sha := os.Getenv("COMMIT_SHA"); sha != "" {
+		return &awss3assets.AssetOptions{
+			AssetHash:     jsii.String(sha),
+			AssetHashType: awscdk.AssetHashType_CUSTOM,
+		}
+	}
+	return nil
 }
 
 func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaStackProps) awscdk.Stack {
@@ -155,25 +170,18 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
-		logGroup := awslogs.NewLogGroup(stack, jsii.String(name+"LogGroup"), &awslogs.LogGroupProps{
-			LogGroupName:  jsii.String("/aws/lambda/" + kebabName + suffix),
-			Retention:     awslogs.RetentionDays_THREE_MONTHS,
-			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-		})
-
-		_ = logGroup
-
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
 			Code: awslambda.Code_FromAsset(
 				jsii.String("../lambda-build/"+lowerName),
-				nil,
+				lambdaAssetOptions(),
 			),
 			FunctionName: jsii.String(kebabName + suffix),
 			Architecture: lambdaArchitecture(),
 			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 			Environment:  sharedEnv,
+			LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 		})
 
 		lambdaFns[name] = fn
@@ -216,22 +224,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- Approval Callback Lambda (outside loop — needs API Gateway wiring) ---
 
-	approvalCallbackLogGroup := awslogs.NewLogGroup(stack, jsii.String("ApprovalCallbackLogGroup"), &awslogs.LogGroupProps{
-		LogGroupName:  jsii.String("/aws/lambda/approval-callback" + suffix),
-		Retention:     awslogs.RetentionDays_THREE_MONTHS,
-		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-	})
-
-	_ = approvalCallbackLogGroup
-
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), nil),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), lambdaAssetOptions()),
 		FunctionName: jsii.String("approval-callback" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
@@ -265,22 +266,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- SES Forwarder Lambda ---
 
-	sesForwarderLogGroup := awslogs.NewLogGroup(stack, jsii.String("SESForwarderLogGroup"), &awslogs.LogGroupProps{
-		LogGroupName:  jsii.String("/aws/lambda/ses-forwarder" + suffix),
-		Retention:     awslogs.RetentionDays_THREE_MONTHS,
-		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
-	})
-
-	_ = sesForwarderLogGroup
-
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), nil),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), lambdaAssetOptions()),
 		FunctionName: jsii.String("ses-forwarder" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment:  sharedEnv,
+		LogRetention: awslogs.RetentionDays_THREE_MONTHS,
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
