@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/email"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 )
@@ -21,8 +21,6 @@ func NewDLQNotifierUseCase(snsSrv snsservice.NotificationService) *DLQNotifierUs
 }
 
 func (u *DLQNotifierUseCase) Execute(ctx context.Context, errorInfo models.DLQNotifierInput) error {
-	subject := "NYC Cares Project Welcomer — Workflow Step Failed"
-
 	// Extract errorMessage from the Cause JSON blob if possible.
 	errorMessage := errorInfo.Cause
 	var cause struct {
@@ -32,16 +30,7 @@ func (u *DLQNotifierUseCase) Execute(ctx context.Context, errorInfo models.DLQNo
 		errorMessage = cause.ErrorMessage
 	}
 
-	plainText := fmt.Sprintf("Workflow step failed.\nStep: %s\nError: %s", errorInfo.FailedStep, errorMessage)
-
-	htmlBody := fmt.Sprintf(`<h2>Workflow Step Failed</h2>
-<table>
-  <tr><td><strong>Step</strong></td><td>%s</td></tr>
-  <tr><td><strong>Error</strong></td><td>%s</td></tr>
-</table>`,
-		html.EscapeString(errorInfo.FailedStep),
-		html.EscapeString(errorMessage),
-	)
+	subject, plainText, htmlBody := email.WorkflowFailed(errorInfo.FailedStep, errorMessage)
 
 	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {

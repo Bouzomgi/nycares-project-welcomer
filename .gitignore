@@ -11,6 +11,9 @@
 # Lambda build output
 lambda-build/
 
+# Local email preview output
+email-preview/
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -34,3 +37,6 @@ go.work.sum
 # .idea/
 # .vscode/
 **/config.yaml
+
+# macOS
+.DS_Store

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/email"
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
 	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 )
@@ -37,16 +38,9 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
-	plainText := fmt.Sprintf(
-		"Project: %s\nDate: %s\nMessage Type: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink,
-	)
-	htmlBody := fmt.Sprintf(
-		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s</p><p><strong>Message Content:</strong></p><pre>%s</pre><p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
-		projectName, projectDate, messageType, messageContent, approveLink, rejectLink,
-	)
+	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink)
 
-	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, "Project Message Approval")
+	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish approval notification: %w", err)
 	}
