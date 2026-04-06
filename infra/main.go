@@ -21,6 +21,14 @@ func main() {
 
 	suffix := os.Getenv("ENV_SUFFIX")
 
+	envName := "prod"
+	if suffix != "" {
+		envName = suffix[1:] // strip leading "-", e.g. "-ci" → "ci"
+	}
+
+	awscdk.Tags_Of(app).Add(jsii.String("Project"), jsii.String("nycares-project-welcomer"), nil)
+	awscdk.Tags_Of(app).Add(jsii.String("Environment"), jsii.String(envName), nil)
+
 	var mockServerUrl *string
 	if os.Getenv("DEPLOY_MOCKSERVER") == "true" {
 		_, url := stack.MockServerStack(app, "NYCaresMockServerStack"+suffix, &awscdk.StackProps{Env: env})
