@@ -8,7 +8,6 @@ Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP s
 |--------|------|------|---------|
 | `POST` | `/user/login` | none | Issues a session cookie |
 | `GET` | `/api/registrations/dashboard/upcoming/{userId}/{page}` | cookie | Returns upcoming projects |
-| `GET` | `/api/campaign/retrieve/{campaignId}` | cookie | Returns campaign details |
 | `GET` | `/api/messenger/channel/{channelId}/messages` | cookie | Returns channel messages |
 | `POST` | `/api/messenger/channel/{channelId}/messages/post` | cookie | Sends a message |
 | `POST` | `/api/messenger/create-pin-message/{campaignId}` | cookie | Pins a message |
