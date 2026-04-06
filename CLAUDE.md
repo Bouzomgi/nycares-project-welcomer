@@ -34,7 +34,7 @@ cd infra && cdk deploy
 
 ### Run mock server (local dev)
 
-The mock server at `internal/mockserver/` simulates the NYC Cares API. Used alongside LocalStack for local AWS services (S3, DynamoDB, SNS).
+The mock server at [`internal/mockserver/`](internal/mockserver/CLAUDE.md) simulates the NYC Cares API. Used alongside LocalStack for local AWS services (S3, DynamoDB, SNS).
 
 ## Architecture
 
