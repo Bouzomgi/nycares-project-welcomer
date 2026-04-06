@@ -4,7 +4,6 @@ type UpcomingSession struct {
 	Name               string  `json:"Name"`
 	FamilyFriendlyRole *string `json:"Family_Friendly_Role__c"`
 	SessionID          string  `json:"Session__c"`
-	RegistrationID     string  `json:"Registration_Id__tl"`
 	Status             string  `json:"Status__c"`
 	SessionStartDate   string  `json:"Session_Start_Date__c"`
 	SessionStartTime   string  `json:"Session_Start_Time__c"`

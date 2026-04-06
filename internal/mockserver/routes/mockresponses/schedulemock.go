@@ -38,7 +38,6 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 			Name:               p.Name,
 			FamilyFriendlyRole: nil,
 			SessionID:          p.Id,
-			RegistrationID:     p.CampaignId,
 			Status:             "Published",
 			SessionStartDate:   p.Date.Format("2006-01-02"),
 			SessionStartTime:   "10:00:00.000Z",
