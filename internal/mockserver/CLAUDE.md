@@ -7,8 +7,11 @@ Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP s
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/user/login` | none | Issues a session cookie |
-| `GET` | `/api/schedule/retrieve/{internalId}` | cookie | Returns project schedule |
-| `POST` | `/api/messages/send` | cookie | Accepts a message send |
+| `GET` | `/api/registrations/dashboard/upcoming/{userId}/{page}` | cookie | Returns upcoming projects |
+| `GET` | `/api/campaign/retrieve/{campaignId}` | cookie | Returns campaign details |
+| `GET` | `/api/messenger/channel/{channelId}/messages` | cookie | Returns channel messages |
+| `POST` | `/api/messenger/channel/{channelId}/messages/post` | cookie | Sends a message |
+| `POST` | `/api/messenger/create-pin-message/{campaignId}` | cookie | Pins a message |
 | `GET` | `/` | none | Health check |
 
 ## Stateless Project Injection
@@ -17,11 +20,11 @@ There is no shared state. Project data flows through the session cookie:
 
 1. **Login** — caller passes `mock_projects` form field: a base64-encoded JSON array of `{name, date, id, campaignId}` objects.
 2. **Cookie** — login sets `session: mock-session:<base64>` encoding that payload.
-3. **Schedule** — reads the cookie, decodes the projects, and builds the response from them.
+3. **Upcoming projects** — reads the cookie, decodes the projects, and builds the response from them.
 
-If `mock_projects` is omitted, schedule returns a single default project dated 6 days from now.
+If `mock_projects` is omitted, upcoming projects returns a single default project dated 6 days from now.
 
-**Date override**: set `NYCARES_CURRENT_DATE=YYYY-MM-DD` to shift what "now" means inside `MockScheduleResponse`.
+**Date override**: set `NYCARES_CURRENT_DATE=YYYY-MM-DD` to shift what "now" means inside `MockUpcomingResponse`.
 
 ## Package Layout
 
@@ -31,12 +34,12 @@ middleware/requirecookie.go    — 401 if no session cookie present
 routes/
   login.go                     — /user/login handler + cookie encoding
   admin.go                     — GetProjectsFromCookie helper (cookie → []ProjectConfig)
-  schedule.go                  — /api/schedule/retrieve/{id} handler
-  messages.go                  — /api/messages/send handler
+  upcomingprojects.go          — /api/registrations/dashboard/upcoming/{userId}/{page} handler
+  messages.go                  — send, pin, campaign, channel message handlers
   mockresponses/
-    schedulemock.go            — builds ScheduleResponse from []ProjectConfig
-    messagesmock.go            — builds message send response
-utils/utils.go                 — ValidateInternalID
+    schedulemock.go            — builds UpcomingResponse from []ProjectConfig
+    messagesmock.go            — builds message-related responses
+utils/utils.go                 — ValidateInternalID, ValidateUUID, NewUUID
 ```
 
 ## Adding a New Endpoint

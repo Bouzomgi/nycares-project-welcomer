@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/mockserver/utils"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/dto"
 )
 
@@ -23,50 +24,49 @@ func currentDate() time.Time {
 	return time.Now()
 }
 
-func MockScheduleResponse(projects []ProjectConfig) []dto.ScheduleResponse {
-	scheduleList := make(map[string]dto.Project)
-
+func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "a1Bxx0000001XYZAAB", CampaignId: "a1Bxx0000001XYZAAB"},
+			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "a1Hxx0000001XYZAAK", CampaignId: "a1Hxx0000001XYZAAK"},
 		}
 	}
 
+	sessions := make([]dto.UpcomingSession, 0, len(projects))
 	for _, p := range projects {
-		scheduleList[p.Id] = dto.Project{
-			Role:               "Volunteer",
+		sessions = append(sessions, dto.UpcomingSession{
+			Name:               p.Name,
 			FamilyFriendlyRole: nil,
-			Id:                 p.Id,
-			Status:             "Scheduled",
-			WebTitleFF:         p.Name,
-			StartDate:          p.Date.Format("2006-01-02"),
-			ActivityStartTime:  "09:00",
-			EndDate:            p.Date.Format("2006-01-02"),
-			ActivityEndTime:    "12:00",
-			CampaignId:         p.CampaignId,
-		}
+			SessionID:          p.Id,
+			Status:             "Published",
+			SessionStartDate:   p.Date.Format("2006-01-02"),
+			SessionStartTime:   "10:00:00.000Z",
+			SessionEndDate:     p.Date.Format("2006-01-02"),
+			SessionEndTime:     "12:00:00.000Z",
+			DatetimeState:      "upcoming",
+			AWSChimeChannelID:  utils.NewUUID(),
+			RegistrationStatus: "signed up",
+			IsTeamLeader:       true,
+		})
 	}
 
-	return []dto.ScheduleResponse{
+	return []dto.UpcomingResponse{
 		{
 			Success:          true,
-			Message:          "Mock schedule",
-			Command:          "GetSchedule",
-			IsUserTeamLeader: false,
-			UserSFID:         "005xx000001Sv6dAAC",
+			Data:             sessions,
+			Message:          "Retrieved dashboard upcoming campaign(s).",
+			Page:             "1",
+			Command:          "SessionActiveUpcoming",
+			IsUserTeamLeader: true,
+			UserSFID:         "003MOCK00000000001",
 			IsUserFlagged: dto.UserFlagged{
 				Deactivated: false,
 			},
+			IsVolunteer:            false,
 			UserFamilyFriendlyRole: nil,
-			OrientationURL:         "https://example.com/orientation",
-			VIFURL:                 "https://example.com/vif",
-			Data: dto.ScheduleData{
-				ScheduleList:         scheduleList,
-				UpcomingCount:        len(scheduleList),
-				PlusCount:            0,
-				ShowNewFunctionality: true,
-			},
+			UserAWSID:              "003Do00000MOCKIDAT",
+			OrientationURL:         "/sites/default/files/trainings/volunteer-orientation/index.html",
+			VIFURL:                 "/volunteer-information-form",
 		},
 	}
 }
