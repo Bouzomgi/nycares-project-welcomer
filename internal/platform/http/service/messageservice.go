@@ -14,57 +14,9 @@ import (
 )
 
 type MessageService interface {
-	GetProjectChannelId(ctx context.Context, projectId string) (string, error)
 	SendMessage(ctx context.Context, channelId, messageContent string) (string, error)
 	PinMessage(ctx context.Context, channelId, messageId string) error
 	SetCookies(cookies []*http.Cookie) error
-}
-
-func (s *HttpService) GetProjectChannelId(ctx context.Context, projectId string) (string, error) {
-
-	req, err := s.buildCampaignRequest(projectId)
-	if err != nil {
-		return "", fmt.Errorf("failed to build campaign request: %w", err)
-	}
-
-	resp, err := s.SendRequest(ctx, req)
-	if err != nil {
-		return "", fmt.Errorf("campaign request failed: %w", err)
-	}
-
-	if err := CheckResponse(resp); err != nil {
-		return "", fmt.Errorf("campaign request failed: %w", err)
-	}
-
-	body, err := s.ReadBody(resp)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var campaignResp dto.CampaignResponse
-	if err := json.Unmarshal(body, &campaignResp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal campaign response: %w", err)
-	}
-
-	if len(campaignResp) == 0 {
-		return "", fmt.Errorf("campaign response was empty")
-	}
-
-	channelId := campaignResp[0].Campaign.AWSChimeChannelID
-
-	return channelId, nil
-}
-
-func (s *HttpService) buildCampaignRequest(projectId string) (*http.Request, error) {
-	getCampaignBaseUrl := endpoints.JoinPaths(s.baseUrl, endpoints.GetCampaignPath)
-	urlStr := fmt.Sprintf("%s/%s", getCampaignBaseUrl, projectId)
-
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
 }
 
 func (s *HttpService) SendMessage(ctx context.Context, channelId, messageContent string) (string, error) {
@@ -89,7 +41,7 @@ func (s *HttpService) SendMessage(ctx context.Context, channelId, messageContent
 
 	var sendMessageResp dto.SendMessageResponse
 	if err := json.Unmarshal(body, &sendMessageResp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal campaign response: %w", err)
+		return "", fmt.Errorf("failed to unmarshal send message response: %w", err)
 	}
 
 	messageId := sendMessageResp.Data.MessageId
