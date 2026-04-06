@@ -28,7 +28,7 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "a1Hxx0000001XYZAAK", CampaignId: "a1Hxx0000001XYZAAK"},
+			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "MOCKSESSION0000001A", CampaignId: "MOCKSESSION0000001A"},
 		}
 	}
 
@@ -58,13 +58,13 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 			Page:             "1",
 			Command:          "SessionActiveUpcoming",
 			IsUserTeamLeader: true,
-			UserSFID:         "003MOCK00000000001",
+			UserSFID:         "MOCKSFID0000000001A",
 			IsUserFlagged: dto.UserFlagged{
 				Deactivated: false,
 			},
 			IsVolunteer:            false,
 			UserFamilyFriendlyRole: nil,
-			UserAWSID:              "003Do00000MOCKIDAT",
+			UserAWSID:              "MOCKAWSID0000000001",
 			OrientationURL:         "/sites/default/files/trainings/volunteer-orientation/index.html",
 			VIFURL:                 "/volunteer-information-form",
 		},
