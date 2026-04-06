@@ -28,7 +28,7 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "MOCKSESSION000001", CampaignId: "MOCKSESSION000001"},
+			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "MOCKSESSION0000001", CampaignId: "MOCKSESSION0000001"},
 		}
 	}
 
