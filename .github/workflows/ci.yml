@@ -84,7 +84,11 @@ jobs:
         run: |
           cd infra
           go mod download
-          cdk bootstrap aws://${{ steps.account.outputs.id }}/us-east-1 || echo "CDK bootstrap failed (stack may need manual recovery) — continuing with existing bootstrap resources"
+          STACK_STATUS=$(aws cloudformation describe-stacks --stack-name CDKToolkit \
+            --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          if [ "$STACK_STATUS" = "DOES_NOT_EXIST" ]; then
+            cdk bootstrap aws://${{ steps.account.outputs.id }}/us-east-1
+          fi
           cdk deploy --require-approval never --all
 
       - name: Seed S3
