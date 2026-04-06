@@ -36,7 +36,7 @@ func (sc *scenarioContext) theNotificationSystemIsReady() error {
 func (sc *scenarioContext) aProjectScheduledDaysFromNow(name string, days int) error {
 	sc.projectDate = dateOffset(sc.today, days)
 	sc.mockProjects = []projectInput{
-		{Name: name, Date: sc.projectDate, Id: testProjectId, CampaignId: testCampaignId},
+		{Name: name, Date: sc.projectDate, Id: testProjectId},
 	}
 
 	return sc.tc.deleteNotification(name, sc.projectDate)
