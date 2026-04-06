@@ -39,6 +39,6 @@ func RegisterLoginRoute(r *mux.Router) {
 
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, `<!DOCTYPE html><html><body><div data-endpoint="api/schedule/retrieve/003MOCK00000000001"></div></body></html>`)
+		fmt.Fprintln(w, `<!DOCTYPE html><html><body><span id="user-sf-id">003MOCK00000000001</span></body></html>`)
 	}).Methods("POST")
 }
