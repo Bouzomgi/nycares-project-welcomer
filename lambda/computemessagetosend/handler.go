@@ -40,6 +40,7 @@ func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.Compute
 
 	message := models.BuildMessage(messageType.String(), messageRef)
 	outputNotification := models.ConvertDomainProjectNotification(existingNotification)
+	outputNotification.ChannelId = input.Project.ChannelId
 
 	output := models.ComputeMessageOutput{
 		Auth:                        input.Auth,

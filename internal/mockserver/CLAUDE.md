@@ -8,7 +8,6 @@ Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP s
 |--------|------|------|---------|
 | `POST` | `/user/login` | none | Issues a session cookie |
 | `GET` | `/api/registrations/dashboard/upcoming/{userId}/{page}` | cookie | Returns upcoming projects |
-| `GET` | `/api/campaign/retrieve/{campaignId}` | cookie | Returns campaign details |
 | `GET` | `/api/messenger/channel/{channelId}/messages` | cookie | Returns channel messages |
 | `POST` | `/api/messenger/channel/{channelId}/messages/post` | cookie | Sends a message |
 | `POST` | `/api/messenger/create-pin-message/{campaignId}` | cookie | Pins a message |
@@ -18,7 +17,7 @@ Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP s
 
 There is no shared state. Project data flows through the session cookie:
 
-1. **Login** — caller passes `mock_projects` form field: a base64-encoded JSON array of `{name, date, id, campaignId}` objects.
+1. **Login** — caller passes `mock_projects` form field: a base64-encoded JSON array of `{name, date, id}` objects.
 2. **Cookie** — login sets `session: mock-session:<base64>` encoding that payload.
 3. **Upcoming projects** — reads the cookie, decodes the projects, and builds the response from them.
 
@@ -35,7 +34,7 @@ routes/
   login.go                     — /user/login handler + cookie encoding
   admin.go                     — GetProjectsFromCookie helper (cookie → []ProjectConfig)
   upcomingprojects.go          — /api/registrations/dashboard/upcoming/{userId}/{page} handler
-  messages.go                  — send, pin, campaign, channel message handlers
+  messages.go                  — send, pin, channel message handlers
   mockresponses/
     schedulemock.go            — builds UpcomingResponse from []ProjectConfig
     messagesmock.go            — builds message-related responses

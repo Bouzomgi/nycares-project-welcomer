@@ -17,28 +17,9 @@ var lastSentMessage string
 
 // Master function to register all MessageService mock routes
 func RegisterMessageRoutes(r *mux.Router) {
-	registerCampaignRoute(r)
 	registerChannelMessagesRoute(r)
 	registerSendMessageRoute(r)
 	registerPinMessageRoute(r)
-}
-
-// --- GET /campaign/{projectId} ---
-func registerCampaignRoute(r *mux.Router) {
-	r.HandleFunc("/api/campaign/retrieve/{campaignId}", middleware.RequireCookieMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		campaignId := vars["campaignId"]
-
-		if !utils.ValidateInternalID(campaignId) {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		resp := mockresponses.MockCampaignResponse()
-
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
-	})).Methods("GET")
 }
 
 // --- GET /messenger/channel/{channelId}/messages ---
@@ -60,7 +41,7 @@ func registerChannelMessagesRoute(r *mux.Router) {
 	})).Methods("GET")
 }
 
-// --- POST /api/messenger/channel/{channelId}/message/post ---
+// --- POST /api/messenger/channel/{channelId}/messages/post ---
 func registerSendMessageRoute(r *mux.Router) {
 	r.HandleFunc("/api/messenger/channel/{channelId}/messages/post", middleware.RequireCookieMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

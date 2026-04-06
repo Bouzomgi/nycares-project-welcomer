@@ -1,5 +1,22 @@
 package dto
 
+import (
+	"fmt"
+
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
+)
+
+type UserFlagged struct {
+	Deactivated       bool `json:"Deactivated"`
+	DoubleDeactivated bool `json:"DoubleDeactivated"`
+	NeedsOrientation  bool `json:"NeedsOrientation"`
+	NeedsVIF          bool `json:"NeedsVIF"`
+	YesToConviction   bool `json:"YesToConviction"`
+	Ineligible        bool `json:"Ineligible"`
+	FamilyDeactivated bool `json:"FamilyDeactivated"`
+}
+
 type UpcomingSession struct {
 	Name               string  `json:"Name"`
 	FamilyFriendlyRole *string `json:"Family_Friendly_Role__c"`
@@ -29,4 +46,21 @@ type UpcomingResponse struct {
 	UserAWSID              string            `json:"user_aws_id"`
 	OrientationURL         string            `json:"orientation_url"`
 	VIFURL                 string            `json:"vif_url"`
+}
+
+func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
+	var projects []domain.Project
+	for _, s := range ur.Data {
+		projectDate, err := utils.StringToDate(s.SessionStartDate)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse date from upcoming projects response")
+		}
+		projects = append(projects, domain.Project{
+			Name:      s.Name,
+			Date:      projectDate,
+			Id:        s.SessionID,
+			ChannelId: s.AWSChimeChannelID,
+		})
+	}
+	return projects, nil
 }
