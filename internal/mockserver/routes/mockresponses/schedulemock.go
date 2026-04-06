@@ -9,10 +9,9 @@ import (
 )
 
 type ProjectConfig struct {
-	Name       string
-	Date       time.Time
-	Id         string
-	CampaignId string
+	Name string
+	Date time.Time
+	Id   string
 }
 
 func currentDate() time.Time {
@@ -28,7 +27,7 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	if projects == nil {
 		now := currentDate()
 		projects = []ProjectConfig{
-			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "MOCKSESSION0000001", CampaignId: "MOCKSESSION0000001"},
+			{Name: "Test Project", Date: now.AddDate(0, 0, 6), Id: "MOCKSESSION0000001"},
 		}
 	}
 
