@@ -23,7 +23,7 @@ func MockServerStack(scope constructs.Construct, id string, props *awscdk.StackP
 		Handler:      jsii.String("bootstrap"),
 		Architecture: lambdaArchitecture(),
 		FunctionName: jsii.String("mock-server" + suffix),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/mockserver"), lambdaAssetOptions()),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/mockserver"), lambdaAssetOptions("mockserver")),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		LogGroup:     lambdaLogGroup(stack, "MockServerLogGroup", "/aws/lambda/mock-server"+suffix),
 	})
