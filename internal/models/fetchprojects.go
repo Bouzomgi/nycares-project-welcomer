@@ -16,9 +16,10 @@ type FetchProjectsOutput struct {
 }
 
 type project struct {
-	Name string `json:"name"`
-	Date string `json:"date"`
-	Id   string `json:"id"`
+	Name      string `json:"name"`
+	Date      string `json:"date"`
+	Id        string `json:"id"`
+	ChannelId string `json:"channelId"`
 }
 
 // MODEL -> DOMAIN
@@ -30,9 +31,10 @@ func BuildDomainProject(p project) (domain.Project, error) {
 	}
 
 	domainProject := domain.Project{
-		Name: p.Name,
-		Date: projectDate,
-		Id:   p.Id,
+		Name:      p.Name,
+		Date:      projectDate,
+		Id:        p.Id,
+		ChannelId: p.ChannelId,
 	}
 
 	return domainProject, nil
@@ -41,9 +43,10 @@ func BuildDomainProject(p project) (domain.Project, error) {
 // DOMAIN -> MODEL
 func buildModelProject(p domain.Project) project {
 	return project{
-		Name: p.Name,
-		Date: utils.DateToString(p.Date),
-		Id:   p.Id,
+		Name:      p.Name,
+		Date:      utils.DateToString(p.Date),
+		Id:        p.Id,
+		ChannelId: p.ChannelId,
 	}
 }
 

@@ -20,16 +20,11 @@ func NewSendAndPinMessageUseCase(s3Service s3service.ContentService, httpService
 	}
 }
 
-func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth, projectId, messageRef string) error {
+func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth, projectId, channelId, messageRef string) error {
 
 	u.httpService.SetCookies(auth.Cookies)
 
 	messageContent, err := u.s3Service.GetMessageContent(ctx, messageRef)
-	if err != nil {
-		return err
-	}
-
-	channelId, err := u.httpService.GetProjectChannelId(ctx, projectId)
 	if err != nil {
 		return err
 	}

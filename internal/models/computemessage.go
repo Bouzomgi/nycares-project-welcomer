@@ -24,6 +24,7 @@ type projectNotification struct {
 	Name             string `json:"projectName"`
 	Date             string `json:"projectDate"`
 	Id               string `json:"projectId"`
+	ChannelId        string `json:"channelId"`
 	HasSentWelcome   bool   `json:"hasSentWelcome"`
 	HasSentReminder  bool   `json:"hasSentReminder"`
 	ShouldStopNotify bool   `json:"shouldStopNotify"`
@@ -75,9 +76,10 @@ func ConvertProjectNotificationToDomainProject(pn projectNotification) (domain.P
 	}
 
 	project := domain.Project{
-		Name: pn.Name,
-		Date: projectDate,
-		Id:   pn.Id,
+		Name:      pn.Name,
+		Date:      projectDate,
+		Id:        pn.Id,
+		ChannelId: pn.ChannelId,
 	}
 
 	return project, nil

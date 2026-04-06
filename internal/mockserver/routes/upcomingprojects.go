@@ -10,12 +10,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func RegisterScheduleRoute(r *mux.Router) {
-	r.HandleFunc("/api/schedule/retrieve/{internalId}", middleware.RequireCookieMiddleware(func(w http.ResponseWriter, r *http.Request) {
+func RegisterUpcomingProjectsRoute(r *mux.Router) {
+	r.HandleFunc("/api/registrations/dashboard/upcoming/{userId}/{page}", middleware.RequireCookieMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		internalId := vars["internalId"]
+		userId := vars["userId"]
 
-		if !utils.ValidateInternalID(internalId) {
+		if !utils.ValidateInternalID(userId) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -26,7 +26,8 @@ func RegisterScheduleRoute(r *mux.Router) {
 			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 			return
 		}
-		resp := mockresponses.MockScheduleResponse(projects)
+
+		resp := mockresponses.MockUpcomingResponse(projects)
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(resp)

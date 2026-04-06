@@ -39,11 +39,6 @@ func newRand() *rand.Rand {
 	return rand.New(rand.NewSource(seed))
 }
 
-func GenerateRandomCampaignID() string {
-	r := newRand()
-	return "701PI0000" + fmt.Sprintf("%05d", r.Intn(100000))
-}
-
 func NewUUID() string {
 	r := newRand()
 

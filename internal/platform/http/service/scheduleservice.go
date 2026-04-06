@@ -11,28 +11,28 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/dto"
 )
 
-type ScheduleService interface {
-	GetSchedule(ctx context.Context, internalID string) ([]domain.Project, error)
+type UpcomingProjectsService interface {
+	GetUpcomingProjects(ctx context.Context, userSFID string) ([]domain.Project, error)
 	SetCookies(cookies []*http.Cookie) error
 }
 
-func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]domain.Project, error) {
-	if internalID == "" {
-		return nil, fmt.Errorf("internalID is required")
+func (s *HttpService) GetUpcomingProjects(ctx context.Context, userSFID string) ([]domain.Project, error) {
+	if userSFID == "" {
+		return nil, fmt.Errorf("userSFID is required")
 	}
 
-	req, err := s.buildScheduleRequest(internalID)
+	req, err := s.buildUpcomingProjectsRequest(userSFID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build schedule request: %w", err)
+		return nil, fmt.Errorf("failed to build upcoming projects request: %w", err)
 	}
 
 	resp, err := s.SendRequest(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("schedule request failed: %w", err)
+		return nil, fmt.Errorf("upcoming projects request failed: %w", err)
 	}
 
 	if err := CheckResponse(resp); err != nil {
-		return nil, fmt.Errorf("schedule request failed: %w", err)
+		return nil, fmt.Errorf("upcoming projects request failed: %w", err)
 	}
 
 	body, err := s.ReadBody(resp)
@@ -40,16 +40,16 @@ func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]dom
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var schedResp []dto.ScheduleResponse
-	if err := json.Unmarshal(body, &schedResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal schedule response: %w", err)
+	var upcomingResp []dto.UpcomingResponse
+	if err := json.Unmarshal(body, &upcomingResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal upcoming projects response: %w", err)
 	}
 
-	if len(schedResp) == 0 {
-		return nil, fmt.Errorf("schedule response was empty")
+	if len(upcomingResp) == 0 {
+		return nil, fmt.Errorf("upcoming projects response was empty")
 	}
 
-	projects, err := schedResp[0].ToDomainProjects()
+	projects, err := upcomingResp[0].ToDomainProjects()
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +57,8 @@ func (s *HttpService) GetSchedule(ctx context.Context, internalID string) ([]dom
 	return projects, nil
 }
 
-func (s *HttpService) buildScheduleRequest(internalId string) (*http.Request, error) {
-	getScheduleBaseUrl := endpoints.JoinPaths(s.baseUrl, endpoints.GetSchedulePath)
-	urlStr := fmt.Sprintf("%s/%s", getScheduleBaseUrl, internalId)
+func (s *HttpService) buildUpcomingProjectsRequest(userSFID string) (*http.Request, error) {
+	urlStr := fmt.Sprintf("%s/%s/1", endpoints.JoinPaths(s.baseUrl, endpoints.GetUpcomingProjectsPath), userSFID)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {

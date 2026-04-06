@@ -10,7 +10,7 @@ import (
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
 )
 
-// AuthFailureException is returned when the schedule request gets a 401/403,
+// AuthFailureException is returned when the upcoming projects request gets a 401/403,
 // indicating expired auth cookies. Step Functions catches this by type name
 // to route back to Login for a fresh authentication attempt.
 type AuthFailureException struct{}
@@ -18,22 +18,22 @@ type AuthFailureException struct{}
 func (e *AuthFailureException) Error() string { return "auth failure: cookies may be expired" }
 
 type FetchProjectsUseCase struct {
-	scheduleSvc httpservice.ScheduleService
+	upcomingSvc httpservice.UpcomingProjectsService
 }
 
-func NewFetchProjectsUseCase(scheduleSvc httpservice.ScheduleService) *FetchProjectsUseCase {
-	return &FetchProjectsUseCase{scheduleSvc: scheduleSvc}
+func NewFetchProjectsUseCase(upcomingSvc httpservice.UpcomingProjectsService) *FetchProjectsUseCase {
+	return &FetchProjectsUseCase{upcomingSvc: upcomingSvc}
 }
 
-func (u *FetchProjectsUseCase) Execute(ctx context.Context, auth domain.Auth, internalID string) ([]domain.Project, error) {
+func (u *FetchProjectsUseCase) Execute(ctx context.Context, auth domain.Auth, userSFID string) ([]domain.Project, error) {
 
-	u.scheduleSvc.SetCookies(auth.Cookies)
-	slog.Info("fetchprojects invoking schedule", "cookieCount", len(auth.Cookies))
-	projects, err := u.scheduleSvc.GetSchedule(ctx, internalID)
+	u.upcomingSvc.SetCookies(auth.Cookies)
+	slog.Info("fetchprojects invoking upcoming projects", "cookieCount", len(auth.Cookies))
+	projects, err := u.upcomingSvc.GetUpcomingProjects(ctx, userSFID)
 	if err != nil {
 		var httpErr *httpservice.HTTPError
 		if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusUnauthorized || httpErr.StatusCode == http.StatusForbidden) {
-			slog.Error("schedule request auth failure", "statusCode", httpErr.StatusCode, "url", httpErr.URL, "body", string(httpErr.Body))
+			slog.Error("upcoming projects request auth failure", "statusCode", httpErr.StatusCode, "url", httpErr.URL, "body", string(httpErr.Body))
 			return nil, &AuthFailureException{}
 		}
 		return nil, err
