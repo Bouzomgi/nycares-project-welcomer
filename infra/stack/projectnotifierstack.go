@@ -40,11 +40,17 @@ func lambdaArchitecture() awslambda.Architecture {
 // lambdaAssetOptions returns asset options that force a new upload on every CI deploy.
 // When COMMIT_SHA is set (i.e. in GitHub Actions), CDK uses it as a custom hash so
 // CloudFormation always sees a changed S3 key and updates the Lambda code.
+// The name suffix makes each lambda's hash unique so CDK does not deduplicate
+// different binaries onto the same S3 asset.
 // Locally (no COMMIT_SHA), CDK falls back to its default content-hash behavior.
-func lambdaAssetOptions() *awss3assets.AssetOptions {
+func lambdaAssetOptions(name ...string) *awss3assets.AssetOptions {
 	if sha := os.Getenv("COMMIT_SHA"); sha != "" {
+		hash := sha
+		if len(name) > 0 && name[0] != "" {
+			hash = sha + "-" + name[0]
+		}
 		return &awss3assets.AssetOptions{
-			AssetHash:     jsii.String(sha),
+			AssetHash:     jsii.String(hash),
 			AssetHashType: awscdk.AssetHashType_CUSTOM,
 		}
 	}
@@ -182,7 +188,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			Handler: jsii.String("bootstrap"),
 			Code: awslambda.Code_FromAsset(
 				jsii.String("../lambda-build/"+lowerName),
-				lambdaAssetOptions(),
+				lambdaAssetOptions(lowerName),
 			),
 			FunctionName: jsii.String(kebabName + suffix),
 			Architecture: lambdaArchitecture(),
@@ -234,7 +240,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	approvalCallbackFn := awslambda.NewFunction(stack, jsii.String("ApprovalCallback"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), lambdaAssetOptions()),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/approvalcallback"), lambdaAssetOptions("approvalcallback")),
 		FunctionName: jsii.String("approval-callback" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
@@ -276,7 +282,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
 		Handler:      jsii.String("bootstrap"),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), lambdaAssetOptions()),
+		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), lambdaAssetOptions("sesforwarder")),
 		FunctionName: jsii.String("ses-forwarder" + suffix),
 		Architecture: lambdaArchitecture(),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
