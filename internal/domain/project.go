@@ -3,9 +3,10 @@ package domain
 import "time"
 
 type Project struct {
-	Name      string
-	Date      time.Time
-	Id        string
-	ChannelId string
-	Status    string
+	Name         string
+	Date         time.Time
+	Id           string
+	ChannelId    string
+	Status       string
+	IsTeamLeader bool
 }

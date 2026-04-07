@@ -33,7 +33,7 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	}
 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	messageType, err := computeNotificationType(now, project.Date, project.Status, existingNotification)
+	messageType, err := computeNotificationType(now, project.Date, project.Status, project.IsTeamLeader, existingNotification)
 	if err != nil {
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
@@ -52,6 +52,12 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	}
 	return *existingNotification, messageType, s3MessageRef, nil
 }
+
+// NotTeamLeader is returned when the authenticated user is not the team leader for the project.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type NotTeamLeader struct{}
+
+func (e *NotTeamLeader) Error() string { return "user is not the team leader for this project" }
 
 // ProjectCancelled is returned when the project status is Cancelled.
 // Step Functions catches this by type name to route to EndProjectIteration.
@@ -83,7 +89,11 @@ type NotificationsDisabled struct{}
 
 func (e *NotificationsDisabled) Error() string { return "notifications are disabled for this project" }
 
-func computeNotificationType(now, projectDate time.Time, status string, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+func computeNotificationType(now, projectDate time.Time, status string, isTeamLeader bool, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+	if !isTeamLeader {
+		return domain.Welcome, &NotTeamLeader{}
+	}
+
 	if status == "Canceled" {
 		return domain.Welcome, &ProjectCancelled{}
 	}

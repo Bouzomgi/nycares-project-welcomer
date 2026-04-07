@@ -57,11 +57,12 @@ func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
 			return nil, fmt.Errorf("could not parse date from upcoming projects response")
 		}
 		projects = append(projects, domain.Project{
-			Name:      s.PublicSessionName,
-			Date:      projectDate,
-			Id:        s.SessionID,
-			ChannelId: s.AWSChimeChannelID,
-			Status:    s.Status,
+			Name:         s.PublicSessionName,
+			Date:         projectDate,
+			Id:           s.SessionID,
+			ChannelId:    s.AWSChimeChannelID,
+			Status:       s.Status,
+			IsTeamLeader: s.IsTeamLeader,
 		})
 	}
 	return projects, nil
