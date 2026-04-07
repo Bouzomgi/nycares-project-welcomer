@@ -20,14 +20,13 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("%s %s returned %d %s", e.Method, e.URL, e.StatusCode, e.Status)
 }
 
-// IsSuccess checks if the response status code indicates success
-func IsSuccess(resp *http.Response) bool {
+func isSuccess(resp *http.Response) bool {
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }
 
 // CheckResponse creates an error from an unsuccessful response
 func CheckResponse(resp *http.Response) error {
-	if IsSuccess(resp) {
+	if isSuccess(resp) {
 		return nil
 	}
 
