@@ -19,6 +19,7 @@ type UserFlagged struct {
 
 type UpcomingSession struct {
 	Name               string  `json:"Name"`
+	PublicSessionName  string  `json:"Public_Session_Name__c"`
 	FamilyFriendlyRole *string `json:"Family_Friendly_Role__c"`
 	SessionID          string  `json:"Session__c"`
 	Status             string  `json:"Status__c"`
@@ -56,7 +57,7 @@ func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
 			return nil, fmt.Errorf("could not parse date from upcoming projects response")
 		}
 		projects = append(projects, domain.Project{
-			Name:      s.Name,
+			Name:      s.PublicSessionName,
 			Date:      projectDate,
 			Id:        s.SessionID,
 			ChannelId: s.AWSChimeChannelID,
