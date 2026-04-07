@@ -35,6 +35,7 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	for _, p := range projects {
 		sessions = append(sessions, dto.UpcomingSession{
 			Name:               p.Name,
+			PublicSessionName:  p.Name,
 			FamilyFriendlyRole: nil,
 			SessionID:          p.Id,
 			Status:             "Published",
