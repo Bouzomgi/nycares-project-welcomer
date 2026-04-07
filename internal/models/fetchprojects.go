@@ -20,6 +20,7 @@ type project struct {
 	Date      string `json:"date"`
 	Id        string `json:"id"`
 	ChannelId string `json:"channelId"`
+	Status    string `json:"status"`
 }
 
 // MODEL -> DOMAIN
@@ -35,6 +36,7 @@ func BuildDomainProject(p project) (domain.Project, error) {
 		Date:      projectDate,
 		Id:        p.Id,
 		ChannelId: p.ChannelId,
+		Status:    p.Status,
 	}
 
 	return domainProject, nil
@@ -47,6 +49,7 @@ func buildModelProject(p domain.Project) project {
 		Date:      utils.DateToString(p.Date),
 		Id:        p.Id,
 		ChannelId: p.ChannelId,
+		Status:    p.Status,
 	}
 }
 

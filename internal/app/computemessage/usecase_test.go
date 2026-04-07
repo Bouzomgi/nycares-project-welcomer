@@ -139,10 +139,17 @@ func TestComputeNotificationType(t *testing.T) {
 	tests := []struct {
 		name        string
 		now         time.Time
+		status      string
 		existing    *domain.ProjectNotification
 		wantType    domain.NotificationType
 		wantErrType error
 	}{
+		{
+			name:        "project is cancelled",
+			now:         projectDate.AddDate(0, 0, -5),
+			status:      "Cancelled",
+			wantErrType: &ProjectCancelled{},
+		},
 		{
 			name:        "project date has passed",
 			now:         projectDate,
@@ -204,7 +211,7 @@ func TestComputeNotificationType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotType, err := computeNotificationType(tt.now, projectDate, tt.existing)
+			gotType, err := computeNotificationType(tt.now, projectDate, tt.status, tt.existing)
 
 			if tt.wantErrType != nil {
 				if err == nil {

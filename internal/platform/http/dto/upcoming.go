@@ -61,6 +61,7 @@ func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
 			Date:      projectDate,
 			Id:        s.SessionID,
 			ChannelId: s.AWSChimeChannelID,
+			Status:    s.Status,
 		})
 	}
 	return projects, nil
