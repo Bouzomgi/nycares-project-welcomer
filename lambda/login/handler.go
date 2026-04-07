@@ -27,7 +27,7 @@ func (h *LoginHandler) Handle(ctx context.Context, input models.LoginInput) (mod
 	var execInput struct {
 		MockProjects json.RawMessage `json:"mockProjects,omitempty"`
 	}
-	json.Unmarshal(input.Context, &execInput)
+	_ = json.Unmarshal(input.Context, &execInput)
 
 	creds := domain.Credentials{
 		Username:         h.cfg.Account.Username,

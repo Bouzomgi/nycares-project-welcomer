@@ -40,16 +40,22 @@ The mock server at [`internal/mockserver/`](internal/mockserver/CLAUDE.md) simul
 
 ### Workflow
 
-A Step Functions state machine orchestrates 8 Lambda functions per project:
+A Step Functions state machine orchestrates 10 Lambda functions. Two run once per execution at the top level; six run per project inside a Map iterator:
 
+**Top-level (once per execution):**
 1. **Login** → authenticate with NYC Cares API
 2. **FetchProjects** → get upcoming projects
+
+**Per-project (Map iterator):**
 3. **ComputeMessageToSend** → decide welcome vs reminder (7+ days = welcome, 2+ days = reminder)
-4. **RequestApprovalToSend** → SNS notification with `waitForTaskToken` callback
+4. **RequestApprovalToSend** → invoke Lambda that publishes to SNS; state machine pauses via `waitForTaskToken` callback
 5. **SendAndPinMessage** → post message to project channel
 6. **RecordMessage** → update DynamoDB tracking
 7. **NotifyCompletion** → SNS success notification
-8. **DLQNotifier** → error handler (catch blocks route here)
+8. **ProjectDLQNotifier** → error handler; invoked from catch blocks in the Map iterator (not a sequential step)
+
+**Top-level error handler:**
+- **DLQNotifier** → invoked from catch blocks at the top-level execution scope
 
 Two additional Lambdas support the workflow outside the state machine:
 

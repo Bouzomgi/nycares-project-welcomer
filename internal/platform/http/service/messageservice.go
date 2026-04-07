@@ -15,7 +15,7 @@ import (
 
 type MessageService interface {
 	SendMessage(ctx context.Context, channelId, messageContent string) (string, error)
-	PinMessage(ctx context.Context, channelId, messageId string) error
+	PinMessage(ctx context.Context, campaignId, messageId string) error
 	SetCookies(cookies []*http.Cookie) error
 }
 
@@ -75,8 +75,8 @@ func (s *HttpService) buildSendMessageRequest(channelId, messageContent string) 
 
 ///////
 
-func (s *HttpService) PinMessage(ctx context.Context, channelId, messageId string) error {
-	req, err := s.buildPinMessageRequest(channelId, messageId)
+func (s *HttpService) PinMessage(ctx context.Context, campaignId, messageId string) error {
+	req, err := s.buildPinMessageRequest(campaignId, messageId)
 	if err != nil {
 		return fmt.Errorf("failed to build pin message request: %w", err)
 	}
@@ -93,7 +93,7 @@ func (s *HttpService) PinMessage(ctx context.Context, channelId, messageId strin
 	return nil
 }
 
-func (s *HttpService) buildPinMessageRequest(channelId, messageId string) (*http.Request, error) {
+func (s *HttpService) buildPinMessageRequest(campaignId, messageId string) (*http.Request, error) {
 
 	body := map[string]string{
 		"MessageId": messageId,
@@ -104,7 +104,7 @@ func (s *HttpService) buildPinMessageRequest(channelId, messageId string) (*http
 		return nil, err
 	}
 
-	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/create-pin-message/", channelId)
+	urlStr := endpoints.JoinPaths(s.baseUrl, "/api/messenger/create-pin-message/", campaignId)
 
 	req, err := http.NewRequest(
 		"POST",
