@@ -94,7 +94,7 @@ jobs:
       - name: Seed S3
         env:
           S3_BUCKET_NAME: nycares-project-welcomer-messages-ci
-        run: FILES_DIR=seed/s3Items bash seed/seed_s3.sh
+        run: S3_FILES_DIR=seed/s3Items bash seed/seed_localstack.sh
 
       - name: Get MockServer URL
         id: env-outputs

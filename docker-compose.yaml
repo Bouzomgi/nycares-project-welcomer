@@ -49,6 +49,23 @@ services:
       - ./lambda-build:/output
     command: cp -r /build/. /output/
 
+  seed-localstack:
+    image: amazon/aws-cli:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - localstack-network
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+    volumes:
+      - ./seed:/seed
+    entrypoint: /bin/sh
+    command: /seed/seed_localstack.sh
+
   deploy-cdk:
     build: ./infra
     depends_on:
@@ -58,6 +75,8 @@ services:
         condition: service_completed_successfully
       mockserver:
         condition: service_healthy
+      seed-localstack:
+        condition: service_completed_successfully
     networks:
       - localstack-network
     volumes:
@@ -85,23 +104,6 @@ services:
     extra_hosts:
       - "cdk-hnb659fds-assets-000000000000-us-east-1.s3.localstack:10.5.0.5"
 
-  seed-s3:
-    image: amazon/aws-cli:latest
-    depends_on:
-      deploy-cdk:
-        condition: service_completed_successfully
-    networks:
-      - localstack-network
-    volumes:
-      - ./seed:/seed
-    environment:
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - AWS_ENDPOINT_URL=http://localstack:4566
-    entrypoint: /bin/sh
-    command: >
-      -c "FILES_DIR=/seed/s3Items /seed/seed_s3.sh"
 
 volumes:
   go-mod-cache:
