@@ -12,9 +12,10 @@ import (
 )
 
 type projectInput struct {
-	Name string `json:"name"`
-	Date string `json:"date"`
-	Id   string `json:"id"`
+	Name   string `json:"name"`
+	Date   string `json:"date"`
+	Id     string `json:"id"`
+	Status string `json:"status"`
 }
 
 func GetProjectsFromCookie(r *http.Request) ([]mockresponses.ProjectConfig, error) {
@@ -38,9 +39,10 @@ func GetProjectsFromCookie(r *http.Request) ([]mockresponses.ProjectConfig, erro
 			return nil, fmt.Errorf("invalid date %q: %w", p.Date, err)
 		}
 		projects = append(projects, mockresponses.ProjectConfig{
-			Name: p.Name,
-			Date: date,
-			Id:   p.Id,
+			Name:   p.Name,
+			Date:   date,
+			Id:     p.Id,
+			Status: p.Status,
 		})
 	}
 	return projects, nil

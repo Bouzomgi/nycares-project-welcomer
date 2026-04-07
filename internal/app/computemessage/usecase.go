@@ -33,7 +33,7 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	}
 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	messageType, err := computeNotificationType(now, project.Date, existingNotification)
+	messageType, err := computeNotificationType(now, project.Date, project.Status, existingNotification)
 	if err != nil {
 		return domain.ProjectNotification{}, domain.Welcome, "", err
 	}
@@ -52,6 +52,12 @@ func (u *ComputeMessageUseCase) Execute(ctx context.Context, messageBucketName s
 	}
 	return *existingNotification, messageType, s3MessageRef, nil
 }
+
+// ProjectCancelled is returned when the project status is Cancelled.
+// Step Functions catches this by type name to route to EndProjectIteration.
+type ProjectCancelled struct{}
+
+func (e *ProjectCancelled) Error() string { return "project is cancelled" }
 
 // ProjectTooFar is returned when the project is too far in the future for any notification.
 // Step Functions catches this by type name to route to EndProjectIteration.
@@ -77,7 +83,11 @@ type NotificationsDisabled struct{}
 
 func (e *NotificationsDisabled) Error() string { return "notifications are disabled for this project" }
 
-func computeNotificationType(now, projectDate time.Time, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+func computeNotificationType(now, projectDate time.Time, status string, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
+	if status == "Canceled" {
+		return domain.Welcome, &ProjectCancelled{}
+	}
+
 	if !now.Before(projectDate) {
 		return domain.Welcome, &ProjectPassed{}
 	}

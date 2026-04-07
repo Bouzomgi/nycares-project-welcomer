@@ -7,4 +7,5 @@ type Project struct {
 	Date      time.Time
 	Id        string
 	ChannelId string
+	Status    string
 }
