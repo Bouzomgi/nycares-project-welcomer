@@ -23,4 +23,8 @@ aws_cmd dynamodb create-table \
 echo "Creating S3 bucket $BUCKET if it doesn't exist..."
 aws_cmd s3 mb "s3://$BUCKET" 2>/dev/null || echo "Bucket already exists"
 
+FILES_DIR="${S3_FILES_DIR:-/seed/s3Items}"
+echo "Syncing $FILES_DIR to s3://$BUCKET..."
+aws_cmd s3 sync "$FILES_DIR" "s3://$BUCKET" --exclude "*.txt"
+
 echo "LocalStack seed complete."
