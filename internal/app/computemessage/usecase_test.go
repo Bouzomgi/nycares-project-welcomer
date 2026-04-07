@@ -147,7 +147,7 @@ func TestComputeNotificationType(t *testing.T) {
 		{
 			name:        "project is cancelled",
 			now:         projectDate.AddDate(0, 0, -5),
-			status:      "Cancelled",
+			status:      "Canceled",
 			wantErrType: &ProjectCancelled{},
 		},
 		{

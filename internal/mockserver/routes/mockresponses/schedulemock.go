@@ -9,9 +9,10 @@ import (
 )
 
 type ProjectConfig struct {
-	Name string
-	Date time.Time
-	Id   string
+	Name   string
+	Date   time.Time
+	Id     string
+	Status string // defaults to "Published" if empty
 }
 
 func currentDate() time.Time {
@@ -33,12 +34,16 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 
 	sessions := make([]dto.UpcomingSession, 0, len(projects))
 	for _, p := range projects {
+		status := p.Status
+		if status == "" {
+			status = "Published"
+		}
 		sessions = append(sessions, dto.UpcomingSession{
 			Name:               p.Name,
 			PublicSessionName:  p.Name,
 			FamilyFriendlyRole: nil,
 			SessionID:          p.Id,
-			Status:             "Published",
+			Status:             status,
 			SessionStartDate:   p.Date.Format("2006-01-02"),
 			SessionStartTime:   "10:00:00.000Z",
 			SessionEndDate:     p.Date.Format("2006-01-02"),

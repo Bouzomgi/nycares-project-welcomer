@@ -84,7 +84,7 @@ type NotificationsDisabled struct{}
 func (e *NotificationsDisabled) Error() string { return "notifications are disabled for this project" }
 
 func computeNotificationType(now, projectDate time.Time, status string, existingNotification *domain.ProjectNotification) (domain.NotificationType, error) {
-	if status == "Cancelled" {
+	if status == "Canceled" {
 		return domain.Welcome, &ProjectCancelled{}
 	}
 
