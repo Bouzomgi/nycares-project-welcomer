@@ -5,16 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
-	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
-	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 func buildHandler() (*ComputeMessageHandler, error) {
@@ -23,31 +18,7 @@ func buildHandler() (*ComputeMessageHandler, error) {
 		return nil, err
 	}
 
-	ctx := context.Background()
-	awsCfg, err := awsconfig.LoadAWSConfigFromConfig(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	dynamoOpts := []func(*dynamodb.Options){}
-	if cfg.AWS.Dynamo.Endpoint != "" {
-		dynamoOpts = append(dynamoOpts, func(o *dynamodb.Options) {
-			o.BaseEndpoint = aws.String(cfg.AWS.Dynamo.Endpoint)
-		})
-	}
-	dynamoClient := dynamodb.NewFromConfig(awsCfg, dynamoOpts...)
-	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
-
-	var currentDate *time.Time
-	if cfg.CurrentDate != "" {
-		t, err := time.Parse("2006-01-02", cfg.CurrentDate)
-		if err != nil {
-			return nil, fmt.Errorf("invalid NYCARES_CURRENT_DATE %q: %w", cfg.CurrentDate, err)
-		}
-		currentDate = &t
-	}
-
-	usecase := cm.NewComputeMessageUseCase(dynamoSvc, currentDate)
+	usecase := cm.NewComputeMessageUseCase()
 	return NewComputeMessageHandler(usecase, cfg), nil
 }
 

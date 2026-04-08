@@ -74,8 +74,34 @@
         "executionId.$": "$.executionId"
       },
       "Iterator": {
-        "StartAt": "ComputeMessageToSend",
+        "StartAt": "RouteProject",
         "States": {
+          "RouteProject": {
+            "Type": "Task",
+            "Resource": "${RouteProjectLambdaArn}",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "ComputeMessageToSend",
+            "Catch": [
+              {
+                "ErrorEquals": ["NotTeamLeader", "ProjectCancelled", "ProjectTooFar", "ProjectPassed", "AllNotificationsSent", "NotificationsDisabled"],
+                "Next": "EndProjectIteration"
+              },
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "RouteProjectFailed"
+              }
+            ]
+          },
+          "RouteProjectFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "RouteProject"
+            },
+            "Next": "ProjectDLQNotifier"
+          },
           "ComputeMessageToSend": {
             "Type": "Task",
             "Resource": "${ComputeMessageToSendLambdaArn}",
@@ -83,10 +109,6 @@
             "ResultPath": "$",
             "Next": "RequestApprovalToSend",
             "Catch": [
-              {
-                "ErrorEquals": ["NotTeamLeader", "ProjectCancelled", "ProjectTooFar", "ProjectPassed", "AllNotificationsSent", "NotificationsDisabled"],
-                "Next": "EndProjectIteration"
-              },
               {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "ComputeMessageToSendFailed"

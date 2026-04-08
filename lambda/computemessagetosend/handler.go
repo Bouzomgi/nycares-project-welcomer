@@ -6,6 +6,7 @@ import (
 
 	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 )
 
@@ -19,35 +20,29 @@ func NewComputeMessageHandler(u *cm.ComputeMessageUseCase, cfg *cm.Config) *Comp
 }
 
 func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.ComputeMessageInput) (models.ComputeMessageOutput, error) {
-	slog.Info("computemessage handler invoked", "executionId", input.ExecutionId, "project", input.Project)
+	slog.Info("computemessage handler invoked", "executionId", input.ExecutionId, "messageType", input.MessageType)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
-	domainProject, err := models.BuildDomainProject(input.Project)
+	messageType, err := domain.ParseNotificationType(input.MessageType)
 	if err != nil {
-		slog.Error("computemessage failed to build project", "executionId", input.ExecutionId, "error", err)
+		slog.Error("computemessage invalid message type", "executionId", input.ExecutionId, "error", err)
 		return models.ComputeMessageOutput{}, err
 	}
 
-	existingNotification, messageType, messageRef, err := h.usecase.Execute(ctx, h.cfg.AWS.S3.BucketName, domainProject)
+	messageRef, err := h.usecase.Execute(h.cfg.AWS.S3.BucketName, input.ExistingProjectNotification.Name, messageType)
 	if err != nil {
 		slog.Error("computemessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.ComputeMessageOutput{}, err
 	}
 
-	slog.Info("computemessage succeeded", "executionId", input.ExecutionId, "messageType", messageType.String())
+	slog.Info("computemessage succeeded", "executionId", input.ExecutionId, "messageType", input.MessageType)
 
-	message := models.BuildMessage(messageType.String(), messageRef)
-	outputNotification := models.ConvertDomainProjectNotification(existingNotification)
-	outputNotification.ChannelId = input.Project.ChannelId
-
-	output := models.ComputeMessageOutput{
+	return models.ComputeMessageOutput{
 		Auth:                        input.Auth,
-		ExistingProjectNotification: outputNotification,
-		MessageToSend:               message,
+		ExistingProjectNotification: input.ExistingProjectNotification,
+		MessageToSend:               models.BuildMessage(input.MessageType, messageRef),
 		ExecutionId:                 input.ExecutionId,
-	}
-
-	return output, nil
+	}, nil
 }
