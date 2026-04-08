@@ -6,6 +6,7 @@ type ProjectNotification struct {
 	ProjectId        string `json:"projectId"`
 	HasSentWelcome   bool   `json:"hasSentWelcome"`
 	HasSentReminder  bool   `json:"hasSentReminder"`
+	HasSentThankYou  bool   `json:"hasSentThankYou"`
 	ShouldStopNotify bool   `json:"shouldStopNotify"`
 	LastUpdated      string `json:"lastUpdated"`
 }

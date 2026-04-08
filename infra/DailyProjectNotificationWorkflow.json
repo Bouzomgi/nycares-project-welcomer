@@ -84,7 +84,7 @@
             "Next": "ComputeMessageToSend",
             "Catch": [
               {
-                "ErrorEquals": ["NotTeamLeader", "ProjectCancelled", "ProjectTooFar", "ProjectPassed", "AllNotificationsSent", "NotificationsDisabled"],
+                "ErrorEquals": ["NotTeamLeader", "ProjectCancelled", "ProjectTooFar", "AllNotificationsSent", "NotificationsDisabled"],
                 "Next": "EndProjectIteration"
               },
               {
@@ -107,13 +107,29 @@
             "Resource": "${ComputeMessageToSendLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
-            "Next": "RequestApprovalToSend",
+            "Next": "ScheduleThankYou",
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "ComputeMessageToSendFailed"
               }
             ]
+          },
+          "ScheduleThankYou": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.message.type",
+                "StringEquals": "thankYou",
+                "Next": "WaitForThankYouWindow"
+              }
+            ],
+            "Default": "RequestApprovalToSend"
+          },
+          "WaitForThankYouWindow": {
+            "Type": "Wait",
+            "TimestampPath": "$.targetSendTime",
+            "Next": "RequestApprovalToSend"
           },
           "ComputeMessageToSendFailed": {
             "Type": "Pass",

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	rp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/routeproject"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -30,7 +31,7 @@ func (h *RouteProjectHandler) Handle(ctx context.Context, input models.RouteProj
 		return models.RouteProjectOutput{}, err
 	}
 
-	existingNotification, messageType, err := h.usecase.Execute(ctx, domainProject)
+	existingNotification, messageType, targetSendTime, err := h.usecase.Execute(ctx, domainProject)
 	if err != nil {
 		slog.Error("routeproject failed", "executionId", input.ExecutionId, "error", err)
 		return models.RouteProjectOutput{}, err
@@ -41,10 +42,16 @@ func (h *RouteProjectHandler) Handle(ctx context.Context, input models.RouteProj
 	outputNotification := models.ConvertDomainProjectNotification(existingNotification)
 	outputNotification.ChannelId = input.Project.ChannelId
 
+	targetSendTimeStr := ""
+	if !targetSendTime.IsZero() {
+		targetSendTimeStr = targetSendTime.UTC().Format(time.RFC3339)
+	}
+
 	return models.RouteProjectOutput{
 		Auth:                        input.Auth,
 		ExistingProjectNotification: outputNotification,
 		MessageType:                 messageType.String(),
+		TargetSendTime:              targetSendTimeStr,
 		ExecutionId:                 input.ExecutionId,
 	}, nil
 }

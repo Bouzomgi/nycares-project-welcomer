@@ -9,10 +9,12 @@ import (
 )
 
 type ProjectConfig struct {
-	Name   string
-	Date   time.Time
-	Id     string
-	Status string // defaults to "Published" if empty
+	Name             string
+	Date             time.Time
+	Id               string
+	Status           string  // defaults to "Published" if empty
+	DurationHours    float64 // defaults to 2.0 if zero
+	StartDateTimeUTC string  // defaults to Date at 14:00:00Z if empty
 }
 
 func currentDate() time.Time {
@@ -38,6 +40,14 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 		if status == "" {
 			status = "Published"
 		}
+		durationHours := p.DurationHours
+		if durationHours == 0 {
+			durationHours = 2.0
+		}
+		startDateTimeUTC := p.StartDateTimeUTC
+		if startDateTimeUTC == "" {
+			startDateTimeUTC = p.Date.Format("2006-01-02") + "T14:00:00.000+0000"
+		}
 		sessions = append(sessions, dto.UpcomingSession{
 			Name:               p.Name,
 			PublicSessionName:  p.Name,
@@ -52,6 +62,8 @@ func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 			AWSChimeChannelID:  utils.NewUUID(),
 			RegistrationStatus: "signed up",
 			IsTeamLeader:       true,
+			StartDateTimeUTC:   startDateTimeUTC,
+			DurationHours:      durationHours,
 		})
 	}
 

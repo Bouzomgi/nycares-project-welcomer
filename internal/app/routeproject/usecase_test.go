@@ -61,22 +61,25 @@ func TestShouldSendReminder(t *testing.T) {
 
 func TestComputeNotificationType(t *testing.T) {
 	projectDate := time.Date(2025, 3, 15, 0, 0, 0, 0, time.UTC)
+	endDateTime := time.Date(2025, 3, 15, 14, 0, 0, 0, time.UTC)
 
-	notif := func(welcome, reminder, stop bool) *domain.ProjectNotification {
+	notif := func(welcome, reminder, thankYou, stop bool) *domain.ProjectNotification {
 		return &domain.ProjectNotification{
 			HasSentWelcome:   welcome,
 			HasSentReminder:  reminder,
+			HasSentThankYou:  thankYou,
 			ShouldStopNotify: stop,
 		}
 	}
 
 	tests := []struct {
-		name        string
-		now         time.Time
-		status      string
-		existing    *domain.ProjectNotification
-		wantType    domain.NotificationType
-		wantErrType error
+		name              string
+		now               time.Time
+		status            string
+		existing          *domain.ProjectNotification
+		wantType          domain.NotificationType
+		wantErrType       error
+		wantTargetNonZero bool
 	}{
 		{
 			name:        "project is cancelled",
@@ -88,11 +91,6 @@ func TestComputeNotificationType(t *testing.T) {
 			name:        "project too far in future",
 			now:         projectDate.AddDate(0, 0, -30),
 			wantErrType: &ProjectTooFar{},
-		},
-		{
-			name:        "project date has passed",
-			now:         projectDate.AddDate(0, 0, 1),
-			wantErrType: &ProjectPassed{},
 		},
 		{
 			name:     "no existing notification, in welcome window",
@@ -109,38 +107,58 @@ func TestComputeNotificationType(t *testing.T) {
 		{
 			name:        "notifications disabled",
 			now:         projectDate.AddDate(0, 0, -5),
-			existing:    notif(true, false, true),
+			existing:    notif(true, false, false, true),
 			wantErrType: &NotificationsDisabled{},
 		},
 		{
 			name:     "welcome not sent, in welcome window",
 			now:      projectDate.AddDate(0, 0, -5),
-			existing: notif(false, false, false),
+			existing: notif(false, false, false, false),
 			wantType: domain.Welcome,
 		},
 		{
 			name:     "welcome sent, reminder not sent, in reminder window",
 			now:      projectDate.AddDate(0, 0, -1),
-			existing: notif(true, false, false),
+			existing: notif(true, false, false, false),
 			wantType: domain.Reminder,
 		},
 		{
 			name:        "welcome sent, not in reminder window yet",
 			now:         projectDate.AddDate(0, 0, -5),
-			existing:    notif(true, false, false),
+			existing:    notif(true, false, false, false),
 			wantErrType: &AllNotificationsSent{},
 		},
 		{
-			name:        "both welcome and reminder already sent",
+			name:        "both welcome and reminder already sent, before project",
 			now:         projectDate.AddDate(0, 0, -1),
-			existing:    notif(true, true, false),
+			existing:    notif(true, true, false, false),
+			wantErrType: &AllNotificationsSent{},
+		},
+		{
+			name:              "project day, no thank-you sent yet",
+			now:               projectDate,
+			existing:          nil,
+			wantType:          domain.ThankYou,
+			wantTargetNonZero: true,
+		},
+		{
+			name:              "project in past, no thank-you sent",
+			now:               projectDate.AddDate(0, 0, 1),
+			existing:          notif(true, true, false, false),
+			wantType:          domain.ThankYou,
+			wantTargetNonZero: true,
+		},
+		{
+			name:        "project in past, thank-you already sent",
+			now:         projectDate.AddDate(0, 0, 1),
+			existing:    notif(true, true, true, false),
 			wantErrType: &AllNotificationsSent{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotType, err := computeNotificationType(tt.now, projectDate, tt.status, true, tt.existing)
+			gotType, gotTarget, err := computeNotificationType(tt.now, projectDate, endDateTime, tt.status, true, tt.existing)
 
 			if tt.wantErrType != nil {
 				if err == nil {
@@ -157,6 +175,12 @@ func TestComputeNotificationType(t *testing.T) {
 			}
 			if gotType != tt.wantType {
 				t.Errorf("notification type = %v, want %v", gotType, tt.wantType)
+			}
+			if tt.wantTargetNonZero && gotTarget.IsZero() {
+				t.Errorf("expected non-zero targetSendTime, got zero")
+			}
+			if !tt.wantTargetNonZero && !gotTarget.IsZero() {
+				t.Errorf("expected zero targetSendTime, got %v", gotTarget)
 			}
 		})
 	}

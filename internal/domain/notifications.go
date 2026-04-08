@@ -12,6 +12,7 @@ type ProjectNotification struct {
 	Id               string    `json:"id"`
 	HasSentWelcome   bool      `json:"hasSentWelcome"`
 	HasSentReminder  bool      `json:"hasSentReminder"`
+	HasSentThankYou  bool      `json:"hasSentThankYou"`
 	ShouldStopNotify bool      `json:"shouldStopNotify"`
 }
 
@@ -20,6 +21,7 @@ type NotificationType int
 const (
 	Welcome NotificationType = iota
 	Reminder
+	ThankYou
 )
 
 func (m NotificationType) String() string {
@@ -28,6 +30,8 @@ func (m NotificationType) String() string {
 		return "welcome"
 	case Reminder:
 		return "reminder"
+	case ThankYou:
+		return "thankYou"
 	default:
 		return "unknown"
 	}
@@ -39,6 +43,8 @@ func ParseNotificationType(s string) (NotificationType, error) {
 		return Welcome, nil
 	case "reminder":
 		return Reminder, nil
+	case "thankYou":
+		return ThankYou, nil
 	default:
 		return 0, fmt.Errorf("unknown notification type: %s", s)
 	}

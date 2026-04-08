@@ -5,6 +5,7 @@ import "time"
 type Project struct {
 	Name         string
 	Date         time.Time
+	EndDateTime  time.Time
 	Id           string
 	ChannelId    string
 	Status       string

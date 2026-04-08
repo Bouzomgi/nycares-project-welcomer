@@ -10,5 +10,6 @@ type RouteProjectOutput struct {
 	Auth                        Auth                `json:"auth"`
 	ExistingProjectNotification projectNotification `json:"existingProjectNotification"`
 	MessageType                 string              `json:"messageType"`
+	TargetSendTime              string              `json:"targetSendTime,omitempty"`
 	ExecutionId                 string              `json:"executionId"`
 }

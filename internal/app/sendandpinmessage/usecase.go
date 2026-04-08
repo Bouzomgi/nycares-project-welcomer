@@ -2,6 +2,7 @@ package sendandpinmessage
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	httpservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/http/service"
@@ -20,7 +21,7 @@ func NewSendAndPinMessageUseCase(s3Service s3service.ContentService, httpService
 	}
 }
 
-func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth, projectId, channelId, messageRef string) error {
+func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth, projectId, channelId, messageRef, projectName string) error {
 
 	u.httpService.SetCookies(auth.Cookies)
 
@@ -28,6 +29,8 @@ func (u *SendAndPinMessageUseCase) Execute(ctx context.Context, auth domain.Auth
 	if err != nil {
 		return err
 	}
+
+	messageContent = strings.ReplaceAll(messageContent, "{{projectName}}", projectName)
 
 	messageId, err := u.httpService.SendMessage(ctx, channelId, messageContent)
 	if err != nil {

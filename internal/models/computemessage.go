@@ -13,6 +13,7 @@ type ComputeMessageOutput struct {
 	Auth                        Auth                `json:"auth"`
 	ExistingProjectNotification projectNotification `json:"existingProjectNotification"`
 	MessageToSend               message             `json:"message"`
+	TargetSendTime              string              `json:"targetSendTime,omitempty"`
 	ExecutionId                 string              `json:"executionId"`
 }
 
@@ -23,6 +24,7 @@ type projectNotification struct {
 	ChannelId        string `json:"channelId"`
 	HasSentWelcome   bool   `json:"hasSentWelcome"`
 	HasSentReminder  bool   `json:"hasSentReminder"`
+	HasSentThankYou  bool   `json:"hasSentThankYou"`
 	ShouldStopNotify bool   `json:"shouldStopNotify"`
 }
 
@@ -45,6 +47,7 @@ func ConvertDomainProjectNotification(pn domain.ProjectNotification) projectNoti
 		Id:               pn.Id,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
+		HasSentThankYou:  pn.HasSentThankYou,
 		ShouldStopNotify: pn.ShouldStopNotify,
 	}
 }
@@ -60,6 +63,7 @@ func ConvertModelProjectNotification(pn projectNotification) (domain.ProjectNoti
 		Id:               pn.Id,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
+		HasSentThankYou:  pn.HasSentThankYou,
 		ShouldStopNotify: pn.ShouldStopNotify,
 	}, nil
 }

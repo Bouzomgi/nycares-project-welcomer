@@ -26,7 +26,7 @@ func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.Send
 
 	auth := models.ConvertAuth(input.Auth)
 
-	err := h.usecase.Execute(ctx, auth, input.ExistingProjectNotification.Id, input.ExistingProjectNotification.ChannelId, input.MessageToSend.TemplateRef)
+	err := h.usecase.Execute(ctx, auth, input.ExistingProjectNotification.Id, input.ExistingProjectNotification.ChannelId, input.MessageToSend.TemplateRef, input.ExistingProjectNotification.Name)
 	if err != nil {
 		slog.Error("sendandpinmessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.SendAndPinMessageOutput{}, err

@@ -19,8 +19,13 @@ func (u *ComputeMessageUseCase) Execute(messageBucketName, projectName string, m
 }
 
 func computeS3MessageRefPath(s3BucketName, projectName string, messageType domain.NotificationType) (string, error) {
-	messageTypeStr := strings.ToLower(messageType.String())
-	s3MessageRef := fmt.Sprintf("s3://%s/%s/%s.md", s3BucketName, toKebabCase(projectName), messageTypeStr)
+	var s3MessageRef string
+	if messageType == domain.ThankYou {
+		s3MessageRef = fmt.Sprintf("s3://%s/thankyou.md", s3BucketName)
+	} else {
+		messageTypeStr := strings.ToLower(messageType.String())
+		s3MessageRef = fmt.Sprintf("s3://%s/%s/%s.md", s3BucketName, toKebabCase(projectName), messageTypeStr)
+	}
 
 	if isValidS3URI(s3MessageRef) {
 		return s3MessageRef, nil
