@@ -1,0 +1,77 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"time"
+
+	rp "github.com/Bouzomgi/nycares-project-welcomer/internal/app/routeproject"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
+	dynamoservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/dynamo/service"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+)
+
+func buildHandler() (*RouteProjectHandler, error) {
+	cfg, err := config.LoadConfig[rp.Config]()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+	awsCfg, err := awsconfig.LoadAWSConfigFromConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	dynamoOpts := []func(*dynamodb.Options){}
+	if cfg.AWS.Dynamo.Endpoint != "" {
+		dynamoOpts = append(dynamoOpts, func(o *dynamodb.Options) {
+			o.BaseEndpoint = aws.String(cfg.AWS.Dynamo.Endpoint)
+		})
+	}
+	dynamoClient := dynamodb.NewFromConfig(awsCfg, dynamoOpts...)
+	dynamoSvc := dynamoservice.NewDynamoService(dynamoClient, cfg.AWS.Dynamo.TableName)
+
+	var currentDate *time.Time
+	if cfg.CurrentDate != "" {
+		t, err := time.Parse("2006-01-02", cfg.CurrentDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid NYCARES_CURRENT_DATE %q: %w", cfg.CurrentDate, err)
+		}
+		currentDate = &t
+	}
+
+	usecase := rp.NewRouteProjectUseCase(dynamoSvc, currentDate)
+	return NewRouteProjectHandler(usecase, cfg), nil
+}
+
+func main() {
+	config.InitLogging()
+	handler, err := buildHandler()
+	if err != nil {
+		panic(err)
+	}
+
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") == "" {
+		var input models.RouteProjectInput
+		if err := json.NewDecoder(os.Stdin).Decode(&input); err != nil {
+			panic(fmt.Errorf("failed to decode input: %w", err))
+		}
+
+		output, err := handler.Handle(context.Background(), input)
+		if err != nil {
+			panic(err)
+		}
+		data, _ := json.MarshalIndent(output, "", "  ")
+		fmt.Println(string(data))
+		return
+	}
+
+	lambda.Start(handler.Handle)
+}

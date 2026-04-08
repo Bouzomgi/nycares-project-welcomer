@@ -169,6 +169,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	lambdaNames := []string{
 		"Login",
 		"FetchProjects",
+		"RouteProject",
 		"ComputeMessageToSend",
 		"RequestApprovalToSend",
 		"SendAndPinMessage",
@@ -220,8 +221,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		}))
 	}
 
-	// ComputeMessageToSend needs DynamoDB read
-	table.GrantReadData(lambdaFns["ComputeMessageToSend"])
+	// RouteProject needs DynamoDB read
+	table.GrantReadData(lambdaFns["RouteProject"])
 
 	// RecordMessage needs DynamoDB read/write
 	table.GrantReadWriteData(lambdaFns["RecordMessage"])

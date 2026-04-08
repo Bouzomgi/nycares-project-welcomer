@@ -1,4 +1,4 @@
-package computemessage
+package routeproject
 
 type Config struct {
 	AWS struct {
@@ -7,8 +7,11 @@ type Config struct {
 			SecretAccessKey string `mapstructure:"secretAccessKey,omitempty"`
 			Region          string `mapstructure:"region,omitempty"`
 		} `mapstructure:"credentials"`
-		S3 struct {
-			BucketName string `mapstructure:"bucketName"`
-		} `mapstructure:"s3"`
+		Dynamo struct {
+			TableName string `mapstructure:"tableName"`
+			Region    string `mapstructure:"region"`
+			Endpoint  string `mapstructure:"endpoint,omitempty"`
+		} `mapstructure:"dynamo"`
 	} `mapstructure:"aws"`
+	CurrentDate string `mapstructure:"currentDate,omitempty"`
 }

@@ -7,11 +7,7 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
 )
 
-type ComputeMessageInput struct {
-	Auth        Auth    `json:"auth"`
-	Project     project `json:"project"`
-	ExecutionId string  `json:"executionId"`
-}
+type ComputeMessageInput = RouteProjectOutput
 
 type ComputeMessageOutput struct {
 	Auth                        Auth                `json:"auth"`
