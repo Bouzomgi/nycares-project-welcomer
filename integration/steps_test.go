@@ -43,11 +43,15 @@ func (sc *scenarioContext) aProjectScheduledDaysFromNow(name string, days int) e
 }
 
 func (sc *scenarioContext) aWelcomeHasAlreadyBeenSent() error {
-	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, false)
+	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, false, false)
 }
 
 func (sc *scenarioContext) bothWelcomeAndReminderHaveAlreadyBeenSent() error {
-	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, true)
+	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, true, false)
+}
+
+func (sc *scenarioContext) aThankYouHasAlreadyBeenSent() error {
+	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, true, true)
 }
 
 // --- When ---
@@ -150,6 +154,10 @@ func (sc *scenarioContext) aReminderNotificationShouldBeRecorded() error {
 	return sc.assertNotificationBoolAttr("HasSentReminder", true)
 }
 
+func (sc *scenarioContext) aThankYouNotificationShouldBeRecorded() error {
+	return sc.assertNotificationBoolAttr("HasSentThankYou", true)
+}
+
 func (sc *scenarioContext) assertNotificationBoolAttr(attr string, expected bool) error {
 	item, err := sc.tc.getNotification(testProjectName, sc.projectDate)
 	if err != nil {
@@ -181,6 +189,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Given(`^a project "([^"]*)" scheduled (-\d+) days? from now$`, sc.aProjectScheduledDaysFromNow)
 	ctx.Given(`^a welcome has already been sent$`, sc.aWelcomeHasAlreadyBeenSent)
 	ctx.Given(`^both welcome and reminder have already been sent$`, sc.bothWelcomeAndReminderHaveAlreadyBeenSent)
+	ctx.Given(`^a thank you has already been sent$`, sc.aThankYouHasAlreadyBeenSent)
 
 	// When
 	ctx.When(`^the workflow runs$`, sc.theWorkflowRuns)
@@ -197,4 +206,5 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Then(`^a welcome notification should be recorded$`, sc.aWelcomeNotificationShouldBeRecorded)
 	ctx.Then(`^no reminder notification should be recorded$`, sc.noReminderNotificationShouldBeRecorded)
 	ctx.Then(`^a reminder notification should be recorded$`, sc.aReminderNotificationShouldBeRecorded)
+	ctx.Then(`^a thank you notification should be recorded$`, sc.aThankYouNotificationShouldBeRecorded)
 }
