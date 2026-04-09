@@ -85,10 +85,12 @@ func initTestClients() (*testClients, error) {
 }
 
 type projectInput struct {
-	Name   string `json:"name"`
-	Date   string `json:"date"`
-	Id     string `json:"id"`
-	Status string `json:"status,omitempty"`
+	Name             string  `json:"name"`
+	Date             string  `json:"date"`
+	Id               string  `json:"id"`
+	Status           string  `json:"status,omitempty"`
+	StartDateTimeUTC string  `json:"startDateTimeUTC,omitempty"`
+	DurationHours    float64 `json:"durationHours,omitempty"`
 }
 
 func (tc *testClients) startExecutionWithProjects(projects []projectInput) (string, error) {

@@ -142,11 +142,10 @@ func TestComputeNotificationType(t *testing.T) {
 			wantTargetNonZero: true,
 		},
 		{
-			name:              "project in past, no thank-you sent",
-			now:               projectDate.AddDate(0, 0, 1),
-			existing:          notif(true, true, false, false),
-			wantType:          domain.ThankYou,
-			wantTargetNonZero: true,
+			name:        "project in past, no thank-you sent",
+			now:         projectDate.AddDate(0, 0, 1),
+			existing:    notif(true, true, false, false),
+			wantErrType: &AllNotificationsSent{},
 		},
 		{
 			name:        "project in past, thank-you already sent",

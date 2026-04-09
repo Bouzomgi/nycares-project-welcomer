@@ -42,6 +42,23 @@ func (sc *scenarioContext) aProjectScheduledDaysFromNow(name string, days int) e
 	return sc.tc.deleteNotification(name, sc.projectDate)
 }
 
+// aProjectHappeningToday creates a same-day project with a guaranteed-past start time
+// so the WaitForThankYouWindow passes immediately in Step Functions.
+func (sc *scenarioContext) aProjectHappeningToday(name string) error {
+	sc.projectDate = sc.today
+	sc.mockProjects = []projectInput{
+		{
+			Name:             name,
+			Date:             sc.projectDate,
+			Id:               testProjectId,
+			StartDateTimeUTC: "1999-12-31T22:00:00.000+0000",
+			DurationHours:    2.0,
+		},
+	}
+
+	return sc.tc.deleteNotification(name, sc.projectDate)
+}
+
 func (sc *scenarioContext) aWelcomeHasAlreadyBeenSent() error {
 	return sc.tc.seedNotification(testProjectName, sc.projectDate, testProjectId, true, false, false)
 }
@@ -187,6 +204,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	// Given
 	ctx.Given(`^a project "([^"]*)" scheduled (\d+) days? from now$`, sc.aProjectScheduledDaysFromNow)
 	ctx.Given(`^a project "([^"]*)" scheduled (-\d+) days? from now$`, sc.aProjectScheduledDaysFromNow)
+	ctx.Given(`^a project "([^"]*)" happening today$`, sc.aProjectHappeningToday)
 	ctx.Given(`^a welcome has already been sent$`, sc.aWelcomeHasAlreadyBeenSent)
 	ctx.Given(`^both welcome and reminder have already been sent$`, sc.bothWelcomeAndReminderHaveAlreadyBeenSent)
 	ctx.Given(`^a thank you has already been sent$`, sc.aThankYouHasAlreadyBeenSent)

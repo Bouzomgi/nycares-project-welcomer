@@ -117,10 +117,12 @@ func computeNotificationType(now, projectDate, endDateTime time.Time, status str
 		return domain.Welcome, time.Time{}, &AllNotificationsSent{}
 	}
 
-	// Project has started or ended — check thank-you window
-	if existingNotification == nil || !existingNotification.HasSentThankYou {
-		targetSendTime := endDateTime.Add(1 * time.Hour)
-		return domain.ThankYou, targetSendTime, nil
+	// Project is today — schedule thank-you
+	if now.Equal(projectDate) {
+		if existingNotification == nil || !existingNotification.HasSentThankYou {
+			targetSendTime := endDateTime.Add(1 * time.Hour)
+			return domain.ThankYou, targetSendTime, nil
+		}
 	}
 
 	return domain.Welcome, time.Time{}, &AllNotificationsSent{}
