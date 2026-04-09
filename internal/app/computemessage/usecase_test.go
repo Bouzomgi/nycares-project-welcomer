@@ -75,7 +75,7 @@ func TestComputeS3MessageRefPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	expected = "s3://my-bucket/thankyou.md"
+	expected = "s3://my-bucket/any-project/thankyou.md"
 	if ref != expected {
 		t.Errorf("got %q, want %q", ref, expected)
 	}
