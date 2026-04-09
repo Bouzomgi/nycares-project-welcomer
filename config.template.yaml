@@ -24,6 +24,7 @@ aws:
     approvalSecret: ""   # NYCARES_AWS_SF_APPROVALSECRET (optional)
 
 currentDate: "" # NYCARES_CURRENTDATE (optional, format: YYYY-MM-DD)
+thankYouJitterMaxMinutes: 15 # NYCARES_THANKYOUJITTERMAXMINUTES (optional, default: 15)
 
 mock:
   sendMessage: false # NYCARES_MOCK_SENDMESSAGE - set to true to route SendAndPinMessage to the mock server

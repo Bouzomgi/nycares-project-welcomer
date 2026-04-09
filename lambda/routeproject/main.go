@@ -47,7 +47,7 @@ func buildHandler() (*RouteProjectHandler, error) {
 		currentDate = &t
 	}
 
-	usecase := rp.NewRouteProjectUseCase(dynamoSvc, currentDate)
+	usecase := rp.NewRouteProjectUseCase(dynamoSvc, currentDate, cfg.ThankYouJitterMaxMinutes)
 	return NewRouteProjectHandler(usecase, cfg), nil
 }
 

@@ -2,6 +2,7 @@ package routeproject
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
@@ -9,12 +10,13 @@ import (
 )
 
 type RouteProjectUseCase struct {
-	dynamoSvc   dynamoservice.StoredNotificationService
-	currentDate *time.Time
+	dynamoSvc            dynamoservice.StoredNotificationService
+	currentDate          *time.Time
+	thankYouJitterMaxMin int
 }
 
-func NewRouteProjectUseCase(dynamoSvc dynamoservice.StoredNotificationService, currentDate *time.Time) *RouteProjectUseCase {
-	return &RouteProjectUseCase{dynamoSvc: dynamoSvc, currentDate: currentDate}
+func NewRouteProjectUseCase(dynamoSvc dynamoservice.StoredNotificationService, currentDate *time.Time, thankYouJitterMaxMin int) *RouteProjectUseCase {
+	return &RouteProjectUseCase{dynamoSvc: dynamoSvc, currentDate: currentDate, thankYouJitterMaxMin: thankYouJitterMaxMin}
 }
 
 func (u *RouteProjectUseCase) Execute(ctx context.Context, project domain.Project) (domain.ProjectNotification, domain.NotificationType, time.Time, error) {
@@ -29,7 +31,7 @@ func (u *RouteProjectUseCase) Execute(ctx context.Context, project domain.Projec
 	}
 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	messageType, targetSendTime, err := computeNotificationType(now, project.Date, project.EndDateTime, project.Status, project.IsTeamLeader, existingNotification)
+	messageType, targetSendTime, err := computeNotificationType(now, project.Date, project.EndDateTime, project.Status, project.IsTeamLeader, existingNotification, u.thankYouJitterMaxMin)
 	if err != nil {
 		return domain.ProjectNotification{}, domain.Welcome, time.Time{}, err
 	}
@@ -74,7 +76,7 @@ type NotificationsDisabled struct{}
 
 func (e *NotificationsDisabled) Error() string { return "notifications are disabled for this project" }
 
-func computeNotificationType(now, projectDate, endDateTime time.Time, status string, isTeamLeader bool, existingNotification *domain.ProjectNotification) (domain.NotificationType, time.Time, error) {
+func computeNotificationType(now, projectDate, endDateTime time.Time, status string, isTeamLeader bool, existingNotification *domain.ProjectNotification, jitterMaxMin int) (domain.NotificationType, time.Time, error) {
 	if !isTeamLeader {
 		return domain.Welcome, time.Time{}, &NotTeamLeader{}
 	}
@@ -120,7 +122,11 @@ func computeNotificationType(now, projectDate, endDateTime time.Time, status str
 	// Project is today — schedule thank-you
 	if now.Equal(projectDate) {
 		if existingNotification == nil || !existingNotification.HasSentThankYou {
-			targetSendTime := endDateTime.Add(1 * time.Hour)
+			jitter := time.Duration(0)
+			if jitterMaxMin > 0 {
+				jitter = time.Duration(rand.Intn(jitterMaxMin+1)) * time.Minute
+			}
+			targetSendTime := endDateTime.Add(1*time.Hour + jitter)
 			return domain.ThankYou, targetSendTime, nil
 		}
 	}

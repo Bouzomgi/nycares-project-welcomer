@@ -157,7 +157,7 @@ func TestComputeNotificationType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotType, gotTarget, err := computeNotificationType(tt.now, projectDate, endDateTime, tt.status, true, tt.existing)
+			gotType, gotTarget, err := computeNotificationType(tt.now, projectDate, endDateTime, tt.status, true, tt.existing, 0)
 
 			if tt.wantErrType != nil {
 				if err == nil {
