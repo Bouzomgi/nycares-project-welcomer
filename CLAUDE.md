@@ -44,7 +44,7 @@ A Step Functions state machine orchestrates 11 Lambda functions. Two run once pe
 
 **Top-level (once per execution):**
 1. **Login** → authenticate with NYC Cares API
-2. **FetchProjects** → get upcoming projects
+2. **FetchProjects** → fetch upcoming and today's projects (merges `/upcoming` + `/today` endpoints, deduplicated by project ID)
 
 **Per-project (Map iterator):**
 3. **RouteProject** → skip logic (NotTeamLeader, ProjectCancelled, ProjectTooFar, AllNotificationsSent, NotificationsDisabled) + notification type decision (7+ days = welcome, 2+ days = reminder, post-project = thankYou); reads DynamoDB

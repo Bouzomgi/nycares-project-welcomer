@@ -26,6 +26,20 @@ func currentDate() time.Time {
 	return time.Now()
 }
 
+func MockTodayResponse(projects []ProjectConfig) []dto.UpcomingResponse {
+	today := currentDate().Truncate(24 * time.Hour)
+	var todayProjects []ProjectConfig
+	for _, p := range projects {
+		if p.Date.Truncate(24 * time.Hour).Equal(today) {
+			todayProjects = append(todayProjects, p)
+		}
+	}
+	if todayProjects == nil {
+		todayProjects = []ProjectConfig{}
+	}
+	return MockUpcomingResponse(todayProjects)
+}
+
 func MockUpcomingResponse(projects []ProjectConfig) []dto.UpcomingResponse {
 	if projects == nil {
 		now := currentDate()

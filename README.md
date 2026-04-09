@@ -24,8 +24,8 @@ sequenceDiagram
     SF->>Login: Authenticate
     Login-->>SF: Auth cookies
 
-    SF->>Fetch: Get upcoming projects
-    Fetch-->>SF: Project list
+    SF->>Fetch: Get upcoming + today's projects
+    Fetch-->>SF: Merged project list (deduped by ID)
 
     loop For each project
         SF->>RouteProject: Check DynamoDB, apply skip logic, decide message type
