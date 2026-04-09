@@ -13,5 +13,6 @@ type Config struct {
 			Endpoint  string `mapstructure:"endpoint,omitempty"`
 		} `mapstructure:"dynamo"`
 	} `mapstructure:"aws"`
-	CurrentDate string `mapstructure:"currentDate,omitempty"`
+	CurrentDate              string `mapstructure:"currentDate,omitempty"`
+	ThankYouJitterMaxMinutes int    `mapstructure:"thankYouJitterMaxMinutes,omitempty"`
 }

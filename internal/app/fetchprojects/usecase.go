@@ -29,7 +29,8 @@ func (u *FetchProjectsUseCase) Execute(ctx context.Context, auth domain.Auth, us
 
 	u.upcomingSvc.SetCookies(auth.Cookies)
 	slog.Info("fetchprojects invoking upcoming projects", "cookieCount", len(auth.Cookies))
-	projects, err := u.upcomingSvc.GetUpcomingProjects(ctx, userSFID)
+
+	upcomingProjects, err := u.upcomingSvc.GetUpcomingProjects(ctx, userSFID)
 	if err != nil {
 		var httpErr *httpservice.HTTPError
 		if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusUnauthorized || httpErr.StatusCode == http.StatusForbidden) {
@@ -39,5 +40,27 @@ func (u *FetchProjectsUseCase) Execute(ctx context.Context, auth domain.Auth, us
 		return nil, err
 	}
 
-	return projects, nil
+	slog.Info("fetchprojects invoking today projects")
+	todayProjects, err := u.upcomingSvc.GetTodayProjects(ctx, userSFID)
+	if err != nil {
+		var httpErr *httpservice.HTTPError
+		if errors.As(err, &httpErr) && (httpErr.StatusCode == http.StatusUnauthorized || httpErr.StatusCode == http.StatusForbidden) {
+			slog.Error("today projects request auth failure", "statusCode", httpErr.StatusCode, "url", httpErr.URL, "body", string(httpErr.Body))
+			return nil, &AuthFailureException{}
+		}
+		return nil, err
+	}
+
+	seen := make(map[string]struct{}, len(upcomingProjects))
+	for _, p := range upcomingProjects {
+		seen[p.Id] = struct{}{}
+	}
+	merged := upcomingProjects
+	for _, p := range todayProjects {
+		if _, exists := seen[p.Id]; !exists {
+			merged = append(merged, p)
+		}
+	}
+
+	return merged, nil
 }

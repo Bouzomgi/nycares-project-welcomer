@@ -19,6 +19,7 @@ func (u *RecordMessageUseCase) Execute(ctx context.Context, existingProjectNotif
 
 	updatedHasSentWelcome := existingProjectNotification.HasSentWelcome || (sentMessageType == domain.Welcome)
 	updatedHasSentReminder := existingProjectNotification.HasSentReminder || (sentMessageType == domain.Reminder)
+	updatedHasSentThankYou := existingProjectNotification.HasSentThankYou || (sentMessageType == domain.ThankYou)
 
 	updatedProjectNotification := &domain.ProjectNotification{
 		Name:             existingProjectNotification.Name,
@@ -26,6 +27,7 @@ func (u *RecordMessageUseCase) Execute(ctx context.Context, existingProjectNotif
 		Id:               existingProjectNotification.Id,
 		HasSentWelcome:   updatedHasSentWelcome,
 		HasSentReminder:  updatedHasSentReminder,
+		HasSentThankYou:  updatedHasSentThankYou,
 		ShouldStopNotify: existingProjectNotification.ShouldStopNotify,
 	}
 

@@ -43,6 +43,7 @@ func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.Compute
 		Auth:                        input.Auth,
 		ExistingProjectNotification: input.ExistingProjectNotification,
 		MessageToSend:               models.BuildMessage(input.MessageType, messageRef),
+		TargetSendTime:              input.TargetSendTime,
 		ExecutionId:                 input.ExecutionId,
 	}, nil
 }

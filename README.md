@@ -1,6 +1,6 @@
 # NYC Cares Project Welcomer
 
-A serverless notification system that sends welcome and reminder messages to New York Cares project attendees. Built with Go, AWS Lambda, and Step Functions.
+A serverless notification system that sends welcome, reminder, and thank-you messages to New York Cares project attendees. Built with Go, AWS Lambda, and Step Functions.
 
 ## How It Works
 
@@ -11,6 +11,7 @@ sequenceDiagram
     participant SF as Step Functions
     participant Login as Login Lambda
     participant Fetch as FetchProjects Lambda
+    participant RouteProject as RouteProject Lambda
     participant Compute as ComputeMessage Lambda
     participant Request as RequestApproval Lambda
     participant User as Approver (SNS)
@@ -23,16 +24,19 @@ sequenceDiagram
     SF->>Login: Authenticate
     Login-->>SF: Auth cookies
 
-    SF->>Fetch: Get upcoming projects
-    Fetch-->>SF: Project list
+    SF->>Fetch: Get upcoming + today's projects
+    Fetch-->>SF: Merged project list (deduped by ID)
 
     loop For each project
-        SF->>Compute: Check DynamoDB, decide message type
-        alt Too far / already sent / past
-            Compute-->>SF: Skip (EndProjectIteration)
-        else Welcome or Reminder needed
-            Compute-->>SF: Message type + S3 template ref
+        SF->>RouteProject: Check DynamoDB, apply skip logic, decide message type
+        alt Too far / already sent / all notifications sent
+            RouteProject-->>SF: Skip (EndProjectIteration)
+        else Welcome, Reminder, or ThankYou needed
+            RouteProject-->>SF: Message type + targetSendTime
+            SF->>Compute: Resolve S3 template ref
+            Compute-->>SF: S3 ref
 
+            note over SF: ThankYou only: Wait until 1h after project end
             SF->>Request: Publish approval request (SNS)
             Request-->>User: Approve/Reject links
             User->>Callback: Click approve or reject
@@ -51,17 +55,18 @@ sequenceDiagram
 
 ### Message Timing
 
-| Message  | Window                        |
-|----------|-------------------------------|
-| Welcome  | 7 days before → project date  |
-| Reminder | 2 days before → project date  |
+| Message  | Window                              |
+|----------|-------------------------------------|
+| Welcome  | 7 days before → project date        |
+| Reminder | 2 days before → project date        |
+| ThankYou | 1 hour after project end            |
 
-Each project (identified by name + date) receives at most one welcome and one reminder. State is tracked in DynamoDB.
+Each project (identified by name + date) receives at most one of each message type. State is tracked in DynamoDB. Message templates support `{{projectName}}` interpolation.
 
 ## Project Structure
 
 ```
-├── lambda/                  # 8 Lambda entry points + approval callback
+├── lambda/                  # 9 Lambda entry points + approval callback
 ├── internal/
 │   ├── app/                 # Use cases (one per Lambda)
 │   ├── domain/              # Domain models (Auth, Project, Notification)
@@ -140,6 +145,7 @@ Locally, config loads from `config.yaml`. In Lambda, environment variables with 
 | `ProjectDate` (SK) | String  | Project date (YYYY-MM-DD)            |
 | `HasSentWelcome`   | Boolean | Welcome message sent                 |
 | `HasSentReminder`  | Boolean | Reminder message sent                |
+| `HasSentThankYou`  | Boolean | Thank-you message sent               |
 | `ShouldStopNotify` | Boolean | Disable notifications (cancelled)    |
 | `LastUpdated`      | String  | ISO timestamp of last update         |
 

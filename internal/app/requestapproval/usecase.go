@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/email"
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
@@ -34,6 +35,8 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	if err != nil {
 		return fmt.Errorf("failed to fetch message content: %w", err)
 	}
+
+	messageContent = strings.ReplaceAll(messageContent, "{{projectName}}", projectName)
 
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)

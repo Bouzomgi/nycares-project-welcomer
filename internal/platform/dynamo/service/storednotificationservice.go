@@ -60,6 +60,7 @@ func (s *DynamoService) GetProjectNotification(ctx context.Context, project doma
 		Id:               pn.ProjectId,
 		HasSentWelcome:   pn.HasSentWelcome,
 		HasSentReminder:  pn.HasSentReminder,
+		HasSentThankYou:  pn.HasSentThankYou,
 		ShouldStopNotify: pn.ShouldStopNotify,
 	}
 
@@ -83,6 +84,7 @@ func (s *DynamoService) UpsertProjectNotification(
 		ProjectId:        projectNotification.Id,
 		HasSentWelcome:   projectNotification.HasSentWelcome,
 		HasSentReminder:  projectNotification.HasSentReminder,
+		HasSentThankYou:  projectNotification.HasSentThankYou,
 		ShouldStopNotify: projectNotification.ShouldStopNotify,
 		LastUpdated:      now,
 	}
@@ -106,6 +108,7 @@ func (s *DynamoService) UpsertProjectNotification(
 		Id:               item.ProjectId,
 		HasSentWelcome:   item.HasSentWelcome,
 		HasSentReminder:  item.HasSentReminder,
+		HasSentThankYou:  item.HasSentThankYou,
 		ShouldStopNotify: item.ShouldStopNotify,
 	}
 

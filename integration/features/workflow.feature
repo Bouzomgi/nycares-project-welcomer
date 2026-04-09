@@ -54,6 +54,21 @@ Feature: Project notification workflow
     Then the execution should succeed
     And the project should be skipped
 
+  Scenario: ThankYou message is sent on the day of the project
+    Given a project "Test Project" happening today
+    When the workflow runs
+    And it requests approval
+    And the message is approved
+    Then the execution should succeed
+    And a thank you notification should be recorded
+
+  Scenario: ThankYou already sent is skipped
+    Given a project "Test Project" happening today
+    And a thank you has already been sent
+    When the workflow runs
+    Then the execution should succeed
+    And the project should be skipped
+
   Scenario: Past projects are skipped
     Given a project "Test Project" scheduled -1 days from now
     When the workflow runs

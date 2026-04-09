@@ -7,7 +7,8 @@ Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP s
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/user/login` | none | Issues a session cookie |
-| `GET` | `/api/registrations/dashboard/upcoming/{userId}/{page}` | cookie | Returns upcoming projects |
+| `GET` | `/api/registrations/dashboard/upcoming/{userId}/{page}` | cookie | Returns future projects |
+| `GET` | `/api/registrations/dashboard/today/{userId}/{page}` | cookie | Returns today's projects (filters by current date) |
 | `GET` | `/api/messenger/channel/{channelId}/messages` | cookie | Returns channel messages |
 | `POST` | `/api/messenger/channel/{channelId}/messages/post` | cookie | Sends a message |
 | `POST` | `/api/messenger/create-pin-message/{campaignId}` | cookie | Pins a message |
@@ -19,7 +20,7 @@ There is no shared state. Project data flows through the session cookie:
 
 1. **Login** — caller passes `mock_projects` form field: a base64-encoded JSON array of `{name, date, id}` objects.
 2. **Cookie** — login sets `session: mock-session:<base64>` encoding that payload.
-3. **Upcoming projects** — reads the cookie, decodes the projects, and builds the response from them.
+3. **Upcoming/today projects** — reads the cookie, decodes the projects, and builds the response. `/upcoming` returns all projects; `/today` filters to only those whose date matches the current date.
 
 If `mock_projects` is omitted, upcoming projects returns a single default project dated 6 days from now.
 
@@ -33,7 +34,7 @@ middleware/requirecookie.go    — 401 if no session cookie present
 routes/
   login.go                     — /user/login handler + cookie encoding
   admin.go                     — GetProjectsFromCookie helper (cookie → []ProjectConfig)
-  upcomingprojects.go          — /api/registrations/dashboard/upcoming/{userId}/{page} handler
+  upcomingprojects.go          — /upcoming and /today project route handlers
   messages.go                  — send, pin, channel message handlers
   mockresponses/
     schedulemock.go            — builds UpcomingResponse from []ProjectConfig

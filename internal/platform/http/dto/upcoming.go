@@ -2,6 +2,7 @@ package dto
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/utils"
@@ -31,6 +32,8 @@ type UpcomingSession struct {
 	AWSChimeChannelID  string  `json:"AWS_Chime_Channel_Arn_Channel_Id__c"`
 	RegistrationStatus string  `json:"Registration_Status__tl"`
 	IsTeamLeader       bool    `json:"IsTeamLeader__tl"`
+	StartDateTimeUTC   string  `json:"Start_DateTime__c"`
+	DurationHours      float64 `json:"Duration__c"`
 }
 
 type UpcomingResponse struct {
@@ -49,6 +52,8 @@ type UpcomingResponse struct {
 	VIFURL                 string            `json:"vif_url"`
 }
 
+const startDateTimeLayout = "2006-01-02T15:04:05.000+0000"
+
 func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
 	var projects []domain.Project
 	for _, s := range ur.Data {
@@ -56,9 +61,24 @@ func (ur UpcomingResponse) ToDomainProjects() ([]domain.Project, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not parse date from upcoming projects response")
 		}
+
+		var endDateTime time.Time
+		if s.StartDateTimeUTC != "" {
+			startDT, err := time.Parse(startDateTimeLayout, s.StartDateTimeUTC)
+			if err != nil {
+				// Fall back to RFC3339 if the custom layout fails
+				startDT, err = time.Parse(time.RFC3339, s.StartDateTimeUTC)
+				if err != nil {
+					return nil, fmt.Errorf("could not parse start datetime from upcoming projects response")
+				}
+			}
+			endDateTime = startDT.Add(time.Duration(s.DurationHours * float64(time.Hour)))
+		}
+
 		projects = append(projects, domain.Project{
 			Name:         s.PublicSessionName,
 			Date:         projectDate,
+			EndDateTime:  endDateTime,
 			Id:           s.SessionID,
 			ChannelId:    s.AWSChimeChannelID,
 			Status:       s.Status,

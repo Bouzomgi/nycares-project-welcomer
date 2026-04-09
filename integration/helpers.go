@@ -85,10 +85,12 @@ func initTestClients() (*testClients, error) {
 }
 
 type projectInput struct {
-	Name   string `json:"name"`
-	Date   string `json:"date"`
-	Id     string `json:"id"`
-	Status string `json:"status,omitempty"`
+	Name             string  `json:"name"`
+	Date             string  `json:"date"`
+	Id               string  `json:"id"`
+	Status           string  `json:"status,omitempty"`
+	StartDateTimeUTC string  `json:"startDateTimeUTC,omitempty"`
+	DurationHours    float64 `json:"durationHours,omitempty"`
 }
 
 func (tc *testClients) startExecutionWithProjects(projects []projectInput) (string, error) {
@@ -240,7 +242,7 @@ func (tc *testClients) deleteNotification(projectName, projectDate string) error
 	return nil
 }
 
-func (tc *testClients) seedNotification(projectName, projectDate, projectId string, hasSentWelcome, hasSentReminder bool) error {
+func (tc *testClients) seedNotification(projectName, projectDate, projectId string, hasSentWelcome, hasSentReminder, hasSentThankYou bool) error {
 	ctx := context.Background()
 	_, err := tc.dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: aws.String(dynamoTableName),
@@ -250,6 +252,7 @@ func (tc *testClients) seedNotification(projectName, projectDate, projectId stri
 			"ProjectId":        &types.AttributeValueMemberS{Value: projectId},
 			"HasSentWelcome":   &types.AttributeValueMemberBOOL{Value: hasSentWelcome},
 			"HasSentReminder":  &types.AttributeValueMemberBOOL{Value: hasSentReminder},
+			"HasSentThankYou":  &types.AttributeValueMemberBOOL{Value: hasSentThankYou},
 			"ShouldStopNotify": &types.AttributeValueMemberBOOL{Value: false},
 			"LastUpdated":      &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
 		},

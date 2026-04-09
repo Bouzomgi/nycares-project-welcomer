@@ -16,6 +16,7 @@ func main() {
 	routes.RegisterLoginRoute(r)
 	routes.RegisterMessageRoutes(r)
 	routes.RegisterUpcomingProjectsRoute(r)
+	routes.RegisterTodayProjectsRoute(r)
 
 	// Health check endpoint
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
