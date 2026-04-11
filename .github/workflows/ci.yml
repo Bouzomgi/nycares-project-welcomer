@@ -126,3 +126,8 @@ jobs:
           INTEGRATION_TIMEOUT: 300s
         run: go test -tags integration -v -count=1 ./integration/
         timeout-minutes: 10
+
+      - name: Fetch GenerateThankYouMessage Lambda logs (debug)
+        if: failure()
+        run: |
+          aws logs tail /aws/lambda/generate-thank-you-message-ci --since 15m --format short || true

@@ -239,10 +239,10 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	bucket.GrantRead(lambdaFns["RequestApprovalToSend"], nil)
 	bucket.GrantRead(lambdaFns["GenerateThankYouMessage"], nil)
 
-	// GenerateThankYouMessage needs Bedrock InvokeModel
+	// GenerateThankYouMessage needs Bedrock InvokeModel (wildcard covers foundation models and inference profiles)
 	lambdaFns["GenerateThankYouMessage"].AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("bedrock:InvokeModel"),
-		Resources: jsii.Strings(fmt.Sprintf("arn:aws:bedrock:%s::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0", *stack.Region())),
+		Resources: jsii.Strings("*"),
 	}))
 
 	// SNS publish for notification lambdas
