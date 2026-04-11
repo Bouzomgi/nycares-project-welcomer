@@ -237,7 +237,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// GenerateThankYouMessage needs Bedrock InvokeModel
 	lambdaFns["GenerateThankYouMessage"].AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("bedrock:InvokeModel"),
-		Resources: jsii.Strings(fmt.Sprintf("arn:aws:bedrock:%s::foundation-model/anthropic.claude-3-5-haiku-20241022", *stack.Region())),
+		Resources: jsii.Strings(fmt.Sprintf("arn:aws:bedrock:%s::foundation-model/anthropic.claude-3-5-haiku-20241022-v1:0", *stack.Region())),
 	}))
 
 	// SNS publish for notification lambdas

@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 )
 
-const ModelID = "anthropic.claude-3-5-haiku-20241022"
+const ModelID = "anthropic.claude-3-5-haiku-20241022-v1:0"
 
 type GenerationService interface {
 	GenerateThankYouMessage(ctx context.Context, writingSample, projectName string) (string, error)
