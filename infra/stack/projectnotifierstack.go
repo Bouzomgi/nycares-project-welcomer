@@ -186,6 +186,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
+		timeout := jsii.Number(30)
+		if name == "GenerateThankYouMessage" {
+			timeout = jsii.Number(60)
+		}
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -195,7 +200,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			),
 			FunctionName: jsii.String(kebabName + suffix),
 			Architecture: lambdaArchitecture(),
-			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+			Timeout:      awscdk.Duration_Seconds(timeout),
 			Environment:  sharedEnv,
 			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
 		})
