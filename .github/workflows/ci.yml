@@ -80,7 +80,6 @@ jobs:
           NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
           NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
           NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
-          NYCARES_MOCK_GENERATETHANKYOU: "true"
           GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           cd infra
@@ -127,3 +126,8 @@ jobs:
           INTEGRATION_TIMEOUT: 300s
         run: go test -tags integration -v -count=1 ./integration/
         timeout-minutes: 10
+
+      - name: Fetch GenerateThankYouMessage Lambda logs (debug)
+        if: failure()
+        run: |
+          aws logs tail /aws/lambda/generate-thank-you-message-ci --since 15m --format short || true
