@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
+	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computepreprojectmessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
 	"github.com/aws/aws-lambda-go/lambda"

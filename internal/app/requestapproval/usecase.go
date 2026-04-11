@@ -25,25 +25,30 @@ func NewRequestApprovalUseCase(snsSrv snsservice.NotificationService, s3Srv s3se
 	}
 }
 
-func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef string, mockMode bool) error {
+func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint url.URL, taskToken, projectName, projectDate, messageType, templateRef, generatedContent string, mockMode bool) error {
 
 	if taskToken == "" {
 		return fmt.Errorf("taskToken must be defined")
 	}
 
-	messageContent, err := u.s3Srv.GetMessageContent(ctx, templateRef)
-	if err != nil {
-		return fmt.Errorf("failed to fetch message content: %w", err)
+	var messageContent string
+	if generatedContent != "" {
+		messageContent = generatedContent
+	} else {
+		var err error
+		messageContent, err = u.s3Srv.GetMessageContent(ctx, templateRef)
+		if err != nil {
+			return fmt.Errorf("failed to fetch message content: %w", err)
+		}
+		messageContent = strings.ReplaceAll(messageContent, "{{projectName}}", projectName)
 	}
-
-	messageContent = strings.ReplaceAll(messageContent, "{{projectName}}", projectName)
 
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
 
 	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, mockMode)
 
-	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
+	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish approval notification: %w", err)
 	}

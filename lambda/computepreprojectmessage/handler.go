@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computemessage"
+	cm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/computepreprojectmessage"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/domain"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/models"
@@ -20,24 +20,24 @@ func NewComputeMessageHandler(u *cm.ComputeMessageUseCase, cfg *cm.Config) *Comp
 }
 
 func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.ComputeMessageInput) (models.ComputeMessageOutput, error) {
-	slog.Info("computemessage handler invoked", "executionId", input.ExecutionId, "messageType", input.MessageType)
+	slog.Info("computepreprojectmessage handler invoked", "executionId", input.ExecutionId, "messageType", input.MessageType)
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	messageType, err := domain.ParseNotificationType(input.MessageType)
 	if err != nil {
-		slog.Error("computemessage invalid message type", "executionId", input.ExecutionId, "error", err)
+		slog.Error("computepreprojectmessage invalid message type", "executionId", input.ExecutionId, "error", err)
 		return models.ComputeMessageOutput{}, err
 	}
 
 	messageRef, err := h.usecase.Execute(h.cfg.AWS.S3.BucketName, input.ExistingProjectNotification.Name, messageType)
 	if err != nil {
-		slog.Error("computemessage failed", "executionId", input.ExecutionId, "error", err)
+		slog.Error("computepreprojectmessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.ComputeMessageOutput{}, err
 	}
 
-	slog.Info("computemessage succeeded", "executionId", input.ExecutionId, "messageType", input.MessageType)
+	slog.Info("computepreprojectmessage succeeded", "executionId", input.ExecutionId, "messageType", input.MessageType)
 
 	return models.ComputeMessageOutput{
 		Auth:                        input.Auth,

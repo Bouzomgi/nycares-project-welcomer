@@ -60,7 +60,7 @@ jobs:
 
       - name: Build lambdas
         run: |
-          for pkg in login fetchprojects routeproject computemessagetosend requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
+          for pkg in login fetchprojects routeproject computepreprojectmessage generatethankyoumessage requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
             mkdir -p lambda-build/$pkg
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/$pkg/bootstrap ./lambda/$pkg &
           done
@@ -80,6 +80,7 @@ jobs:
           NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
           NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
           NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
+          NYCARES_MOCK_GENERATETHANKYOU: "true"
           GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           cd infra

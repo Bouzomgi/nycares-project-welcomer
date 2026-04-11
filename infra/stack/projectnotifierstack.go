@@ -143,6 +143,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"NYCARES_API_BASE_URL",
 		"NYCARES_CURRENT_DATE",
 		"NYCARES_MOCK_SENDMESSAGE",
+		"NYCARES_MOCK_GENERATETHANKYOU",
 		"NYCARES_ACCOUNT_USERNAME",
 		"NYCARES_ACCOUNT_PASSWORD",
 		"NYCARES_AWS_SF_APPROVALSECRET",
@@ -170,7 +171,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		"Login",
 		"FetchProjects",
 		"RouteProject",
-		"ComputeMessageToSend",
+		"ComputePreProjectMessage",
+		"GenerateThankYouMessage",
 		"RequestApprovalToSend",
 		"SendAndPinMessage",
 		"RecordMessage",
@@ -227,9 +229,16 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// RecordMessage needs DynamoDB read/write
 	table.GrantReadWriteData(lambdaFns["RecordMessage"])
 
-	// SendAndPinMessage and RequestApprovalToSend need S3 read
+	// SendAndPinMessage, RequestApprovalToSend, and GenerateThankYouMessage need S3 read
 	bucket.GrantRead(lambdaFns["SendAndPinMessage"], nil)
 	bucket.GrantRead(lambdaFns["RequestApprovalToSend"], nil)
+	bucket.GrantRead(lambdaFns["GenerateThankYouMessage"], nil)
+
+	// GenerateThankYouMessage needs Bedrock InvokeModel
+	lambdaFns["GenerateThankYouMessage"].AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("bedrock:InvokeModel"),
+		Resources: jsii.Strings(fmt.Sprintf("arn:aws:bedrock:%s::foundation-model/anthropic.claude-3-5-haiku-20241022", *stack.Region())),
+	}))
 
 	// SNS publish for notification lambdas
 	topic.GrantPublish(lambdaFns["RequestApprovalToSend"])

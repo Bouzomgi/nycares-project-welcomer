@@ -10,7 +10,7 @@ lint:
 	go vet ./...
 
 integration:
-	go test -tags integration -v -count=1 ./integration/
+	AWS_ENDPOINT_URL=http://localhost:4566 go test -tags integration -v -count=1 ./integration/
 
 build:
 	docker compose up --build build-lambdas
