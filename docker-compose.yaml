@@ -97,6 +97,8 @@ services:
       - NYCARES_AWS_SF_CALLBACKENDPOINT=http://localhost:4566
       - NYCARES_AWS_SF_APPROVALSECRET=test-secret
       - NYCARES_MOCK_GENERATETHANKYOU=true
+      - NYCARES_AWS_SES_SENDER=noreply@localhost
+      - NYCARES_AWS_SES_RECIPIENT=dev@localhost
       - NYCARES_LAMBDA_ARCH=${LAMBDA_GOARCH:-arm64}
     command: >
       sh -c "go mod download &&
