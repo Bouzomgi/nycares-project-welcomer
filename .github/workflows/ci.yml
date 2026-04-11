@@ -80,6 +80,7 @@ jobs:
           NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
           NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
           NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
+          NYCARES_MOCK_GENERATETHANKYOU: "true"
           GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           cd infra
