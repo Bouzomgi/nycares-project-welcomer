@@ -81,7 +81,7 @@
             "Resource": "${RouteProjectLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
-            "Next": "ComputeMessageToSend",
+            "Next": "BranchByMessageType",
             "Catch": [
               {
                 "ErrorEquals": ["NotTeamLeader", "ProjectCancelled", "ProjectTooFar", "AllNotificationsSent", "NotificationsDisabled"],
@@ -102,16 +102,49 @@
             },
             "Next": "ProjectDLQNotifier"
           },
-          "ComputeMessageToSend": {
+          "BranchByMessageType": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.messageType",
+                "StringEquals": "thankYou",
+                "Next": "GenerateThankYouMessage"
+              }
+            ],
+            "Default": "ComputePreProjectMessage"
+          },
+          "GenerateThankYouMessage": {
             "Type": "Task",
-            "Resource": "${ComputeMessageToSendLambdaArn}",
+            "Resource": "${GenerateThankYouMessageLambdaArn}",
             "InputPath": "$",
             "ResultPath": "$",
             "Next": "ScheduleThankYou",
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
-                "Next": "ComputeMessageToSendFailed"
+                "Next": "GenerateThankYouMessageFailed"
+              }
+            ]
+          },
+          "GenerateThankYouMessageFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "GenerateThankYouMessage"
+            },
+            "Next": "ProjectDLQNotifier"
+          },
+          "ComputePreProjectMessage": {
+            "Type": "Task",
+            "Resource": "${ComputePreProjectMessageLambdaArn}",
+            "InputPath": "$",
+            "ResultPath": "$",
+            "Next": "ScheduleThankYou",
+            "Catch": [
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "ComputePreProjectMessageFailed"
               }
             ]
           },
@@ -131,12 +164,12 @@
             "TimestampPath": "$.targetSendTime",
             "Next": "RequestApprovalToSend"
           },
-          "ComputeMessageToSendFailed": {
+          "ComputePreProjectMessageFailed": {
             "Type": "Pass",
             "Parameters": {
               "Error.$": "$.Error",
               "Cause.$": "$.Cause",
-              "FailedStep": "ComputeMessageToSend"
+              "FailedStep": "ComputePreProjectMessage"
             },
             "Next": "ProjectDLQNotifier"
           },

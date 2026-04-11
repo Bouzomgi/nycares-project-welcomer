@@ -14,14 +14,16 @@ COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go/build \
     CGO_ENABLED=0 GOOS=linux GOARCH=${LAMBDA_GOARCH} \
-    sh -c 'mkdir -p /build/login /build/fetchprojects /build/routeproject /build/computemessagetosend \
+    sh -c 'mkdir -p /build/login /build/fetchprojects /build/routeproject /build/computepreprojectmessage \
+                    /build/generatethankyoumessage \
                     /build/requestapprovaltosend /build/sendandpinmessage /build/recordmessage \
                     /build/notifycompletion /build/dlqnotifier /build/approvalcallback /build/sesforwarder \
                     /build/mockserver && \
            go build -o /build/login/bootstrap ./lambda/login & \
            go build -o /build/fetchprojects/bootstrap ./lambda/fetchprojects & \
            go build -o /build/routeproject/bootstrap ./lambda/routeproject & \
-           go build -o /build/computemessagetosend/bootstrap ./lambda/computemessagetosend & \
+           go build -o /build/computepreprojectmessage/bootstrap ./lambda/computepreprojectmessage & \
+           go build -o /build/generatethankyoumessage/bootstrap ./lambda/generatethankyoumessage & \
            go build -o /build/requestapprovaltosend/bootstrap ./lambda/requestapprovaltosend & \
            go build -o /build/sendandpinmessage/bootstrap ./lambda/sendandpinmessage & \
            go build -o /build/recordmessage/bootstrap ./lambda/recordmessage & \

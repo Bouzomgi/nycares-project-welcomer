@@ -29,8 +29,9 @@ type projectNotification struct {
 }
 
 type message struct {
-	Type        string `json:"type"`
-	TemplateRef string `json:"templateRef"`
+	Type             string `json:"type"`
+	TemplateRef      string `json:"templateRef"`
+	GeneratedContent string `json:"generatedContent,omitempty"`
 }
 
 func BuildMessage(messageType, templateRef string) message {

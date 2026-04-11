@@ -1,4 +1,4 @@
-package computemessage
+package computepreprojectmessage
 
 import (
 	"testing"
