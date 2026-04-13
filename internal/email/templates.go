@@ -59,10 +59,10 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 			html.EscapeString(messageType),
 			html.EscapeString(destination),
 			html.EscapeString(messageContent),
-			approveLink,
-			rejectLink,
-			regenerateLink,
-			refineFormBase,
+			html.EscapeString(approveLink),
+			html.EscapeString(rejectLink),
+			html.EscapeString(regenerateLink),
+			html.EscapeString(refineFormBase),
 		)
 	} else {
 		plainText = fmt.Sprintf(
@@ -79,8 +79,8 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 			html.EscapeString(messageType),
 			html.EscapeString(destination),
 			html.EscapeString(messageContent),
-			approveLink,
-			rejectLink,
+			html.EscapeString(approveLink),
+			html.EscapeString(rejectLink),
 		)
 	}
 

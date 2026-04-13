@@ -43,6 +43,9 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 	token := request.QueryStringParameters["token"]
 	action := request.QueryStringParameters["action"]
 	refinementContext := request.QueryStringParameters["context"]
+	if len(refinementContext) > 500 {
+		refinementContext = refinementContext[:500]
+	}
 
 	if token == "" || action == "" {
 		return events.APIGatewayProxyResponse{
