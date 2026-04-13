@@ -162,6 +162,14 @@ func (tc *testClients) pollForTaskToken(executionArn string) (string, error) {
 					return token, nil
 				}
 			}
+			// Execution failed before a task token was ever scheduled;
+			// scan remaining events for the actual Lambda error.
+			if event.Type == sfntypes.HistoryEventTypeExecutionFailed ||
+				event.Type == sfntypes.HistoryEventTypeExecutionAborted ||
+				event.Type == sfntypes.HistoryEventTypeExecutionTimedOut {
+				lambdaErr := extractLambdaFailure(result.Events)
+				return "", fmt.Errorf("execution failed before task token (lambda error: %s)", lambdaErr)
+			}
 		}
 
 		time.Sleep(pollInterval)
@@ -185,6 +193,19 @@ func extractTaskToken(params string) string {
 	}
 
 	return ""
+}
+
+// extractLambdaFailure scans execution history events (reverse-ordered) for the
+// most recent LambdaFunctionFailed event and returns its error + cause string.
+func extractLambdaFailure(events []sfntypes.HistoryEvent) string {
+	for _, e := range events {
+		if e.Type == sfntypes.HistoryEventTypeLambdaFunctionFailed && e.LambdaFunctionFailedEventDetails != nil {
+			errStr := aws.ToString(e.LambdaFunctionFailedEventDetails.Error)
+			cause := aws.ToString(e.LambdaFunctionFailedEventDetails.Cause)
+			return fmt.Sprintf("error=%s cause=%s", errStr, cause)
+		}
+	}
+	return "unknown (no LambdaFunctionFailed event found)"
 }
 
 func (tc *testClients) approveTask(taskToken string) error {
