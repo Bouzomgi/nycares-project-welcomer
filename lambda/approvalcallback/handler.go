@@ -72,8 +72,10 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		message = "Regenerating a fresh thank-you message. A new approval email will arrive shortly."
 	case "refine":
 		message = "Regenerating with your context. A new approval email will arrive shortly."
-	default:
+	case "reject":
 		message = "Rejected. The message will not be sent."
+	default:
+		message = fmt.Sprintf("Action %q processed.", action)
 	}
 
 	return events.APIGatewayProxyResponse{

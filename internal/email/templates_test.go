@@ -63,13 +63,23 @@ func TestApprovalRequest_Subject(t *testing.T) {
 func TestApprovalRequest_ContainsFields(t *testing.T) {
 	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
 
-	checks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", "http://regenerate", "http://refine-base"}
+	checks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject"}
 	for _, s := range checks {
 		if !strings.Contains(plainText, s) {
 			t.Errorf("plainText missing %q", s)
 		}
 		if !strings.Contains(htmlBody, s) {
 			t.Errorf("htmlBody missing %q", s)
+		}
+	}
+
+	// Regenerate/Refine must not appear for non-thankYou messages
+	for _, s := range []string{"http://regenerate", "http://refine-base", "Regenerate", "refine"} {
+		if strings.Contains(plainText, s) {
+			t.Errorf("plainText should not contain %q for welcome message", s)
+		}
+		if strings.Contains(htmlBody, s) {
+			t.Errorf("htmlBody should not contain %q for welcome message", s)
 		}
 	}
 }

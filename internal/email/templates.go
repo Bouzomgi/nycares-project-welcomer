@@ -26,8 +26,8 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 
 // ApprovalRequest returns the subject, plain text, and HTML body for a message approval email.
 // mockMode indicates whether send/pin requests will go to the mock server or the real NYC Cares platform.
-// regenerateLink triggers a fresh generation with no additional context.
-// refineFormBase is the callback URL (with token and secret) used as the HTML form action for refinement.
+// regenerateLink triggers a fresh generation with no additional context (thankYou only).
+// refineFormBase is the callback URL (with token and secret) used as the HTML form action for refinement (thankYou only).
 func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase string, mockMode bool) (subject, plainText, htmlBody string) {
 	subject = "Project Message Approval"
 
@@ -36,32 +36,53 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 		destination = "mock server"
 	}
 
-	plainText = fmt.Sprintf(
-		"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nRegenerate: %s\n\nRefine: %s&action=refine&context=YOUR+CONTEXT+HERE",
-		projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase,
-	)
+	isThankYou := messageType == "thankYou"
 
-	htmlBody = fmt.Sprintf(
-		`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
-			`<p><strong>Message Content:</strong></p>`+
-			`<pre>%s</pre>`+
-			`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a> &nbsp; <a href="%s">Regenerate</a></p>`+
-			`<p><strong>Refine &amp; Regenerate:</strong></p>`+
-			`<form method="get" action="%s">`+
-			`<input type="hidden" name="action" value="refine">`+
-			`<textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>`+
-			`<input type="submit" value="Refine &amp; Regenerate">`+
-			`</form>`,
-		html.EscapeString(projectName),
-		html.EscapeString(projectDate),
-		html.EscapeString(messageType),
-		html.EscapeString(destination),
-		html.EscapeString(messageContent),
-		approveLink,
-		rejectLink,
-		regenerateLink,
-		refineFormBase,
-	)
+	if isThankYou {
+		plainText = fmt.Sprintf(
+			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nRegenerate: %s\n\nRefine: %s&action=refine&context=YOUR+CONTEXT+HERE",
+			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase,
+		)
+		htmlBody = fmt.Sprintf(
+			`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
+				`<p><strong>Message Content:</strong></p>`+
+				`<pre>%s</pre>`+
+				`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a> &nbsp; <a href="%s">Regenerate</a></p>`+
+				`<p><strong>Refine &amp; Regenerate:</strong></p>`+
+				`<form method="get" action="%s">`+
+				`<input type="hidden" name="action" value="refine">`+
+				`<textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>`+
+				`<input type="submit" value="Refine &amp; Regenerate">`+
+				`</form>`,
+			html.EscapeString(projectName),
+			html.EscapeString(projectDate),
+			html.EscapeString(messageType),
+			html.EscapeString(destination),
+			html.EscapeString(messageContent),
+			approveLink,
+			rejectLink,
+			regenerateLink,
+			refineFormBase,
+		)
+	} else {
+		plainText = fmt.Sprintf(
+			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
+			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink,
+		)
+		htmlBody = fmt.Sprintf(
+			`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
+				`<p><strong>Message Content:</strong></p>`+
+				`<pre>%s</pre>`+
+				`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
+			html.EscapeString(projectName),
+			html.EscapeString(projectDate),
+			html.EscapeString(messageType),
+			html.EscapeString(destination),
+			html.EscapeString(messageContent),
+			approveLink,
+			rejectLink,
+		)
+	}
 
 	return
 }
