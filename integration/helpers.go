@@ -212,7 +212,7 @@ func (tc *testClients) approveTask(taskToken string) error {
 	ctx := context.Background()
 	_, err := tc.sfnClient.SendTaskSuccess(ctx, &sfn.SendTaskSuccessInput{
 		TaskToken: aws.String(taskToken),
-		Output:    aws.String(`{"approved": true}`),
+		Output:    aws.String(`{"action": "approve", "refinementContext": ""}`),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to approve task: %w", err)
