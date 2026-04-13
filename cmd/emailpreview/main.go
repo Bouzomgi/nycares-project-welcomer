@@ -45,6 +45,8 @@ func main() {
 			"Hi volunteers! We're excited to have you join us for Central Park Cleanup on April 10th. Please arrive at the Visitor Center by 9am.",
 			"http://localhost:4566/callback?token=abc123&action=approve&secret=test-secret",
 			"http://localhost:4566/callback?token=abc123&action=reject&secret=test-secret",
+			"http://localhost:4566/callback?token=abc123&action=regenerate&secret=test-secret",
+			"http://localhost:4566/callback?token=abc123&secret=test-secret",
 			mockMode,
 		)
 		emails = append(emails, entry{"approval-request" + suffix, s, p, h})
