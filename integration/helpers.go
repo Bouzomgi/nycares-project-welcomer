@@ -222,10 +222,9 @@ func (tc *testClients) approveTask(taskToken string) error {
 
 func (tc *testClients) rejectTask(taskToken string) error {
 	ctx := context.Background()
-	_, err := tc.sfnClient.SendTaskFailure(ctx, &sfn.SendTaskFailureInput{
+	_, err := tc.sfnClient.SendTaskSuccess(ctx, &sfn.SendTaskSuccessInput{
 		TaskToken: aws.String(taskToken),
-		Error:     aws.String("rejected"),
-		Cause:     aws.String("User rejected the approval request"),
+		Output:    aws.String(`{"action": "reject", "refinementContext": ""}`),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to reject task: %w", err)

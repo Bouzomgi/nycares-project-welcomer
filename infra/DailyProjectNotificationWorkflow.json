@@ -204,6 +204,11 @@
                 "Variable": "$.approvalResult.action",
                 "StringEquals": "approve",
                 "Next": "SendAndPinMessage"
+              },
+              {
+                "Variable": "$.approvalResult.action",
+                "StringEquals": "reject",
+                "Next": "EndProjectIteration"
               }
             ],
             "Default": "RegenerateThankYouMessage"

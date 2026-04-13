@@ -10,7 +10,6 @@ import (
 
 type SFNClient interface {
 	SendTaskSuccess(ctx context.Context, params *sfn.SendTaskSuccessInput, optFns ...func(*sfn.Options)) (*sfn.SendTaskSuccessOutput, error)
-	SendTaskFailure(ctx context.Context, params *sfn.SendTaskFailureInput, optFns ...func(*sfn.Options)) (*sfn.SendTaskFailureOutput, error)
 }
 
 type ApprovalCallbackUseCase struct {
@@ -25,14 +24,14 @@ func NewApprovalCallbackUseCase(sfnClient SFNClient) *ApprovalCallbackUseCase {
 //   - "approve"     → SendTaskSuccess with action="approve"
 //   - "regenerate"  → SendTaskSuccess with action="regenerate" (fresh generation, no context)
 //   - "refine"      → SendTaskSuccess with action="refine" and the supplied refinementContext
-//   - "reject"      → SendTaskFailure
+//   - "reject"      → SendTaskSuccess with action="reject" (routes to EndProjectIteration, not DLQ)
 func (u *ApprovalCallbackUseCase) Execute(ctx context.Context, taskToken, action, refinementContext string) error {
 	if taskToken == "" {
 		return fmt.Errorf("taskToken must be defined")
 	}
 
 	switch action {
-	case "approve", "regenerate", "refine":
+	case "approve", "regenerate", "refine", "reject":
 		type successOutput struct {
 			Action            string `json:"action"`
 			RefinementContext string `json:"refinementContext"`
@@ -51,19 +50,7 @@ func (u *ApprovalCallbackUseCase) Execute(ctx context.Context, taskToken, action
 		})
 		return err
 
-	case "reject":
-		_, err := u.sfnClient.SendTaskFailure(ctx, &sfn.SendTaskFailureInput{
-			TaskToken: &taskToken,
-			Error:     strPtr("rejected"),
-			Cause:     strPtr("User rejected the approval request"),
-		})
-		return err
-
 	default:
 		return fmt.Errorf("unknown action %q: must be approve, regenerate, refine, or reject", action)
 	}
-}
-
-func strPtr(s string) *string {
-	return &s
 }
