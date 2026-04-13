@@ -186,6 +186,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		lowerName := strings.ToLower(name)
 		kebabName := strcase.ToKebab(name)
 
+		timeout := jsii.Number(30)
+		if name == "GenerateThankYouMessage" {
+			timeout = jsii.Number(60)
+		}
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -195,7 +200,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			),
 			FunctionName: jsii.String(kebabName + suffix),
 			Architecture: lambdaArchitecture(),
-			Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
+			Timeout:      awscdk.Duration_Seconds(timeout),
 			Environment:  sharedEnv,
 			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
 		})
@@ -234,10 +239,10 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	bucket.GrantRead(lambdaFns["RequestApprovalToSend"], nil)
 	bucket.GrantRead(lambdaFns["GenerateThankYouMessage"], nil)
 
-	// GenerateThankYouMessage needs Bedrock InvokeModel
+	// GenerateThankYouMessage needs Bedrock InvokeModel (wildcard covers foundation models and inference profiles)
 	lambdaFns["GenerateThankYouMessage"].AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("bedrock:InvokeModel"),
-		Resources: jsii.Strings(fmt.Sprintf("arn:aws:bedrock:%s::foundation-model/anthropic.claude-3-5-haiku-20241022", *stack.Region())),
+		Resources: jsii.Strings("*"),
 	}))
 
 	// SNS publish for notification lambdas

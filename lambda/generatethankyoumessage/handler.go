@@ -21,7 +21,7 @@ func NewGenerateThankYouMessageHandler(u *gtm.GenerateThankYouMessageUseCase, cf
 func (h *GenerateThankYouMessageHandler) Handle(ctx context.Context, input models.GenerateThankYouMessageInput) (models.GenerateThankYouMessageOutput, error) {
 	slog.Info("generatethankyoumessage handler invoked", "executionId", input.ExecutionId, "project", input.ExistingProjectNotification.Name)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := context.WithTimeout(ctx, config.AIHandlerTimeout)
 	defer cancel()
 
 	generatedContent, err := h.usecase.Execute(ctx, input.ExistingProjectNotification.Name)
