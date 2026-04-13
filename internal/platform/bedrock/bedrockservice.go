@@ -12,7 +12,7 @@ import (
 const ModelID = "us.amazon.nova-lite-v1:0"
 
 type GenerationService interface {
-	GenerateThankYouMessage(ctx context.Context, writingSample, projectName string) (string, error)
+	GenerateThankYouMessage(ctx context.Context, writingSample, projectName, refinementContext string) (string, error)
 }
 
 type BedrockService struct {
@@ -23,9 +23,12 @@ func NewBedrockService(client *bedrockruntime.Client) *BedrockService {
 	return &BedrockService{client: client}
 }
 
-func (s *BedrockService) GenerateThankYouMessage(ctx context.Context, writingSample, projectName string) (string, error) {
+func (s *BedrockService) GenerateThankYouMessage(ctx context.Context, writingSample, projectName, refinementContext string) (string, error) {
 	systemPrompt := fmt.Sprintf("You are writing thank-you messages on behalf of a volunteer program coordinator. Here are several example messages they have written — match their style exactly:\n\n%s", writingSample)
 	userPrompt := fmt.Sprintf("Write a new, unique thank-you message (2-3 sentences) for a team leader who led the volunteer project \"%s\" today. Match the style of the examples but do not repeat any of them.", projectName)
+	if refinementContext != "" {
+		userPrompt += fmt.Sprintf(" Additional context to incorporate: %s", refinementContext)
+	}
 
 	resp, err := s.client.Converse(ctx, &bedrockruntime.ConverseInput{
 		ModelId: aws.String(ModelID),

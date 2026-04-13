@@ -189,13 +189,58 @@
               }
             },
             "ResultPath": "$.approvalResult",
-            "Next": "SendAndPinMessage",
+            "Next": "CheckApprovalDecision",
             "Catch": [
               {
                 "ErrorEquals": ["States.ALL"],
                 "Next": "RequestApprovalToSendFailed"
               }
             ]
+          },
+          "CheckApprovalDecision": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.approvalResult.action",
+                "StringEquals": "approve",
+                "Next": "SendAndPinMessage"
+              },
+              {
+                "Variable": "$.approvalResult.action",
+                "StringEquals": "reject",
+                "Next": "EndProjectIteration"
+              }
+            ],
+            "Default": "RegenerateThankYouMessage"
+          },
+          "RegenerateThankYouMessage": {
+            "Type": "Task",
+            "Resource": "${GenerateThankYouMessageLambdaArn}",
+            "Parameters": {
+              "auth.$": "$.auth",
+              "existingProjectNotification.$": "$.existingProjectNotification",
+              "messageType": "thankYou",
+              "targetSendTime.$": "$.targetSendTime",
+              "executionId.$": "$.executionId",
+              "refinementContext.$": "$.approvalResult.refinementContext"
+            },
+            "ResultPath": "$",
+            "Next": "RequestApprovalToSend",
+            "Catch": [
+              {
+                "ErrorEquals": ["States.ALL"],
+                "Next": "RegenerateThankYouMessageFailed"
+              }
+            ]
+          },
+          "RegenerateThankYouMessageFailed": {
+            "Type": "Pass",
+            "Parameters": {
+              "Error.$": "$.Error",
+              "Cause.$": "$.Cause",
+              "FailedStep": "RegenerateThankYouMessage"
+            },
+            "Next": "ProjectDLQNotifier"
           },
           "RequestApprovalToSendFailed": {
             "Type": "Pass",

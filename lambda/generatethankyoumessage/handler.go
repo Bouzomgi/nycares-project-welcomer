@@ -24,7 +24,7 @@ func (h *GenerateThankYouMessageHandler) Handle(ctx context.Context, input model
 	ctx, cancel := context.WithTimeout(ctx, config.AIHandlerTimeout)
 	defer cancel()
 
-	generatedContent, err := h.usecase.Execute(ctx, input.ExistingProjectNotification.Name)
+	generatedContent, err := h.usecase.Execute(ctx, input.ExistingProjectNotification.Name, input.RefinementContext)
 	if err != nil {
 		slog.Error("generatethankyoumessage failed", "executionId", input.ExecutionId, "error", err)
 		return models.GenerateThankYouMessageOutput{}, err

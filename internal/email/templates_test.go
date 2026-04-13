@@ -54,14 +54,14 @@ func TestWorkflowFailed_NoErrorTypeNoise(t *testing.T) {
 }
 
 func TestApprovalRequest_Subject(t *testing.T) {
-	subject, _, _ := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", false)
+	subject, _, _ := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
 	if subject != "Project Message Approval" {
 		t.Errorf("subject = %q, want %q", subject, "Project Message Approval")
 	}
 }
 
 func TestApprovalRequest_ContainsFields(t *testing.T) {
-	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", false)
+	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
 
 	checks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject"}
 	for _, s := range checks {
@@ -72,12 +72,22 @@ func TestApprovalRequest_ContainsFields(t *testing.T) {
 			t.Errorf("htmlBody missing %q", s)
 		}
 	}
+
+	// Regenerate/Refine must not appear for non-thankYou messages
+	for _, s := range []string{"http://regenerate", "http://refine-base", "Regenerate", "refine"} {
+		if strings.Contains(plainText, s) {
+			t.Errorf("plainText should not contain %q for welcome message", s)
+		}
+		if strings.Contains(htmlBody, s) {
+			t.Errorf("htmlBody should not contain %q for welcome message", s)
+		}
+	}
 }
 
 func TestApprovalRequest_HTMLEscaping(t *testing.T) {
 	_, _, htmlBody := ApprovalRequest(
 		"<Project>", "<date>", "<type>", "<script>xss</script>",
-		"http://approve", "http://reject", false,
+		"http://approve", "http://reject", "http://regenerate", "http://refine-base", false,
 	)
 
 	for _, raw := range []string{"<Project>", "<date>", "<type>", "<script>"} {
@@ -88,7 +98,7 @@ func TestApprovalRequest_HTMLEscaping(t *testing.T) {
 }
 
 func TestApprovalRequest_MockMode(t *testing.T) {
-	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", true)
+	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", true)
 
 	if !strings.Contains(plainText, "mock server") {
 		t.Error("plainText should indicate mock server when mockMode=true")
@@ -97,12 +107,29 @@ func TestApprovalRequest_MockMode(t *testing.T) {
 		t.Error("htmlBody should indicate mock server when mockMode=true")
 	}
 
-	_, plainText2, htmlBody2 := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", false)
+	_, plainText2, htmlBody2 := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
 	if !strings.Contains(plainText2, "real NYC Cares platform") {
 		t.Error("plainText should indicate real platform when mockMode=false")
 	}
 	if !strings.Contains(htmlBody2, "real NYC Cares platform") {
 		t.Error("htmlBody should indicate real platform when mockMode=false")
+	}
+}
+
+func TestApprovalRequest_ContainsRegenerateAndRefine(t *testing.T) {
+	_, plainText, htmlBody := ApprovalRequest("Park Cleanup", "2026-04-10", "thankYou", "Thanks!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
+
+	if !strings.Contains(plainText, "http://regenerate") {
+		t.Error("plainText missing regenerate link")
+	}
+	if !strings.Contains(htmlBody, "Regenerate") {
+		t.Error("htmlBody missing Regenerate option")
+	}
+	if !strings.Contains(htmlBody, `value="refine"`) {
+		t.Error("htmlBody missing refine form hidden action field")
+	}
+	if !strings.Contains(htmlBody, "http://refine-base") {
+		t.Error("htmlBody missing refine form base URL")
 	}
 }
 

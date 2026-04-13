@@ -42,6 +42,10 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 
 	token := request.QueryStringParameters["token"]
 	action := request.QueryStringParameters["action"]
+	refinementContext := request.QueryStringParameters["context"]
+	if len(refinementContext) > 500 {
+		refinementContext = refinementContext[:500]
+	}
 
 	if token == "" || action == "" {
 		return events.APIGatewayProxyResponse{
@@ -51,9 +55,7 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		}, nil
 	}
 
-	approved := action == "approve"
-
-	err := h.usecase.Execute(ctx, token, approved)
+	err := h.usecase.Execute(ctx, token, action, refinementContext)
 	if err != nil {
 		slog.Error("approvalcallback failed", "error", err)
 		return events.APIGatewayProxyResponse{
@@ -63,13 +65,20 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		}, nil
 	}
 
-	slog.Info("approvalcallback succeeded", "approved", approved)
+	slog.Info("approvalcallback succeeded", "action", action)
 
 	var message string
-	if approved {
+	switch action {
+	case "approve":
 		message = "Approved! The message will be sent shortly."
-	} else {
+	case "regenerate":
+		message = "Regenerating a fresh thank-you message. A new approval email will arrive shortly."
+	case "refine":
+		message = "Regenerating with your context. A new approval email will arrive shortly."
+	case "reject":
 		message = "Rejected. The message will not be sent."
+	default:
+		message = fmt.Sprintf("Action %q processed.", action)
 	}
 
 	return events.APIGatewayProxyResponse{

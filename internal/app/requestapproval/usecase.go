@@ -45,8 +45,10 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 
 	approveLink := buildCallbackLink(callbackEndpoint, taskToken, "approve", u.approvalSecret)
 	rejectLink := buildCallbackLink(callbackEndpoint, taskToken, "reject", u.approvalSecret)
+	regenerateLink := buildCallbackLink(callbackEndpoint, taskToken, "regenerate", u.approvalSecret)
+	refineFormBase := buildRefineFormBase(callbackEndpoint, taskToken, u.approvalSecret)
 
-	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, mockMode)
+	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, mockMode)
 
 	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
@@ -57,15 +59,7 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 }
 
 func buildCallbackLink(baseURL url.URL, taskToken string, action string, secret string) string {
-
-	// Append "/callback" to path correctly
-	if len(baseURL.Path) == 0 || baseURL.Path[len(baseURL.Path)-1] != '/' {
-		baseURL.Path += "/callback"
-	} else {
-		baseURL.Path += "callback"
-	}
-
-	// Add the task token, action, and secret as query parameters
+	appendCallbackPath(&baseURL)
 	q := baseURL.Query()
 	q.Set("token", taskToken)
 	q.Set("action", action)
@@ -73,6 +67,27 @@ func buildCallbackLink(baseURL url.URL, taskToken string, action string, secret 
 		q.Set("secret", secret)
 	}
 	baseURL.RawQuery = q.Encode()
-
 	return baseURL.String()
+}
+
+// buildRefineFormBase returns the callback URL with token and secret set but
+// no action — used as the HTML form action so the form can supply action=refine
+// and the user-provided context as additional query parameters.
+func buildRefineFormBase(baseURL url.URL, taskToken string, secret string) string {
+	appendCallbackPath(&baseURL)
+	q := baseURL.Query()
+	q.Set("token", taskToken)
+	if secret != "" {
+		q.Set("secret", secret)
+	}
+	baseURL.RawQuery = q.Encode()
+	return baseURL.String()
+}
+
+func appendCallbackPath(u *url.URL) {
+	if len(u.Path) == 0 || u.Path[len(u.Path)-1] != '/' {
+		u.Path += "/callback"
+	} else {
+		u.Path += "callback"
+	}
 }
