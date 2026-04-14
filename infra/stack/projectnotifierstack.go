@@ -382,25 +382,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	}
 
 	// --- CloudWatch Alarms ---
+	// Workflow Lambda and Step Functions failures are already handled by DLQNotifier,
+	// which publishes to the SNS topic with full context. Alarms here cover failure
+	// paths that the DLQ cannot see.
 
 	alarmAction := awscloudwatchactions.NewSnsAction(topic)
 	fiveMin := &awscloudwatch.MetricOptions{
 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
 		Statistic: jsii.String("Sum"),
-	}
-
-	// Lambda error alarms for all workflow lambdas
-	for _, name := range lambdaNames {
-		alarm := awscloudwatch.NewAlarm(stack, jsii.String(name+"ErrorAlarm"), &awscloudwatch.AlarmProps{
-			AlarmName:          jsii.String(strcase.ToKebab(name) + "-errors" + suffix),
-			AlarmDescription:   jsii.String(name + " Lambda has errors"),
-			Metric:             lambdaFns[name].MetricErrors(fiveMin),
-			Threshold:          jsii.Number(1),
-			EvaluationPeriods:  jsii.Number(1),
-			ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-			TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
-		})
-		alarm.AddAlarmAction(alarmAction)
 	}
 
 	// SES Forwarder Lambda errors
@@ -426,18 +415,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
 	})
 	approvalCallbackAlarm.AddAlarmAction(alarmAction)
-
-	// Step Functions execution failures
-	sfnFailedAlarm := awscloudwatch.NewAlarm(stack, jsii.String("StateMachineFailedAlarm"), &awscloudwatch.AlarmProps{
-		AlarmName:          jsii.String("project-notifier-workflow-failed" + suffix),
-		AlarmDescription:   jsii.String("Project notifier state machine execution failed"),
-		Metric:             stateMachine.MetricFailed(fiveMin),
-		Threshold:          jsii.Number(1),
-		EvaluationPeriods:  jsii.Number(1),
-		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
-	})
-	sfnFailedAlarm.AddAlarmAction(alarmAction)
 
 	// DynamoDB throttled requests — on-demand tables can still throttle during sudden
 	// traffic bursts (>2x previous peak within 30 minutes) before auto-scaling catches up.
