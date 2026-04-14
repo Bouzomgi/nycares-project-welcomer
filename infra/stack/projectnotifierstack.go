@@ -381,12 +381,24 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		}
 	}
 
+	// --- Ops Alerts Topic ---
+	// Separate from the notifications topic so CloudWatch alarm payloads don't get
+	// routed through SESForwarder, which expects workflow-specific message formats.
+	// SNS sends plain-text alarm emails directly to the subscriber.
+
+	opsAlertsTopic := awssns.NewTopic(stack, jsii.String("OpsAlertsTopic"), &awssns.TopicProps{
+		TopicName: jsii.String("nycares-ops-alerts" + suffix),
+	})
+	if opsEmail := os.Getenv("NYCARES_AWS_SES_RECIPIENT"); opsEmail != "" {
+		opsAlertsTopic.AddSubscription(awssnssubscriptions.NewEmailSubscription(jsii.String(opsEmail), nil))
+	}
+
 	// --- CloudWatch Alarms ---
 	// Workflow Lambda and Step Functions failures are already handled by DLQNotifier,
 	// which publishes to the SNS topic with full context. Alarms here cover failure
 	// paths that the DLQ cannot see.
 
-	alarmAction := awscloudwatchactions.NewSnsAction(topic)
+	alarmAction := awscloudwatchactions.NewSnsAction(opsAlertsTopic)
 	fiveMin := &awscloudwatch.MetricOptions{
 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
 		Statistic: jsii.String("Sum"),
