@@ -439,7 +439,8 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 	sfnFailedAlarm.AddAlarmAction(alarmAction)
 
-	// DynamoDB throttled requests
+	// DynamoDB throttled requests — on-demand tables can still throttle during sudden
+	// traffic bursts (>2x previous peak within 30 minutes) before auto-scaling catches up.
 	dynamoThrottleAlarm := awscloudwatch.NewAlarm(stack, jsii.String("DynamoDBThrottleAlarm"), &awscloudwatch.AlarmProps{
 		AlarmName:        jsii.String("dynamodb-throttles" + suffix),
 		AlarmDescription: jsii.String("DynamoDB table has throttled requests"),
@@ -471,12 +472,12 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 	apiServerErrorAlarm.AddAlarmAction(alarmAction)
 
-	// API Gateway 4xx errors on the callback endpoint (threshold of 5 to reduce noise)
+	// API Gateway 4xx errors on the callback endpoint
 	apiClientErrorAlarm := awscloudwatch.NewAlarm(stack, jsii.String("APIGateway4xxAlarm"), &awscloudwatch.AlarmProps{
 		AlarmName:          jsii.String("approval-callback-api-4xx" + suffix),
 		AlarmDescription:   jsii.String("Approval callback API is returning 4xx errors"),
 		Metric:             api.MetricClientError(fiveMin),
-		Threshold:          jsii.Number(5),
+		Threshold:          jsii.Number(1),
 		EvaluationPeriods:  jsii.Number(1),
 		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
 		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
