@@ -1,0 +1,26 @@
+<p>
+  <strong>Project:</strong> {{.ProjectName}}<br>
+  <strong>Date:</strong> {{.ProjectDate}}<br>
+  <strong>Message Type:</strong> {{.MessageType}}<br>
+  <strong>Destination:</strong> {{.Destination}}
+</p>
+<p><strong>Message Content:</strong></p>
+<pre>{{.MessageContent}}</pre>
+{{if .IsThankYou}}
+<p>
+  <a href="{{.ApproveLink}}">Approve</a> &nbsp;
+  <a href="{{.RejectLink}}">Reject</a> &nbsp;
+  <a href="{{.RegenerateLink}}">Regenerate</a>
+</p>
+<p><strong>Refine &amp; Regenerate:</strong></p>
+<form method="get" action="{{.RefineFormBase}}">
+  <input type="hidden" name="action" value="refine">
+  <textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>
+  <input type="submit" value="Refine &amp; Regenerate">
+</form>
+{{else}}
+<p>
+  <a href="{{.ApproveLink}}">Approve</a> &nbsp;
+  <a href="{{.RejectLink}}">Reject</a>
+</p>
+{{end}}

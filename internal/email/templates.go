@@ -2,9 +2,13 @@ package email
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"html/template"
 )
+
+//go:embed templates
+var templateFiles embed.FS
 
 type workflowFailedData struct {
 	FailedStep   string
@@ -31,32 +35,9 @@ type approvalRequestData struct {
 	IsThankYou     bool
 }
 
-var workflowFailedTmpl = template.Must(template.New("workflowFailed").Parse(
-	`<h2>Workflow Step Failed</h2>
-<table>
-  <tr><td><strong>Step</strong></td><td>{{.FailedStep}}</td></tr>
-  <tr><td><strong>Error</strong></td><td>{{.ErrorMessage}}</td></tr>
-</table>`))
-
-var completionTmpl = template.Must(template.New("completion").Parse(
-	`<p>Successfully sent <strong>{{.MessageType}}</strong> message to <strong>{{.ProjectName}}</strong> on {{.ProjectDate}}!</p>` +
-		`<p><em>Sending to: {{.Destination}}</em></p>`))
-
-var approvalRequestTmpl = template.Must(template.New("approvalRequest").Parse(
-	`<p><strong>Project:</strong> {{.ProjectName}}<br><strong>Date:</strong> {{.ProjectDate}}<br><strong>Message Type:</strong> {{.MessageType}}<br><strong>Destination:</strong> {{.Destination}}</p>` +
-		`<p><strong>Message Content:</strong></p>` +
-		`<pre>{{.MessageContent}}</pre>` +
-		`{{if .IsThankYou}}` +
-		`<p><a href="{{.ApproveLink}}">Approve</a> &nbsp; <a href="{{.RejectLink}}">Reject</a> &nbsp; <a href="{{.RegenerateLink}}">Regenerate</a></p>` +
-		`<p><strong>Refine &amp; Regenerate:</strong></p>` +
-		`<form method="get" action="{{.RefineFormBase}}">` +
-		`<input type="hidden" name="action" value="refine">` +
-		`<textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>` +
-		`<input type="submit" value="Refine &amp; Regenerate">` +
-		`</form>` +
-		`{{else}}` +
-		`<p><a href="{{.ApproveLink}}">Approve</a> &nbsp; <a href="{{.RejectLink}}">Reject</a></p>` +
-		`{{end}}`))
+var workflowFailedTmpl = template.Must(template.New("workflow_failed.html").ParseFS(templateFiles, "templates/workflow_failed.html"))
+var completionTmpl = template.Must(template.New("completion.html").ParseFS(templateFiles, "templates/completion.html"))
+var approvalRequestTmpl = template.Must(template.New("approval_request.html").ParseFS(templateFiles, "templates/approval_request.html"))
 
 // WorkflowFailed returns the subject, plain text, and HTML body for a workflow step failure email.
 // errorMessage should be the human-readable error (already extracted from any JSON Cause blob).
@@ -66,10 +47,12 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 	plainText = fmt.Sprintf("Workflow step failed.\nStep: %s\nError: %s", failedStep, errorMessage)
 
 	var buf bytes.Buffer
-	_ = workflowFailedTmpl.Execute(&buf, workflowFailedData{
+	if err := workflowFailedTmpl.Execute(&buf, workflowFailedData{
 		FailedStep:   failedStep,
 		ErrorMessage: errorMessage,
-	})
+	}); err != nil {
+		panic(err)
+	}
 	htmlBody = buf.String()
 
 	return
@@ -102,7 +85,7 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 	}
 
 	var buf bytes.Buffer
-	_ = approvalRequestTmpl.Execute(&buf, approvalRequestData{
+	if err := approvalRequestTmpl.Execute(&buf, approvalRequestData{
 		ProjectName:    projectName,
 		ProjectDate:    projectDate,
 		MessageType:    messageType,
@@ -113,7 +96,9 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 		RegenerateLink: regenerateLink,
 		RefineFormBase: refineFormBase,
 		IsThankYou:     isThankYou,
-	})
+	}); err != nil {
+		panic(err)
+	}
 	htmlBody = buf.String()
 
 	return
@@ -135,12 +120,14 @@ func Completion(messageType, projectName, projectDate string, mockMode bool) (su
 	)
 
 	var buf bytes.Buffer
-	_ = completionTmpl.Execute(&buf, completionData{
+	if err := completionTmpl.Execute(&buf, completionData{
 		MessageType: messageType,
 		ProjectName: projectName,
 		ProjectDate: projectDate,
 		Destination: destination,
-	})
+	}); err != nil {
+		panic(err)
+	}
 	htmlBody = buf.String()
 
 	return
