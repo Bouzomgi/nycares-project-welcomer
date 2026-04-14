@@ -5,9 +5,10 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"strings"
 )
 
-//go:embed templates
+//go:embed templates/*.html
 var templateFiles embed.FS
 
 type workflowFailedData struct {
@@ -53,7 +54,7 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 	}); err != nil {
 		panic(err)
 	}
-	htmlBody = buf.String()
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
@@ -99,7 +100,7 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 	}); err != nil {
 		panic(err)
 	}
-	htmlBody = buf.String()
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
@@ -128,7 +129,7 @@ func Completion(messageType, projectName, projectDate string, mockMode bool) (su
 	}); err != nil {
 		panic(err)
 	}
-	htmlBody = buf.String()
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
