@@ -17,7 +17,8 @@ func TestShouldSendWelcome(t *testing.T) {
 		expected bool
 	}{
 		{"8 days before - too early", projectDate.AddDate(0, 0, -8), false},
-		{"7 days before - boundary", projectDate.AddDate(0, 0, -7).Add(time.Hour), true},
+		{"7 days before - boundary (exact)", projectDate.AddDate(0, 0, -7), true},
+		{"7 days before - boundary (plus hour)", projectDate.AddDate(0, 0, -7).Add(time.Hour), true},
 		{"5 days before - in window", projectDate.AddDate(0, 0, -5), true},
 		{"1 day before - in window", projectDate.AddDate(0, 0, -1), true},
 		{"project day - too late", projectDate, false},
@@ -91,6 +92,12 @@ func TestComputeNotificationType(t *testing.T) {
 			name:        "project too far in future",
 			now:         projectDate.AddDate(0, 0, -30),
 			wantErrType: &ProjectTooFar{},
+		},
+		{
+			name:     "no existing notification, exactly 7 days before",
+			now:      projectDate.AddDate(0, 0, -7),
+			existing: nil,
+			wantType: domain.Welcome,
 		},
 		{
 			name:     "no existing notification, in welcome window",
