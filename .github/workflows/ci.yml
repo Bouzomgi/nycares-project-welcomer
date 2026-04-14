@@ -29,12 +29,12 @@ jobs:
       - name: Unit tests
         run: go test ./...
 
-  integration:
+  e2e:
     runs-on: ubuntu-latest
     needs: lint-and-test
-    # Only one integration run at a time — new runs queue, not cancel
+    # Only one e2e run at a time — new runs queue, not cancel
     concurrency:
-      group: integration
+      group: e2e
       cancel-in-progress: false
     permissions:
       id-token: write
@@ -118,11 +118,11 @@ jobs:
           sleep 5
           aws stepfunctions stop-execution --execution-arn "$EXEC_ARN" || true
 
-      - name: Run integration tests
+      - name: Run e2e tests
         env:
           STATE_MACHINE_ARN: arn:aws:states:us-east-1:${{ steps.account.outputs.id }}:stateMachine:project-notifier-workflow-ci
           DYNAMO_TABLE_NAME: nycares-project-welcomer-notifications-ci
           MOCKSERVER_URL: ${{ steps.env-outputs.outputs.mockserver_url }}
           INTEGRATION_TIMEOUT: 300s
-        run: go test -tags integration -v -count=1 ./integration/
+        run: go test -tags e2e -v -count=1 ./e2e/
         timeout-minutes: 10

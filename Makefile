@@ -1,4 +1,4 @@
-.PHONY: test fmt lint integration build clean up down
+.PHONY: test fmt lint e2e build clean up down
 
 test:
 	go test ./...
@@ -9,8 +9,8 @@ fmt:
 lint:
 	go vet ./...
 
-integration:
-	AWS_ENDPOINT_URL=http://localhost:4566 go test -tags integration -v -count=1 ./integration/
+e2e:
+	AWS_ENDPOINT_URL=http://localhost:4566 go test -tags e2e -v -count=1 ./e2e/
 
 build:
 	docker compose up --build build-lambdas
