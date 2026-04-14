@@ -76,7 +76,7 @@ Each project (identified by name + date) receives at most one of each message ty
 │   ├── endpoints/           # API URL constants
 │   └── mockserver/          # Local mock of NYC Cares API
 ├── infra/                   # AWS CDK stack (Go)
-├── integration/             # Integration tests (run against LocalStack)
+├── e2e/                     # E2E tests (run against LocalStack)
 ├── seed/                    # S3 seed data for local dev
 └── docker-compose.yaml      # LocalStack + mock server + CDK deploy + S3 seeding
 ```
@@ -109,8 +109,8 @@ This spins up:
 # Unit tests
 make test
 
-# Integration tests (requires docker compose up)
-make integration
+# E2E tests (requires docker compose up)
+make e2e
 
 # Format code
 make fmt
@@ -151,7 +151,7 @@ Locally, config loads from `config.yaml`. In Lambda, environment variables with 
 
 ## CI/CD
 
-- **PR to main:** Format check, unit tests, integration tests (via Docker Compose + LocalStack)
+- **PR to main:** Format check, unit tests, e2e tests (via Docker Compose + LocalStack)
 - **Push to main:** CDK deploy to AWS
 
 ## Tear Down
