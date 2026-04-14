@@ -116,7 +116,7 @@ func Completion(messageType, projectName, projectDate string, mockMode bool) (su
 	}
 
 	plainText = fmt.Sprintf(
-		"Successfully sent %s message to %s on %s!\n\nSending to: %s",
+		"Successfully sent %s message to %s on %s!\n\nSent to: %s",
 		messageType, projectName, projectDate, destination,
 	)
 
