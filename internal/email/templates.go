@@ -1,9 +1,44 @@
 package email
 
 import (
+	"bytes"
+	"embed"
 	"fmt"
-	"html"
+	"html/template"
+	"strings"
 )
+
+//go:embed templates/*.html
+var templateFiles embed.FS
+
+type workflowFailedData struct {
+	FailedStep   string
+	ErrorMessage string
+}
+
+type completionData struct {
+	MessageType string
+	ProjectName string
+	ProjectDate string
+	Destination string
+}
+
+type approvalRequestData struct {
+	ProjectName    string
+	ProjectDate    string
+	MessageType    string
+	MessageContent string
+	Destination    string
+	ApproveLink    string
+	RejectLink     string
+	RegenerateLink string
+	RefineFormBase string
+	IsThankYou     bool
+}
+
+var workflowFailedTmpl = template.Must(template.New("workflow_failed.html").ParseFS(templateFiles, "templates/workflow_failed.html"))
+var completionTmpl = template.Must(template.New("completion.html").ParseFS(templateFiles, "templates/completion.html"))
+var approvalRequestTmpl = template.Must(template.New("approval_request.html").ParseFS(templateFiles, "templates/approval_request.html"))
 
 // WorkflowFailed returns the subject, plain text, and HTML body for a workflow step failure email.
 // errorMessage should be the human-readable error (already extracted from any JSON Cause blob).
@@ -12,14 +47,14 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 
 	plainText = fmt.Sprintf("Workflow step failed.\nStep: %s\nError: %s", failedStep, errorMessage)
 
-	htmlBody = fmt.Sprintf(`<h2>Workflow Step Failed</h2>
-<table>
-  <tr><td><strong>Step</strong></td><td>%s</td></tr>
-  <tr><td><strong>Error</strong></td><td>%s</td></tr>
-</table>`,
-		html.EscapeString(failedStep),
-		html.EscapeString(errorMessage),
-	)
+	var buf bytes.Buffer
+	if err := workflowFailedTmpl.Execute(&buf, workflowFailedData{
+		FailedStep:   failedStep,
+		ErrorMessage: errorMessage,
+	}); err != nil {
+		panic(err)
+	}
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
@@ -43,46 +78,29 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nRegenerate: %s\n\nRefine: %s&action=refine&context=YOUR+CONTEXT+HERE",
 			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase,
 		)
-		htmlBody = fmt.Sprintf(
-			`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
-				`<p><strong>Message Content:</strong></p>`+
-				`<pre>%s</pre>`+
-				`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a> &nbsp; <a href="%s">Regenerate</a></p>`+
-				`<p><strong>Refine &amp; Regenerate:</strong></p>`+
-				`<form method="get" action="%s">`+
-				`<input type="hidden" name="action" value="refine">`+
-				`<textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>`+
-				`<input type="submit" value="Refine &amp; Regenerate">`+
-				`</form>`,
-			html.EscapeString(projectName),
-			html.EscapeString(projectDate),
-			html.EscapeString(messageType),
-			html.EscapeString(destination),
-			html.EscapeString(messageContent),
-			html.EscapeString(approveLink),
-			html.EscapeString(rejectLink),
-			html.EscapeString(regenerateLink),
-			html.EscapeString(refineFormBase),
-		)
 	} else {
 		plainText = fmt.Sprintf(
 			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
 			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink,
 		)
-		htmlBody = fmt.Sprintf(
-			`<p><strong>Project:</strong> %s<br><strong>Date:</strong> %s<br><strong>Message Type:</strong> %s<br><strong>Destination:</strong> %s</p>`+
-				`<p><strong>Message Content:</strong></p>`+
-				`<pre>%s</pre>`+
-				`<p><a href="%s">Approve</a> &nbsp; <a href="%s">Reject</a></p>`,
-			html.EscapeString(projectName),
-			html.EscapeString(projectDate),
-			html.EscapeString(messageType),
-			html.EscapeString(destination),
-			html.EscapeString(messageContent),
-			html.EscapeString(approveLink),
-			html.EscapeString(rejectLink),
-		)
 	}
+
+	var buf bytes.Buffer
+	if err := approvalRequestTmpl.Execute(&buf, approvalRequestData{
+		ProjectName:    projectName,
+		ProjectDate:    projectDate,
+		MessageType:    messageType,
+		MessageContent: messageContent,
+		Destination:    destination,
+		ApproveLink:    approveLink,
+		RejectLink:     rejectLink,
+		RegenerateLink: regenerateLink,
+		RefineFormBase: refineFormBase,
+		IsThankYou:     isThankYou,
+	}); err != nil {
+		panic(err)
+	}
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
@@ -102,14 +120,16 @@ func Completion(messageType, projectName, projectDate string, mockMode bool) (su
 		messageType, projectName, projectDate, destination,
 	)
 
-	htmlBody = fmt.Sprintf(
-		`<p>Successfully sent <strong>%s</strong> message to <strong>%s</strong> on %s!</p>`+
-			`<p><em>Sending to: %s</em></p>`,
-		html.EscapeString(messageType),
-		html.EscapeString(projectName),
-		html.EscapeString(projectDate),
-		html.EscapeString(destination),
-	)
+	var buf bytes.Buffer
+	if err := completionTmpl.Execute(&buf, completionData{
+		MessageType: messageType,
+		ProjectName: projectName,
+		ProjectDate: projectDate,
+		Destination: destination,
+	}); err != nil {
+		panic(err)
+	}
+	htmlBody = strings.TrimSpace(buf.String())
 
 	return
 }
