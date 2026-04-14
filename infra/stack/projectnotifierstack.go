@@ -392,30 +392,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Statistic: jsii.String("Sum"),
 	}
 
-	// SES Forwarder Lambda errors
-	sesForwarderAlarm := awscloudwatch.NewAlarm(stack, jsii.String("SESForwarderErrorAlarm"), &awscloudwatch.AlarmProps{
-		AlarmName:          jsii.String("ses-forwarder-errors" + suffix),
-		AlarmDescription:   jsii.String("SESForwarder Lambda has errors"),
-		Metric:             sesForwarderFn.MetricErrors(fiveMin),
-		Threshold:          jsii.Number(1),
-		EvaluationPeriods:  jsii.Number(1),
-		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
-	})
-	sesForwarderAlarm.AddAlarmAction(alarmAction)
-
-	// ApprovalCallback Lambda errors
-	approvalCallbackAlarm := awscloudwatch.NewAlarm(stack, jsii.String("ApprovalCallbackErrorAlarm"), &awscloudwatch.AlarmProps{
-		AlarmName:          jsii.String("approval-callback-errors" + suffix),
-		AlarmDescription:   jsii.String("ApprovalCallback Lambda has errors"),
-		Metric:             approvalCallbackFn.MetricErrors(fiveMin),
-		Threshold:          jsii.Number(1),
-		EvaluationPeriods:  jsii.Number(1),
-		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
-	})
-	approvalCallbackAlarm.AddAlarmAction(alarmAction)
-
 	// DynamoDB throttled requests — on-demand tables can still throttle during sudden
 	// traffic bursts (>2x previous peak within 30 minutes) before auto-scaling catches up.
 	dynamoThrottleAlarm := awscloudwatch.NewAlarm(stack, jsii.String("DynamoDBThrottleAlarm"), &awscloudwatch.AlarmProps{
