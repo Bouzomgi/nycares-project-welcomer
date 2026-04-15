@@ -71,15 +71,22 @@ jobs:
       - name: Install CDK
         run: npm install -g aws-cdk
 
+      - name: Upsert SSM parameters
+        env:
+          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
+          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
+          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
+        run: |
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_ACCOUNT_USERNAME" --value "$NYCARES_ACCOUNT_USERNAME" --type SecureString --overwrite
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_ACCOUNT_PASSWORD" --value "$NYCARES_ACCOUNT_PASSWORD" --type SecureString --overwrite
+          aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_AWS_SF_APPROVALSECRET" --value "$NYCARES_AWS_SF_APPROVALSECRET" --type SecureString --overwrite
+
       - name: Deploy test environment
         env:
           DEPLOY_MOCKSERVER: "true"
           CDK_DEFAULT_ACCOUNT: ${{ steps.account.outputs.id }}
           CDK_DEFAULT_REGION: us-east-1
           NYCARES_LAMBDA_ARCH: amd64
-          NYCARES_ACCOUNT_USERNAME: ${{ secrets.NYCARES_ACCOUNT_USERNAME }}
-          NYCARES_ACCOUNT_PASSWORD: ${{ secrets.NYCARES_ACCOUNT_PASSWORD }}
-          NYCARES_AWS_SF_APPROVALSECRET: ${{ secrets.NYCARES_AWS_SF_APPROVALSECRET }}
           GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           cd infra
