@@ -7,6 +7,8 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatchactions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsevents"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awseventstargets"
@@ -378,6 +380,108 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			}))
 		}
 	}
+
+	// --- Ops Alerts Topic ---
+	// Separate from the notifications topic so CloudWatch alarm payloads don't get
+	// routed through SESForwarder, which expects workflow-specific message formats.
+	// SNS sends plain-text alarm emails directly to the subscriber.
+
+	opsAlertsTopic := awssns.NewTopic(stack, jsii.String("OpsAlertsTopic"), &awssns.TopicProps{
+		TopicName: jsii.String("nycares-ops-alerts" + suffix),
+	})
+	if opsEmail := os.Getenv("NYCARES_AWS_SES_RECIPIENT"); opsEmail != "" {
+		opsAlertsTopic.AddSubscription(awssnssubscriptions.NewEmailSubscription(jsii.String(opsEmail), nil))
+	}
+
+	// --- CloudWatch Alarms ---
+	// Workflow Lambda and Step Functions failures are already handled by DLQNotifier,
+	// which publishes to the SNS topic with full context. Alarms here cover failure
+	// paths that the DLQ cannot see.
+
+	alarmAction := awscloudwatchactions.NewSnsAction(opsAlertsTopic)
+	fiveMin := &awscloudwatch.MetricOptions{
+		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
+		Statistic: jsii.String("Sum"),
+	}
+
+	// DynamoDB throttled requests — on-demand tables can still throttle during sudden
+	// traffic bursts (>2x previous peak within 30 minutes) before auto-scaling catches up.
+	dynamoThrottleAlarm := awscloudwatch.NewAlarm(stack, jsii.String("DynamoDBThrottleAlarm"), &awscloudwatch.AlarmProps{
+		AlarmName:        jsii.String("dynamodb-throttles" + suffix),
+		AlarmDescription: jsii.String("DynamoDB table has throttled requests"),
+		Metric: awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+			Namespace:  jsii.String("AWS/DynamoDB"),
+			MetricName: jsii.String("ThrottledRequests"),
+			DimensionsMap: &map[string]*string{
+				"TableName": jsii.String(tableName),
+			},
+			Period:    awscdk.Duration_Minutes(jsii.Number(5)),
+			Statistic: jsii.String("Sum"),
+		}),
+		Threshold:          jsii.Number(1),
+		EvaluationPeriods:  jsii.Number(1),
+		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
+	})
+	dynamoThrottleAlarm.AddAlarmAction(alarmAction)
+
+	// API Gateway 5xx errors on the callback endpoint
+	apiServerErrorAlarm := awscloudwatch.NewAlarm(stack, jsii.String("APIGateway5xxAlarm"), &awscloudwatch.AlarmProps{
+		AlarmName:          jsii.String("approval-callback-api-5xx" + suffix),
+		AlarmDescription:   jsii.String("Approval callback API is returning 5xx errors"),
+		Metric:             api.MetricServerError(fiveMin),
+		Threshold:          jsii.Number(1),
+		EvaluationPeriods:  jsii.Number(1),
+		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
+	})
+	apiServerErrorAlarm.AddAlarmAction(alarmAction)
+
+	// API Gateway 4xx errors on the callback endpoint
+	apiClientErrorAlarm := awscloudwatch.NewAlarm(stack, jsii.String("APIGateway4xxAlarm"), &awscloudwatch.AlarmProps{
+		AlarmName:          jsii.String("approval-callback-api-4xx" + suffix),
+		AlarmDescription:   jsii.String("Approval callback API is returning 4xx errors"),
+		Metric:             api.MetricClientError(fiveMin),
+		Threshold:          jsii.Number(1),
+		EvaluationPeriods:  jsii.Number(1),
+		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
+	})
+	apiClientErrorAlarm.AddAlarmAction(alarmAction)
+
+	// SES bounce rate
+	sesBounceAlarm := awscloudwatch.NewAlarm(stack, jsii.String("SESBounceAlarm"), &awscloudwatch.AlarmProps{
+		AlarmName:        jsii.String("ses-bounces" + suffix),
+		AlarmDescription: jsii.String("SES email bounce detected"),
+		Metric: awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+			Namespace:  jsii.String("AWS/SES"),
+			MetricName: jsii.String("Bounce"),
+			Period:     awscdk.Duration_Minutes(jsii.Number(15)),
+			Statistic:  jsii.String("Sum"),
+		}),
+		Threshold:          jsii.Number(1),
+		EvaluationPeriods:  jsii.Number(1),
+		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
+	})
+	sesBounceAlarm.AddAlarmAction(alarmAction)
+
+	// SES complaint rate
+	sesComplaintAlarm := awscloudwatch.NewAlarm(stack, jsii.String("SESComplaintAlarm"), &awscloudwatch.AlarmProps{
+		AlarmName:        jsii.String("ses-complaints" + suffix),
+		AlarmDescription: jsii.String("SES email complaint detected"),
+		Metric: awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+			Namespace:  jsii.String("AWS/SES"),
+			MetricName: jsii.String("Complaint"),
+			Period:     awscdk.Duration_Minutes(jsii.Number(15)),
+			Statistic:  jsii.String("Sum"),
+		}),
+		Threshold:          jsii.Number(1),
+		EvaluationPeriods:  jsii.Number(1),
+		ComparisonOperator: awscloudwatch.ComparisonOperator_GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+		TreatMissingData:   awscloudwatch.TreatMissingData_NOT_BREACHING,
+	})
+	sesComplaintAlarm.AddAlarmAction(alarmAction)
 
 	return stack
 }
