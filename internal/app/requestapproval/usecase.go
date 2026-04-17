@@ -48,9 +48,12 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	regenerateLink := buildCallbackLink(callbackEndpoint, taskToken, "regenerate", u.approvalSecret)
 	refineFormBase := buildRefineFormBase(callbackEndpoint, taskToken, u.approvalSecret)
 
-	subject, plainText, htmlBody := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, mockMode)
+	subject, plainText, htmlBody, err := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, mockMode)
+	if err != nil {
+		return fmt.Errorf("failed to render approval request email: %w", err)
+	}
 
-	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
+	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish approval notification: %w", err)
 	}

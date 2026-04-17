@@ -30,9 +30,12 @@ func (u *DLQNotifierUseCase) Execute(ctx context.Context, errorInfo models.DLQNo
 		errorMessage = cause.ErrorMessage
 	}
 
-	subject, plainText, htmlBody := email.WorkflowFailed(errorInfo.FailedStep, errorMessage)
+	subject, plainText, htmlBody, err := email.WorkflowFailed(errorInfo.FailedStep, errorMessage)
+	if err != nil {
+		return fmt.Errorf("failed to render workflow failed email: %w", err)
+	}
 
-	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
+	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish DLQ notification: %w", err)
 	}

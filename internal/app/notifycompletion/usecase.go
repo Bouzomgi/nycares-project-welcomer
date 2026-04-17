@@ -28,9 +28,12 @@ func (u *NotifyCompletionUseCase) Execute(
 ) error {
 
 	projectDate := utils.DateToString(project.Date)
-	subject, plainText, htmlBody := email.Completion(notificationType.String(), project.Name, projectDate, mockMode)
+	subject, plainText, htmlBody, err := email.Completion(notificationType.String(), project.Name, projectDate, mockMode)
+	if err != nil {
+		return fmt.Errorf("failed to render completion email: %w", err)
+	}
 
-	_, err := u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
+	_, err = u.snsSrv.PublishHTMLEmailNotification(ctx, plainText, htmlBody, subject)
 	if err != nil {
 		return fmt.Errorf("failed to publish completion notification: %w", err)
 	}

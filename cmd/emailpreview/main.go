@@ -32,13 +32,17 @@ func main() {
 			suffix = "-mock"
 		}
 
-		s, p, h := email.WorkflowFailed(
+		s, p, h, err := email.WorkflowFailed(
 			"SendAndPinMessage",
 			"connection to NYC Cares API timed out after 30s",
 		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to render workflow-failed email: %v\n", err)
+			os.Exit(1)
+		}
 		emails = append(emails, entry{"workflow-failed" + suffix, s, p, h})
 
-		s, p, h = email.ApprovalRequest(
+		s, p, h, err = email.ApprovalRequest(
 			"Central Park Cleanup",
 			"2026-04-10",
 			"welcome",
@@ -49,9 +53,17 @@ func main() {
 			"http://localhost:4566/callback?token=abc123&secret=test-secret",
 			mockMode,
 		)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to render approval-request email: %v\n", err)
+			os.Exit(1)
+		}
 		emails = append(emails, entry{"approval-request" + suffix, s, p, h})
 
-		s, p, h = email.Completion("reminder", "Brooklyn Food Bank", "2026-04-15", mockMode)
+		s, p, h, err = email.Completion("reminder", "Brooklyn Food Bank", "2026-04-15", mockMode)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to render completion email: %v\n", err)
+			os.Exit(1)
+		}
 		emails = append(emails, entry{"completion" + suffix, s, p, h})
 	}
 
