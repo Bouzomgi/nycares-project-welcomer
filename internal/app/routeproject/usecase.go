@@ -146,5 +146,5 @@ func shouldSendWelcome(now, projectDate time.Time) bool {
 
 func shouldSendReminder(now, projectDate time.Time) bool {
 	cutoff := projectDate.AddDate(0, 0, -reminderLeadDays)
-	return now.After(cutoff) && now.Before(projectDate)
+	return !now.Before(cutoff) && now.Before(projectDate)
 }
