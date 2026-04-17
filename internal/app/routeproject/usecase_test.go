@@ -44,7 +44,8 @@ func TestShouldSendReminder(t *testing.T) {
 		expected bool
 	}{
 		{"3 days before - too early", projectDate.AddDate(0, 0, -3), false},
-		{"2 days before - boundary", projectDate.AddDate(0, 0, -2).Add(time.Hour), true},
+		{"2 days before - boundary (exact)", projectDate.AddDate(0, 0, -2), true},
+		{"2 days before - boundary (plus hour)", projectDate.AddDate(0, 0, -2).Add(time.Hour), true},
 		{"1 day before - in window", projectDate.AddDate(0, 0, -1), true},
 		{"project day - too late", projectDate, false},
 		{"after project - too late", projectDate.AddDate(0, 0, 1), false},
@@ -122,6 +123,12 @@ func TestComputeNotificationType(t *testing.T) {
 			now:      projectDate.AddDate(0, 0, -5),
 			existing: notif(false, false, false, false),
 			wantType: domain.Welcome,
+		},
+		{
+			name:     "welcome sent, reminder not sent, exactly 2 days before",
+			now:      projectDate.AddDate(0, 0, -2),
+			existing: notif(true, false, false, false),
+			wantType: domain.Reminder,
 		},
 		{
 			name:     "welcome sent, reminder not sent, in reminder window",
