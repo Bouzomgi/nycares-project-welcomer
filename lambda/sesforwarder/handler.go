@@ -31,7 +31,8 @@ func (h *SESForwarderHandler) Handle(ctx context.Context, event events.SNSEvent)
 		}
 
 		attr, hasFormat := msg.MessageAttributes["format"]
-		if hasFormat && attr.(map[string]interface{})["Value"] == "html" {
+		attrMap, attrIsMap := attr.(map[string]interface{})
+		if hasFormat && attrIsMap && attrMap["Value"] == "html" {
 			var payload htmlPayload
 			if err := json.Unmarshal([]byte(msg.Message), &payload); err != nil {
 				slog.Error("sesforwarder failed to parse HTML payload", "error", err)
