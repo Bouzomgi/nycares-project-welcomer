@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 
 	gtm "github.com/Bouzomgi/nycares-project-welcomer/internal/app/generatethankyoumessage"
@@ -75,8 +76,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
+		if data, err := json.MarshalIndent(output, "", "  "); err != nil {
+			slog.Warn("failed to marshal output for logging", "error", err)
+		} else {
+			fmt.Println(string(data))
+		}
 		return
 	}
 
