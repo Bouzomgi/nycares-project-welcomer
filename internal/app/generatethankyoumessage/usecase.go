@@ -34,7 +34,7 @@ func (u *GenerateThankYouMessageUseCase) Execute(ctx context.Context, projectNam
 		return "", fmt.Errorf("failed to fetch writing samples: %w", err)
 	}
 
-	return u.bedrockService.GenerateThankYouMessage(ctx, writingSample, projectName, refinementContext)
+	return u.bedrockService.GenerateThankYouMessage(ctx, writingSample, refinementContext)
 }
 
 func toKebabCase(s string) string {
