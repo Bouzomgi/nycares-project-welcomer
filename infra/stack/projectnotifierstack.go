@@ -355,7 +355,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Resources: jsii.Strings(ssmArn),
 	}))
 
-	topic.AddSubscription(awssnssubscriptions.NewLambdaSubscription(sesForwarderFn, nil))
+	sesForwarderDLQ := awssqs.NewQueue(stack, jsii.String("SESForwarderDLQ"), &awssqs.QueueProps{
+		QueueName:       jsii.String("ses-forwarder-dlq" + suffix),
+		RetentionPeriod: awscdk.Duration_Days(jsii.Number(14)),
+		RemovalPolicy:   awscdk.RemovalPolicy_DESTROY,
+	})
+
+	topic.AddSubscription(awssnssubscriptions.NewLambdaSubscription(sesForwarderFn, &awssnssubscriptions.LambdaSubscriptionProps{
+		DeadLetterQueue: sesForwarderDLQ,
+	}))
 
 	// --- Step Functions State Machine ---
 
