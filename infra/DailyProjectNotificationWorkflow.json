@@ -213,9 +213,28 @@
                 "Variable": "$.approvalResult.action",
                 "StringEquals": "reject",
                 "Next": "EndProjectIteration"
+              },
+              {
+                "Variable": "$.approvalResult.action",
+                "StringEquals": "manual",
+                "Next": "UseManualMessage"
               }
             ],
             "Default": "RegenerateThankYouMessage"
+          },
+          "UseManualMessage": {
+            "Type": "Pass",
+            "Parameters": {
+              "auth.$": "$.auth",
+              "existingProjectNotification.$": "$.existingProjectNotification",
+              "message": {
+                "type.$": "$.message.type",
+                "templateRef.$": "$.message.templateRef",
+                "generatedContent.$": "$.approvalResult.manualMessage"
+              },
+              "executionId.$": "$.executionId"
+            },
+            "Next": "SendAndPinMessage"
           },
           "RegenerateThankYouMessage": {
             "Type": "Task",

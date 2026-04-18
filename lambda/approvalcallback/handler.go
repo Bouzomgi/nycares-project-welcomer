@@ -82,6 +82,10 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 	if len(refinementContext) > 500 {
 		refinementContext = refinementContext[:500]
 	}
+	manualMessage := getParam("manualMessage")
+	if len(manualMessage) > 2000 {
+		manualMessage = manualMessage[:2000]
+	}
 
 	if token == "" || action == "" {
 		return events.APIGatewayProxyResponse{
@@ -91,7 +95,15 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		}, nil
 	}
 
-	err := h.usecase.Execute(ctx, token, action, refinementContext)
+	if action == "manual" && manualMessage == "" {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Headers:    map[string]string{"Content-Type": "text/html"},
+			Body:       "<html><body><h1>Bad Request</h1><p>manualMessage is required for action=manual.</p></body></html>",
+		}, nil
+	}
+
+	err := h.usecase.Execute(ctx, token, action, refinementContext, manualMessage)
 	if err != nil {
 		slog.Error("approvalcallback failed", "error", err)
 		h.publishError(err)
@@ -114,6 +126,8 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		message = "Regenerating with your context. A new approval email will arrive shortly."
 	case "reject":
 		message = "Rejected. The message will not be sent."
+	case "manual":
+		message = "Your message will be sent shortly."
 	default:
 		message = fmt.Sprintf("Action %q processed.", action)
 	}
