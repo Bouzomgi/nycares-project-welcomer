@@ -91,6 +91,7 @@ jobs:
           GHA_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           cd infra
+          go mod download
           STACK_STATUS=$(aws cloudformation describe-stacks --stack-name CDKToolkit \
             --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "DOES_NOT_EXIST")
           if [ "$STACK_STATUS" = "DOES_NOT_EXIST" ]; then
