@@ -266,10 +266,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
-		Resources: jsii.Strings("*"),
-	}))
-	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("ssm:GetParametersByPath"),
 		Resources: jsii.Strings(ssmArn),
 	}))
@@ -352,6 +348,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	for _, name := range lambdaNames {
 		lambdaFns[name].GrantInvoke(stateMachine)
 	}
+
+	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
+		Resources: jsii.Strings(*stateMachine.StateMachineArn()),
+	}))
 
 	// --- Daily trigger at noon EST (17:00 UTC) ---
 
