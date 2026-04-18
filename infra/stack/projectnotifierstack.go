@@ -266,12 +266,13 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	})
 
 	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
-		Resources: jsii.Strings("*"),
-	}))
-	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Actions:   jsii.Strings("ssm:GetParametersByPath"),
 		Resources: jsii.Strings(ssmArn),
+	}))
+	stateMachineArn := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:project-notifier-workflow%s", *stack.Region(), *stack.Account(), suffix)
+	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
+		Resources: jsii.Strings(stateMachineArn),
 	}))
 
 	// --- API Gateway ---
