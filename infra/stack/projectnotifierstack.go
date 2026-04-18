@@ -103,8 +103,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		})
 
 		bucket = awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
-			BucketName:    jsii.String(bucketName),
-			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+			BucketName:        jsii.String(bucketName),
+			RemovalPolicy:     awscdk.RemovalPolicy_DESTROY,
+			Versioned:         jsii.Bool(true),
+			Encryption:        awss3.BucketEncryption_S3_MANAGED,
+			BlockPublicAccess: awss3.BlockPublicAccess_BLOCK_ALL(),
 		})
 
 	} else {
