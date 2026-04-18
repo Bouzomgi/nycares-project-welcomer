@@ -7,9 +7,11 @@ import (
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/platform/awsconfig"
 	sesservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/ses"
+	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 )
 
 func buildHandler() (*SESForwarderHandler, error) {
@@ -27,7 +29,10 @@ func buildHandler() (*SESForwarderHandler, error) {
 	sesClient := sesv2.NewFromConfig(awsCfg)
 	sesSvc := sesservice.NewSESService(sesClient, cfg.AWS.SES.Sender, cfg.AWS.SES.Recipient)
 
-	return NewSESForwarderHandler(sesSvc), nil
+	snsClient := sns.NewFromConfig(awsCfg)
+	snsSvc := snsservice.NewSNSService(snsClient, cfg.AWS.SNS.TopicArn)
+
+	return NewSESForwarderHandler(sesSvc, snsSvc), nil
 }
 
 func main() {
