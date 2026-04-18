@@ -3,11 +3,14 @@ package generatethankyoumessage
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	bedrockservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/bedrock"
 	s3service "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/s3"
 )
+
+var nonAlphanumeric = regexp.MustCompile(`[^a-zA-Z0-9]+`)
 
 type GenerateThankYouMessageUseCase struct {
 	s3Service      s3service.ContentService
@@ -35,12 +38,12 @@ func (u *GenerateThankYouMessageUseCase) Execute(ctx context.Context, projectNam
 }
 
 func toKebabCase(s string) string {
-	words := strings.Fields(s)
-	if len(words) == 0 {
-		return ""
-	}
-	for i := range words {
-		words[i] = strings.ToLower(words[i])
+	parts := nonAlphanumeric.Split(s, -1)
+	words := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			words = append(words, strings.ToLower(p))
+		}
 	}
 	return strings.Join(words, "-")
 }
