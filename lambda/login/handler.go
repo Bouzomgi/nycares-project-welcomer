@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -27,7 +28,11 @@ func (h *LoginHandler) Handle(ctx context.Context, input models.LoginInput) (mod
 	var execInput struct {
 		MockProjects json.RawMessage `json:"mockProjects,omitempty"`
 	}
-	_ = json.Unmarshal(input.Context, &execInput)
+	if len(input.Context) > 0 {
+		if err := json.Unmarshal(input.Context, &execInput); err != nil {
+			return models.LoginOutput{}, fmt.Errorf("failed to unmarshal context: %w", err)
+		}
+	}
 
 	creds := domain.Credentials{
 		Username:         h.cfg.Account.Username,
