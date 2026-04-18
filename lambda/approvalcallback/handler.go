@@ -11,16 +11,33 @@ import (
 
 	ac "github.com/Bouzomgi/nycares-project-welcomer/internal/app/approvalcallback"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
+	"github.com/Bouzomgi/nycares-project-welcomer/internal/email"
+	snsservice "github.com/Bouzomgi/nycares-project-welcomer/internal/platform/sns"
 	"github.com/aws/aws-lambda-go/events"
 )
 
 type ApprovalCallbackHandler struct {
 	usecase *ac.ApprovalCallbackUseCase
 	cfg     *ac.Config
+	snsSvc  snsservice.NotificationService
 }
 
-func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config) *ApprovalCallbackHandler {
-	return &ApprovalCallbackHandler{usecase: u, cfg: cfg}
+func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config, snsSvc snsservice.NotificationService) *ApprovalCallbackHandler {
+	return &ApprovalCallbackHandler{usecase: u, cfg: cfg, snsSvc: snsSvc}
+}
+
+func (h *ApprovalCallbackHandler) publishError(err error) {
+	if h.snsSvc == nil {
+		return
+	}
+	subject, plainText, htmlBody, renderErr := email.WorkflowFailed("ApprovalCallback", err.Error())
+	if renderErr != nil {
+		slog.Error("approvalcallback failed to render error notification", "error", renderErr)
+		return
+	}
+	if _, publishErr := h.snsSvc.PublishHTMLEmailNotification(context.Background(), plainText, htmlBody, subject); publishErr != nil {
+		slog.Error("approvalcallback failed to publish error notification", "error", publishErr)
+	}
 }
 
 func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -77,6 +94,7 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 	err := h.usecase.Execute(ctx, token, action, refinementContext)
 	if err != nil {
 		slog.Error("approvalcallback failed", "error", err)
+		h.publishError(err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers:    map[string]string{"Content-Type": "text/html"},

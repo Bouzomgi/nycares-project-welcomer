@@ -283,6 +283,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
 		Resources: jsii.Strings(stateMachineArn),
 	}))
+	topic.GrantPublish(approvalCallbackFn)
 
 	// --- API Gateway ---
 
@@ -364,6 +365,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	topic.AddSubscription(awssnssubscriptions.NewLambdaSubscription(sesForwarderFn, &awssnssubscriptions.LambdaSubscriptionProps{
 		DeadLetterQueue: sesForwarderDLQ,
 	}))
+	topic.GrantPublish(sesForwarderFn)
 
 	// --- Step Functions State Machine ---
 

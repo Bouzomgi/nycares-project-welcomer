@@ -10,5 +10,8 @@ type Config struct {
 		SF struct {
 			ApprovalSecret string `mapstructure:"approvalSecret"`
 		} `mapstructure:"sf"`
+		SNS struct {
+			TopicArn string `mapstructure:"topicArn"`
+		} `mapstructure:"sns"`
 	} `mapstructure:"aws"`
 }
