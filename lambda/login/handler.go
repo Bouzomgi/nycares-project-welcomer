@@ -40,7 +40,7 @@ func (h *LoginHandler) Handle(ctx context.Context, input models.LoginInput) (mod
 		MockProjectsJSON: execInput.MockProjects,
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	authResp, err := h.usecase.Execute(ctx, creds)

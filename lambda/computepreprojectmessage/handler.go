@@ -22,7 +22,7 @@ func NewComputeMessageHandler(u *cm.ComputeMessageUseCase, cfg *cm.Config) *Comp
 func (h *ComputeMessageHandler) Handle(ctx context.Context, input models.ComputeMessageInput) (models.ComputeMessageOutput, error) {
 	slog.Info("computepreprojectmessage handler invoked", "executionId", input.ExecutionId, "messageType", input.MessageType)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	messageType, err := domain.ParseNotificationType(input.MessageType)

@@ -20,7 +20,7 @@ func NewFetchProjectsHandler(u *fp.FetchProjectsUseCase, cfg *fp.Config) *FetchP
 func (h *FetchProjectsHandler) Handle(ctx context.Context, input models.FetchProjectsInput) (models.FetchProjectsOutput, error) {
 	slog.Info("fetchprojects handler invoked", "executionId", input.ExecutionId)
 
-	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	auth := models.ConvertAuth(input.Auth)

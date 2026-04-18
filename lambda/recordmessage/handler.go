@@ -22,7 +22,7 @@ func NewRecordMessageHandler(u *rm.RecordMessageUseCase, cfg *rm.Config) *Record
 func (h *RecordMessageHandler) Handle(ctx context.Context, input models.RecordMessageInput) (models.RecordMessageOutput, error) {
 	slog.Info("recordmessage handler invoked", "executionId", input.ExecutionId)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProjectNotification, err := models.ConvertModelProjectNotification(input.ExistingProjectNotification)
