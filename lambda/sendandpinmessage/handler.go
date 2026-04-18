@@ -21,7 +21,7 @@ func NewSendAndPinMessageHandler(u *spm.SendAndPinMessageUseCase, cfg *spm.Confi
 func (h *SendAndPinMessageHandler) Handle(ctx context.Context, input models.SendAndPinMessageInput) (models.SendAndPinMessageOutput, error) {
 	slog.Info("sendandpinmessage handler invoked", "executionId", input.ExecutionId, "projectId", input.ExistingProjectNotification.Id)
 
-	ctx, cancel := context.WithTimeout(ctx, config.HTTPHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.HTTPHandlerTimeout)
 	defer cancel()
 
 	auth := models.ConvertAuth(input.Auth)

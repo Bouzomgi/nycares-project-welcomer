@@ -60,7 +60,7 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 
 	slog.Info("approvalcallback handler invoked", "action", getParam("action"))
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	// Validate shared secret if configured

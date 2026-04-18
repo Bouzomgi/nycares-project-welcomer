@@ -22,7 +22,7 @@ func NewNotifyCompletionHandler(u *nc.NotifyCompletionUseCase, cfg *nc.Config) *
 func (h *NotifyCompletionHandler) Handle(ctx context.Context, input models.NotifyCompletionInput) error {
 	slog.Info("notifycompletion handler invoked", "executionId", input.ExecutionId)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProject, err := models.ConvertProjectNotificationToDomainProject(input.ExistingProjectNotification)

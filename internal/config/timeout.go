@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 const (
 	// DefaultHandlerTimeout is the timeout for handlers that perform
@@ -16,3 +19,14 @@ const (
 	// services (e.g. Bedrock). Set below the Lambda function timeout (60s).
 	AIHandlerTimeout = 55 * time.Second
 )
+
+// HandlerDeadline returns a context capped at the earlier of the given timeout
+// and the Lambda context's remaining execution time, preventing the handler
+// from outlasting the Lambda's hard kill deadline.
+func HandlerDeadline(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	deadline := time.Now().Add(timeout)
+	if lambdaDeadline, ok := ctx.Deadline(); ok && lambdaDeadline.Before(deadline) {
+		deadline = lambdaDeadline
+	}
+	return context.WithDeadline(ctx, deadline)
+}

@@ -22,7 +22,7 @@ func NewRouteProjectHandler(u *rp.RouteProjectUseCase, cfg *rp.Config) *RoutePro
 func (h *RouteProjectHandler) Handle(ctx context.Context, input models.RouteProjectInput) (models.RouteProjectOutput, error) {
 	slog.Info("routeproject handler invoked", "executionId", input.ExecutionId)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	domainProject, err := models.BuildDomainProject(input.Project)

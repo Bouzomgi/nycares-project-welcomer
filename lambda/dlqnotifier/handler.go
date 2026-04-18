@@ -21,7 +21,7 @@ func NewDLQNotifierHandler(u *dlq.DLQNotifierUseCase, cfg *dlq.Config) *DLQNotif
 func (h *DLQNotifierHandler) Handle(ctx context.Context, input models.DLQNotifierInput) error {
 	slog.Error("dlqnotifier handler invoked", "error", input.Error, "cause", input.Cause)
 
-	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
+	ctx, cancel := config.HandlerDeadline(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	err := h.usecase.Execute(ctx, input)
