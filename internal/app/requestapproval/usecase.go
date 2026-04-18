@@ -48,7 +48,7 @@ func (u *RequestApprovalUseCase) Execute(ctx context.Context, callbackEndpoint u
 	regenerateLink := buildCallbackLink(callbackEndpoint, taskToken, "regenerate", u.approvalSecret)
 	refineFormBase := buildRefineFormBase(callbackEndpoint, taskToken, u.approvalSecret)
 
-	subject, plainText, htmlBody, err := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, mockMode)
+	subject, plainText, htmlBody, err := email.ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, u.approvalSecret, mockMode)
 	if err != nil {
 		return fmt.Errorf("failed to render approval request email: %w", err)
 	}
@@ -66,9 +66,6 @@ func buildCallbackLink(baseURL url.URL, taskToken string, action string, secret 
 	q := baseURL.Query()
 	q.Set("token", taskToken)
 	q.Set("action", action)
-	if secret != "" {
-		q.Set("secret", secret)
-	}
 	baseURL.RawQuery = q.Encode()
 	return baseURL.String()
 }
@@ -80,9 +77,6 @@ func buildRefineFormBase(baseURL url.URL, taskToken string, secret string) strin
 	appendCallbackPath(&baseURL)
 	q := baseURL.Query()
 	q.Set("token", taskToken)
-	if secret != "" {
-		q.Set("secret", secret)
-	}
 	baseURL.RawQuery = q.Encode()
 	return baseURL.String()
 }

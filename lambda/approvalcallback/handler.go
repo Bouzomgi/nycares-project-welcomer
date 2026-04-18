@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/base64"
 	"fmt"
 	"html"
 	"log/slog"
+	"net/url"
 
 	ac "github.com/Bouzomgi/nycares-project-welcomer/internal/app/approvalcallback"
 	"github.com/Bouzomgi/nycares-project-welcomer/internal/config"
@@ -22,14 +24,31 @@ func NewApprovalCallbackHandler(u *ac.ApprovalCallbackUseCase, cfg *ac.Config) *
 }
 
 func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	slog.Info("approvalcallback handler invoked", "action", request.QueryStringParameters["action"])
+	bodyParams := url.Values{}
+	if request.Body != "" {
+		body := request.Body
+		if request.IsBase64Encoded {
+			if decoded, err := base64.StdEncoding.DecodeString(body); err == nil {
+				body = string(decoded)
+			}
+		}
+		bodyParams, _ = url.ParseQuery(body)
+	}
+	getParam := func(key string) string {
+		if v := bodyParams.Get(key); v != "" {
+			return v
+		}
+		return request.QueryStringParameters[key]
+	}
+
+	slog.Info("approvalcallback handler invoked", "action", getParam("action"))
 
 	ctx, cancel := context.WithTimeout(ctx, config.DefaultHandlerTimeout)
 	defer cancel()
 
 	// Validate shared secret if configured
 	if expectedSecret := h.cfg.AWS.SF.ApprovalSecret; expectedSecret != "" {
-		providedSecret := request.QueryStringParameters["secret"]
+		providedSecret := getParam("secret")
 		if subtle.ConstantTimeCompare([]byte(expectedSecret), []byte(providedSecret)) != 1 {
 			slog.Warn("approvalcallback rejected: invalid secret")
 			return events.APIGatewayProxyResponse{
@@ -40,9 +59,9 @@ func (h *ApprovalCallbackHandler) Handle(ctx context.Context, request events.API
 		}
 	}
 
-	token := request.QueryStringParameters["token"]
-	action := request.QueryStringParameters["action"]
-	refinementContext := request.QueryStringParameters["context"]
+	token := getParam("token")
+	action := getParam("action")
+	refinementContext := getParam("context")
 	if len(refinementContext) > 500 {
 		refinementContext = refinementContext[:500]
 	}

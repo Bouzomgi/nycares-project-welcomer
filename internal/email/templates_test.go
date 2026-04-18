@@ -66,7 +66,7 @@ func TestWorkflowFailed_NoErrorTypeNoise(t *testing.T) {
 }
 
 func TestApprovalRequest_Subject(t *testing.T) {
-	subject, _, _, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
+	subject, _, _, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,16 +76,19 @@ func TestApprovalRequest_Subject(t *testing.T) {
 }
 
 func TestApprovalRequest_ContainsFields(t *testing.T) {
-	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
+	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	checks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject"}
-	for _, s := range checks {
+	plainChecks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!"}
+	for _, s := range plainChecks {
 		if !strings.Contains(plainText, s) {
 			t.Errorf("plainText missing %q", s)
 		}
+	}
+	htmlChecks := []string{"Park Cleanup", "2026-04-10", "welcome", "Hello volunteers!", "http://approve", "http://reject"}
+	for _, s := range htmlChecks {
 		if !strings.Contains(htmlBody, s) {
 			t.Errorf("htmlBody missing %q", s)
 		}
@@ -105,7 +108,7 @@ func TestApprovalRequest_ContainsFields(t *testing.T) {
 func TestApprovalRequest_HTMLEscaping(t *testing.T) {
 	_, _, htmlBody, err := ApprovalRequest(
 		"<Project>", "<date>", "<type>", "<script>xss</script>",
-		"http://approve", "http://reject", "http://regenerate", "http://refine-base", false,
+		"http://approve", "http://reject", "http://regenerate", "http://refine-base", "", false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +122,7 @@ func TestApprovalRequest_HTMLEscaping(t *testing.T) {
 }
 
 func TestApprovalRequest_MockMode(t *testing.T) {
-	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", true)
+	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", "", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +134,7 @@ func TestApprovalRequest_MockMode(t *testing.T) {
 		t.Error("htmlBody should indicate mock server when mockMode=true")
 	}
 
-	_, plainText2, htmlBody2, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
+	_, plainText2, htmlBody2, err := ApprovalRequest("Park Cleanup", "2026-04-10", "welcome", "content", "http://approve", "http://reject", "http://regenerate", "http://refine-base", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,13 +147,13 @@ func TestApprovalRequest_MockMode(t *testing.T) {
 }
 
 func TestApprovalRequest_ContainsRegenerateAndRefine(t *testing.T) {
-	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "thankYou", "Thanks!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", false)
+	_, plainText, htmlBody, err := ApprovalRequest("Park Cleanup", "2026-04-10", "thankYou", "Thanks!", "http://approve", "http://reject", "http://regenerate", "http://refine-base", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(plainText, "http://regenerate") {
-		t.Error("plainText missing regenerate link")
+	if !strings.Contains(plainText, "HTML version") {
+		t.Error("plainText should direct user to HTML version")
 	}
 	if !strings.Contains(htmlBody, "Regenerate") {
 		t.Error("htmlBody missing Regenerate option")

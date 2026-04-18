@@ -8,19 +8,38 @@
 <pre>{{.MessageContent}}</pre>
 {{if .IsThankYou}}
 <p>
-  <a href="{{.ApproveLink}}">Approve</a> &nbsp;
-  <a href="{{.RejectLink}}">Reject</a> &nbsp;
-  <a href="{{.RegenerateLink}}">Regenerate</a>
+  <form method="post" action="{{.ApproveLink}}" style="display:inline">
+    {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
+    <button type="submit">Approve</button>
+  </form>
+  &nbsp;
+  <form method="post" action="{{.RejectLink}}" style="display:inline">
+    {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
+    <button type="submit">Reject</button>
+  </form>
+  &nbsp;
+  <form method="post" action="{{.RegenerateLink}}" style="display:inline">
+    {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
+    <button type="submit">Regenerate</button>
+  </form>
 </p>
 <p><strong>Refine &amp; Regenerate:</strong></p>
-<form method="get" action="{{.RefineFormBase}}">
+<form method="post" action="{{.RefineFormBase}}">
+  {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
   <input type="hidden" name="action" value="refine">
   <textarea name="context" rows="3" cols="60" placeholder="e.g. it was raining today"></textarea><br>
   <input type="submit" value="Refine &amp; Regenerate">
 </form>
 {{else}}
 <p>
-  <a href="{{.ApproveLink}}">Approve</a> &nbsp;
-  <a href="{{.RejectLink}}">Reject</a>
+  <form method="post" action="{{.ApproveLink}}" style="display:inline">
+    {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
+    <button type="submit">Approve</button>
+  </form>
+  &nbsp;
+  <form method="post" action="{{.RejectLink}}" style="display:inline">
+    {{if .Secret}}<input type="hidden" name="secret" value="{{.Secret}}">{{end}}
+    <button type="submit">Reject</button>
+  </form>
 </p>
 {{end}}
