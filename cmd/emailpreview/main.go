@@ -47,10 +47,11 @@ func main() {
 			"2026-04-10",
 			"welcome",
 			"Hi volunteers! We're excited to have you join us for Central Park Cleanup on April 10th. Please arrive at the Visitor Center by 9am.",
-			"http://localhost:4566/callback?token=abc123&action=approve&secret=test-secret",
-			"http://localhost:4566/callback?token=abc123&action=reject&secret=test-secret",
-			"http://localhost:4566/callback?token=abc123&action=regenerate&secret=test-secret",
-			"http://localhost:4566/callback?token=abc123&secret=test-secret",
+			"http://localhost:4566/callback?token=abc123&action=approve",
+			"http://localhost:4566/callback?token=abc123&action=reject",
+			"http://localhost:4566/callback?token=abc123&action=regenerate",
+			"http://localhost:4566/callback?token=abc123",
+			"test-secret",
 			mockMode,
 		)
 		if err != nil {

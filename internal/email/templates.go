@@ -34,6 +34,7 @@ type approvalRequestData struct {
 	RegenerateLink string
 	RefineFormBase string
 	IsThankYou     bool
+	Secret         string
 }
 
 var workflowFailedTmpl = template.Must(template.New("workflow_failed.html").ParseFS(templateFiles, "templates/workflow_failed.html"))
@@ -63,7 +64,7 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 // mockMode indicates whether send/pin requests will go to the mock server or the real NYC Cares platform.
 // regenerateLink triggers a fresh generation with no additional context (thankYou only).
 // refineFormBase is the callback URL (with token and secret) used as the HTML form action for refinement (thankYou only).
-func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase string, mockMode bool) (subject, plainText, htmlBody string, err error) {
+func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, secret string, mockMode bool) (subject, plainText, htmlBody string, err error) {
 	subject = "Project Message Approval"
 
 	destination := "real NYC Cares platform"
@@ -75,13 +76,13 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 
 	if isThankYou {
 		plainText = fmt.Sprintf(
-			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s\n\nRegenerate: %s\n\nRefine: %s&action=refine&context=YOUR+CONTEXT+HERE",
-			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase,
+			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nPlease use the HTML version of this email to approve, reject, regenerate, or refine this message.",
+			projectName, projectDate, messageType, destination, messageContent,
 		)
 	} else {
 		plainText = fmt.Sprintf(
-			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nApprove: %s\n\nReject: %s",
-			projectName, projectDate, messageType, destination, messageContent, approveLink, rejectLink,
+			"Project: %s\nDate: %s\nMessage Type: %s\nDestination: %s\n\nMessage Content:\n%s\n\nPlease use the HTML version of this email to approve or reject this message.",
+			projectName, projectDate, messageType, destination, messageContent,
 		)
 	}
 
@@ -97,6 +98,7 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 		RegenerateLink: regenerateLink,
 		RefineFormBase: refineFormBase,
 		IsThankYou:     isThankYou,
+		Secret:         secret,
 	}); err != nil {
 		return
 	}

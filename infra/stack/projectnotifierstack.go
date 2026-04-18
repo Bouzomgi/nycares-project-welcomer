@@ -286,6 +286,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		awsapigateway.NewLambdaIntegration(approvalCallbackFn, nil),
 		nil,
 	)
+	callbackResource.AddMethod(
+		jsii.String("POST"),
+		awsapigateway.NewLambdaIntegration(approvalCallbackFn, nil),
+		nil,
+	)
 
 	// Set the callback endpoint from the API Gateway URL (resolved at deploy time)
 	lambdaFns["RequestApprovalToSend"].AddEnvironment(
