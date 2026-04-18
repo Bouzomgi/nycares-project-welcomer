@@ -30,4 +30,24 @@ FILES_DIR="${S3_FILES_DIR:-/seed/s3Items}"
 echo "Syncing $FILES_DIR to s3://$BUCKET..."
 aws_cmd s3 sync "$FILES_DIR" "s3://$BUCKET" --exclude "*.txt"
 
+if [ -n "${AWS_ENDPOINT_URL:-}" ]; then
+  echo "Seeding SSM parameters..."
+  SSM_PATH="/nycares-project-welcomer"
+  for KEY_VAL in \
+    "NYCARES_ACCOUNT_USERNAME:${NYCARES_ACCOUNT_USERNAME:-user}" \
+    "NYCARES_ACCOUNT_PASSWORD:${NYCARES_ACCOUNT_PASSWORD:-pass}" \
+    "NYCARES_AWS_SF_CALLBACKENDPOINT:${NYCARES_AWS_SF_CALLBACKENDPOINT:-http://localhost:4566}" \
+    "NYCARES_AWS_SF_APPROVALSECRET:${NYCARES_AWS_SF_APPROVALSECRET:-test-secret}"
+  do
+    KEY="${KEY_VAL%%:*}"
+    VAL="${KEY_VAL#*:}"
+    aws_cmd ssm put-parameter \
+      --name "${SSM_PATH}/${KEY}" \
+      --value "$VAL" \
+      --type String \
+      --overwrite \
+      > /dev/null
+  done
+fi
+
 echo "LocalStack seed complete."
