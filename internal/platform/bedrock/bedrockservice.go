@@ -12,7 +12,7 @@ import (
 const ModelID = "us.amazon.nova-lite-v1:0"
 
 type GenerationService interface {
-	GenerateThankYouMessage(ctx context.Context, writingSample, projectName, refinementContext string) (string, error)
+	GenerateThankYouMessage(ctx context.Context, writingSample, refinementContext string) (string, error)
 }
 
 type BedrockService struct {
@@ -23,23 +23,22 @@ func NewBedrockService(client *bedrockruntime.Client) *BedrockService {
 	return &BedrockService{client: client}
 }
 
-func (s *BedrockService) GenerateThankYouMessage(ctx context.Context, writingSample, projectName, refinementContext string) (string, error) {
-	systemPrompt := fmt.Sprintf("You are writing thank-you messages on behalf of a volunteer program coordinator. Here are several example messages they have written — match their style exactly:\n\n%s", writingSample)
-	userPrompt := fmt.Sprintf("Write a new, unique thank-you message (2-3 sentences) for a team leader who led the volunteer project \"%s\" today. Match the style of the examples but do not repeat any of them.", projectName)
+func (s *BedrockService) GenerateThankYouMessage(ctx context.Context, writingSample, refinementContext string) (string, error) {
+	prompt := fmt.Sprintf(
+		"You are writing thank-you messages on behalf of a volunteer program coordinator. Here are several example messages they have written — match their style exactly:\n\n%s\n\nWrite a new, unique thank-you message (2-3 sentences) for a team leader who led today's volunteer project. Match the style of the examples but do not repeat any of them.",
+		writingSample,
+	)
 	if refinementContext != "" {
-		userPrompt += fmt.Sprintf(" Additional context to incorporate: %s", refinementContext)
+		prompt += fmt.Sprintf(" Additional context to incorporate: %s", refinementContext)
 	}
 
 	resp, err := s.client.Converse(ctx, &bedrockruntime.ConverseInput{
 		ModelId: aws.String(ModelID),
-		System: []types.SystemContentBlock{
-			&types.SystemContentBlockMemberText{Value: systemPrompt},
-		},
 		Messages: []types.Message{
 			{
 				Role: types.ConversationRoleUser,
 				Content: []types.ContentBlock{
-					&types.ContentBlockMemberText{Value: userPrompt},
+					&types.ContentBlockMemberText{Value: prompt},
 				},
 			},
 		},
