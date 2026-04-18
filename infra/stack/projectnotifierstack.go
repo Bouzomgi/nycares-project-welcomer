@@ -269,6 +269,11 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		Actions:   jsii.Strings("ssm:GetParametersByPath"),
 		Resources: jsii.Strings(ssmArn),
 	}))
+	stateMachineArn := fmt.Sprintf("arn:aws:states:%s:%s:stateMachine:project-notifier-workflow%s", *stack.Region(), *stack.Account(), suffix)
+	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
+		Resources: jsii.Strings(stateMachineArn),
+	}))
 
 	// --- API Gateway ---
 
@@ -348,11 +353,6 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	for _, name := range lambdaNames {
 		lambdaFns[name].GrantInvoke(stateMachine)
 	}
-
-	approvalCallbackFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-		Actions:   jsii.Strings("states:SendTaskSuccess", "states:SendTaskFailure"),
-		Resources: jsii.Strings(*stateMachine.StateMachineArn()),
-	}))
 
 	// --- Daily trigger at noon EST (17:00 UTC) ---
 
