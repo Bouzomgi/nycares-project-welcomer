@@ -19,6 +19,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -76,11 +77,10 @@ jobs:
         run: |
           for pkg in login fetchprojects routeproject computepreprojectmessage generatethankyoumessage requestapprovaltosend sendandpinmessage recordmessage notifycompletion dlqnotifier approvalcallback sesforwarder; do
             mkdir -p lambda-build/$pkg
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/$pkg/bootstrap ./lambda/$pkg &
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/$pkg/bootstrap ./lambda/$pkg
           done
           mkdir -p lambda-build/mockserver
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/mockserver/bootstrap ./internal/mockserver &
-          wait
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lambda-build/mockserver/bootstrap ./internal/mockserver
 
       - name: Install CDK
         if: steps.ci-check.outputs.skip == 'false'
