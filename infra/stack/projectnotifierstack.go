@@ -277,8 +277,31 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 
 	// --- API Gateway ---
 
+	apiLogGroup := awslogs.NewLogGroup(stack, jsii.String("ApprovalCallbackApiLogGroup"), &awslogs.LogGroupProps{
+		LogGroupName:  jsii.String("/aws/apigateway/approval-callback-api" + suffix),
+		Retention:     awslogs.RetentionDays_THREE_MONTHS,
+		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
+	})
+
 	api := awsapigateway.NewRestApi(stack, jsii.String("ApprovalCallbackApi"), &awsapigateway.RestApiProps{
 		RestApiName: jsii.String("approval-callback-api" + suffix),
+		DeployOptions: &awsapigateway.StageOptions{
+			AccessLogDestination: awsapigateway.NewLogGroupLogDestination(apiLogGroup),
+			AccessLogFormat: awsapigateway.AccessLogFormat_JsonWithStandardFields(&awsapigateway.JsonWithStandardFieldProps{
+				Caller:         jsii.Bool(true),
+				HttpMethod:     jsii.Bool(true),
+				Ip:             jsii.Bool(true),
+				Protocol:       jsii.Bool(true),
+				RequestTime:    jsii.Bool(true),
+				ResourcePath:   jsii.Bool(true),
+				ResponseLength: jsii.Bool(true),
+				Status:         jsii.Bool(true),
+				User:           jsii.Bool(true),
+			}),
+			LoggingLevel:         awsapigateway.MethodLoggingLevel_ERROR,
+			ThrottlingBurstLimit: jsii.Number(10),
+			ThrottlingRateLimit:  jsii.Number(5),
+		},
 	})
 
 	callbackResource := api.Root().AddResource(jsii.String("callback"), nil)
