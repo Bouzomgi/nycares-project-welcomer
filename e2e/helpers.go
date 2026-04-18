@@ -232,6 +232,23 @@ func (tc *testClients) rejectTask(taskToken string) error {
 	return nil
 }
 
+func (tc *testClients) sendManualTask(taskToken, message string) error {
+	ctx := context.Background()
+	output, err := json.Marshal(map[string]string{"action": "manual", "manualMessage": message})
+	if err != nil {
+		return fmt.Errorf("failed to marshal manual task output: %w", err)
+	}
+	outStr := string(output)
+	_, err = tc.sfnClient.SendTaskSuccess(ctx, &sfn.SendTaskSuccessInput{
+		TaskToken: aws.String(taskToken),
+		Output:    aws.String(outStr),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send manual task: %w", err)
+	}
+	return nil
+}
+
 func (tc *testClients) getNotification(projectName, projectDate string) (map[string]types.AttributeValue, error) {
 	ctx := context.Background()
 	result, err := tc.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{

@@ -62,6 +62,23 @@ Feature: Project notification workflow
     Then the execution should succeed
     And a thank you notification should be recorded
 
+  Scenario: ThankYou message is rejected
+    Given a project "Test Project" happening today
+    When the workflow runs
+    And it requests approval
+    And the message is denied
+    Then the execution should succeed
+    And the project should be skipped
+    And no notification should be recorded
+
+  Scenario: ThankYou message is sent with a manual message
+    Given a project "Test Project" happening today
+    When the workflow runs
+    And it requests approval
+    And a manual message is submitted
+    Then the execution should succeed
+    And a thank you notification should be recorded
+
   Scenario: ThankYou already sent is skipped
     Given a project "Test Project" happening today
     And a thank you has already been sent

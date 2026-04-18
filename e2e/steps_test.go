@@ -102,6 +102,10 @@ func (sc *scenarioContext) theMessageIsApproved() error {
 	return sc.tc.approveTask(sc.taskToken)
 }
 
+func (sc *scenarioContext) aManualMessageIsSubmitted() error {
+	return sc.tc.sendManualTask(sc.taskToken, "Thank you so much for your help today — it truly made a difference!")
+}
+
 // --- Then ---
 
 func (sc *scenarioContext) theExecutionShouldSucceed() error {
@@ -214,6 +218,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.When(`^it requests approval$`, sc.itRequestsApproval)
 	ctx.When(`^the message is denied$`, sc.theMessageIsDenied)
 	ctx.When(`^the message is approved$`, sc.theMessageIsApproved)
+	ctx.When(`^a manual message is submitted$`, sc.aManualMessageIsSubmitted)
 
 	// Then
 	ctx.Then(`^the execution should succeed$`, sc.theExecutionShouldSucceed)
