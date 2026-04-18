@@ -193,6 +193,14 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			timeout = jsii.Number(60)
 		}
 
+		var reservedConcurrency *float64
+		switch name {
+		case "GenerateThankYouMessage":
+			reservedConcurrency = jsii.Number(5) // Bedrock per-account invocation quota
+		case "SendAndPinMessage":
+			reservedConcurrency = jsii.Number(10) // NYC Cares API rate limit
+		}
+
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
 			Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 			Handler: jsii.String("bootstrap"),
@@ -200,11 +208,12 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 				jsii.String("../lambda-build/"+lowerName),
 				lambdaAssetOptions(lowerName),
 			),
-			FunctionName: jsii.String(kebabName + suffix),
-			Architecture: lambdaArchitecture(),
-			Timeout:      awscdk.Duration_Seconds(timeout),
-			Environment:  sharedEnv,
-			LogGroup:     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
+			FunctionName:                 jsii.String(kebabName + suffix),
+			Architecture:                 lambdaArchitecture(),
+			Timeout:                      awscdk.Duration_Seconds(timeout),
+			Environment:                  sharedEnv,
+			LogGroup:                     lambdaLogGroup(stack, name+"LogGroup", "/aws/lambda/"+kebabName+suffix),
+			ReservedConcurrentExecutions: reservedConcurrency,
 		})
 
 		lambdaFns[name] = fn
@@ -326,14 +335,15 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// --- SES Forwarder Lambda ---
 
 	sesForwarderFn := awslambda.NewFunction(stack, jsii.String("SESForwarder"), &awslambda.FunctionProps{
-		Runtime:      awslambda.Runtime_PROVIDED_AL2023(),
-		Handler:      jsii.String("bootstrap"),
-		Code:         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), lambdaAssetOptions("sesforwarder")),
-		FunctionName: jsii.String("ses-forwarder" + suffix),
-		Architecture: lambdaArchitecture(),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
-		Environment:  sharedEnv,
-		LogGroup:     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix),
+		Runtime:                      awslambda.Runtime_PROVIDED_AL2023(),
+		Handler:                      jsii.String("bootstrap"),
+		Code:                         awslambda.Code_FromAsset(jsii.String("../lambda-build/sesforwarder"), lambdaAssetOptions("sesforwarder")),
+		FunctionName:                 jsii.String("ses-forwarder" + suffix),
+		Architecture:                 lambdaArchitecture(),
+		Timeout:                      awscdk.Duration_Seconds(jsii.Number(30)),
+		Environment:                  sharedEnv,
+		LogGroup:                     lambdaLogGroup(stack, "SESForwarderLogGroup", "/aws/lambda/ses-forwarder"+suffix),
+		ReservedConcurrentExecutions: jsii.Number(5), // SES sandbox send rate limit
 	})
 
 	sesForwarderFn.AddToRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
