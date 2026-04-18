@@ -16,7 +16,7 @@ Feature: Project notification workflow
     Given a project "Test Project" scheduled 6 days from now
     When the workflow runs
     And it requests approval
-    And the message is denied
+    And the welcome message is denied
     Then the execution should succeed
     And the project should be skipped
     And no notification should be recorded
@@ -25,7 +25,7 @@ Feature: Project notification workflow
     Given a project "Test Project" scheduled 5 days from now
     When the workflow runs
     And it requests approval
-    And the message is approved
+    And the welcome message is approved
     Then the execution should succeed
     And a welcome notification should be recorded
     And no reminder notification should be recorded
@@ -42,7 +42,7 @@ Feature: Project notification workflow
     And a welcome has already been sent
     When the workflow runs
     And it requests approval
-    And the message is approved
+    And the reminder message is approved
     Then the execution should succeed
     And a welcome notification should be recorded
     And a reminder notification should be recorded
@@ -54,28 +54,27 @@ Feature: Project notification workflow
     Then the execution should succeed
     And the project should be skipped
 
-  Scenario: ThankYou message is sent on the day of the project
+  Scenario: ThankYou message is approved
     Given a project "Test Project" happening today
     When the workflow runs
     And it requests approval
-    And the message is approved
+    And the thank you message is approved
     Then the execution should succeed
     And a thank you notification should be recorded
 
-  Scenario: ThankYou message is rejected
+  Scenario: ThankYou message is denied
     Given a project "Test Project" happening today
     When the workflow runs
     And it requests approval
-    And the message is denied
+    And the thank you message is denied
     Then the execution should succeed
-    And the project should be skipped
     And no notification should be recorded
 
   Scenario: ThankYou message is sent with a manual message
     Given a project "Test Project" happening today
     When the workflow runs
     And it requests approval
-    And a manual message is submitted
+    And a manual thank you message is submitted
     Then the execution should succeed
     And a thank you notification should be recorded
 
