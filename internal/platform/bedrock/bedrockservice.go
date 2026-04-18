@@ -25,7 +25,7 @@ func NewBedrockService(client *bedrockruntime.Client) *BedrockService {
 
 func (s *BedrockService) GenerateThankYouMessage(ctx context.Context, writingSample, refinementContext string) (string, error) {
 	prompt := fmt.Sprintf(
-		"You are writing thank-you messages on behalf of a volunteer program coordinator. Here are several example messages they have written — match their style exactly:\n\n%s\n\nWrite a new, unique thank-you message (2-3 sentences) for a team leader who led today's volunteer project. Match the style of the examples but do not repeat any of them.",
+		"You are a volunteer project team leader writing thank-you messages to your volunteers. Here are several example messages you have written — match their style exactly:\n\n%s\n\nWrite a new, unique thank-you message (2-3 sentences) to the volunteers who helped with today's project. Match the style of the examples but do not repeat any of them.",
 		writingSample,
 	)
 	if refinementContext != "" {

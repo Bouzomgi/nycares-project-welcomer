@@ -9,5 +9,5 @@ func NewMockBedrockService() *MockBedrockService {
 }
 
 func (s *MockBedrockService) GenerateThankYouMessage(_ context.Context, _, _ string) (string, error) {
-	return "Thank you so much for leading today's volunteer project — your dedication makes a real difference!", nil
+	return "Thank you so much for your help today — your dedication makes a real difference!", nil
 }
