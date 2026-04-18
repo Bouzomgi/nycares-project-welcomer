@@ -94,12 +94,28 @@ func (sc *scenarioContext) itRequestsApproval() error {
 	return nil
 }
 
-func (sc *scenarioContext) theMessageIsDenied() error {
+func (sc *scenarioContext) theWelcomeMessageIsDenied() error {
 	return sc.tc.rejectTask(sc.taskToken)
 }
 
-func (sc *scenarioContext) theMessageIsApproved() error {
+func (sc *scenarioContext) theWelcomeMessageIsApproved() error {
 	return sc.tc.approveTask(sc.taskToken)
+}
+
+func (sc *scenarioContext) theReminderMessageIsApproved() error {
+	return sc.tc.approveTask(sc.taskToken)
+}
+
+func (sc *scenarioContext) theThankYouMessageIsApproved() error {
+	return sc.tc.approveTask(sc.taskToken)
+}
+
+func (sc *scenarioContext) theThankYouMessageIsDenied() error {
+	return sc.tc.rejectTask(sc.taskToken)
+}
+
+func (sc *scenarioContext) aManualThankYouMessageIsSubmitted() error {
+	return sc.tc.sendManualTask(sc.taskToken, "Thank you so much for your help today — it truly made a difference!")
 }
 
 // --- Then ---
@@ -212,8 +228,12 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	// When
 	ctx.When(`^the workflow runs$`, sc.theWorkflowRuns)
 	ctx.When(`^it requests approval$`, sc.itRequestsApproval)
-	ctx.When(`^the message is denied$`, sc.theMessageIsDenied)
-	ctx.When(`^the message is approved$`, sc.theMessageIsApproved)
+	ctx.When(`^the welcome message is denied$`, sc.theWelcomeMessageIsDenied)
+	ctx.When(`^the welcome message is approved$`, sc.theWelcomeMessageIsApproved)
+	ctx.When(`^the reminder message is approved$`, sc.theReminderMessageIsApproved)
+	ctx.When(`^the thank you message is approved$`, sc.theThankYouMessageIsApproved)
+	ctx.When(`^the thank you message is denied$`, sc.theThankYouMessageIsDenied)
+	ctx.When(`^a manual thank you message is submitted$`, sc.aManualThankYouMessageIsSubmitted)
 
 	// Then
 	ctx.Then(`^the execution should succeed$`, sc.theExecutionShouldSucceed)
