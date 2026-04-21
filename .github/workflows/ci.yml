@@ -84,11 +84,6 @@ jobs:
           aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_ACCOUNT_PASSWORD" --value "$NYCARES_ACCOUNT_PASSWORD" --type SecureString --overwrite
           aws ssm put-parameter --name "/nycares-project-welcomer/NYCARES_AWS_SF_APPROVALSECRET" --value "$NYCARES_AWS_SF_APPROVALSECRET" --type SecureString --overwrite
 
-      - name: Ensure S3 bucket exists
-        run: |
-          aws s3api head-bucket --bucket nycares-project-welcomer-messages-ci 2>/dev/null || \
-            aws s3api create-bucket --bucket nycares-project-welcomer-messages-ci --region us-east-1
-
       - name: Deploy test environment
         env:
           DEPLOY_MOCKSERVER: "true"
