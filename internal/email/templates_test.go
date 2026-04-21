@@ -10,7 +10,7 @@ func TestWorkflowFailed_Subject(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "NYC Cares Project Welcomer \u2014 Workflow Step Failed"
+	want := "NYCares Project Welcomer \u2014 Workflow Step Failed"
 	if subject != want {
 		t.Errorf("subject = %q, want %q", subject, want)
 	}
@@ -138,10 +138,10 @@ func TestApprovalRequest_MockMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(plainText2, "real NYC Cares platform") {
+	if !strings.Contains(plainText2, "real NYCares platform") {
 		t.Error("plainText should indicate real platform when mockMode=false")
 	}
-	if !strings.Contains(htmlBody2, "real NYC Cares platform") {
+	if !strings.Contains(htmlBody2, "real NYCares platform") {
 		t.Error("htmlBody should indicate real platform when mockMode=false")
 	}
 }
@@ -223,10 +223,10 @@ func TestCompletion_MockMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(plainText2, "real NYC Cares platform") {
+	if !strings.Contains(plainText2, "real NYCares platform") {
 		t.Error("plainText should indicate real platform when mockMode=false")
 	}
-	if !strings.Contains(htmlBody2, "real NYC Cares platform") {
+	if !strings.Contains(htmlBody2, "real NYCares platform") {
 		t.Error("htmlBody should indicate real platform when mockMode=false")
 	}
 }

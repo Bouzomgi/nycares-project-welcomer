@@ -105,6 +105,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		bucket = awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
 			BucketName:        jsii.String(bucketName),
 			RemovalPolicy:     awscdk.RemovalPolicy_DESTROY,
+			AutoDeleteObjects: jsii.Bool(true),
 			Versioned:         jsii.Bool(true),
 			Encryption:        awss3.BucketEncryption_S3_MANAGED,
 			BlockPublicAccess: awss3.BlockPublicAccess_BLOCK_ALL(),
@@ -161,7 +162,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	// When a mock server URL is provided AND this is an ephemeral environment (suffix != ""),
 	// override NYCARES_API_BASE_URL globally — integration tests mock the full API including
 	// Login and FetchProjects. In production (no suffix), only SendAndPinMessage should route
-	// to the mock server; Login/FetchProjects must hit the real NYC Cares API. The per-lambda
+	// to the mock server; Login/FetchProjects must hit the real NYCares API. The per-lambda
 	// override for production is applied after the lambda loop below.
 	if props != nil && props.MockServerUrl != nil && suffix != "" {
 		(*sharedEnv)["NYCARES_API_BASE_URL"] = props.MockServerUrl
@@ -198,7 +199,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 		case "GenerateThankYouMessage":
 			reservedConcurrency = jsii.Number(5) // Bedrock per-account invocation quota
 		case "SendAndPinMessage":
-			reservedConcurrency = jsii.Number(10) // NYC Cares API rate limit
+			reservedConcurrency = jsii.Number(10) // NYCares API rate limit
 		}
 
 		fn := awslambda.NewFunction(stack, jsii.String(name), &awslambda.FunctionProps{
@@ -220,7 +221,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 	}
 
 	// Production mock mode (no suffix): only SendAndPinMessage routes to the mock server.
-	// Login and FetchProjects continue hitting the real NYC Cares API so that real project
+	// Login and FetchProjects continue hitting the real NYCares API so that real project
 	// data and auth cookies are used.
 	if props != nil && props.MockServerUrl != nil && suffix == "" {
 		lambdaFns["SendAndPinMessage"].AddEnvironment(
