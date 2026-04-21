@@ -1,5 +1,5 @@
 Feature: Project notification workflow
-  The system sends welcome and reminder messages to upcoming NYC Cares
+  The system sends welcome and reminder messages to upcoming nycares
   project attendees based on how far away the project date is.
 
   Background:

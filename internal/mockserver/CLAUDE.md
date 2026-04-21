@@ -1,6 +1,6 @@
 # Mock Server
 
-Simulates the NYC Cares API for local development and CI. Runs as a plain HTTP server locally (`:3001`) or as a Lambda Function URL in the `-ci` environment.
+Simulates the nycares API for local development and CI. Runs as a plain HTTP server locally (`:3001`) or as a Lambda Function URL in the `-ci` environment.
 
 ## Endpoints
 

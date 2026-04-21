@@ -34,7 +34,7 @@ func main() {
 
 		s, p, h, err := email.WorkflowFailed(
 			"SendAndPinMessage",
-			"connection to NYC Cares API timed out after 30s",
+			"connection to nycares API timed out after 30s",
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to render workflow-failed email: %v\n", err)
