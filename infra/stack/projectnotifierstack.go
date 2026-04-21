@@ -102,13 +102,7 @@ func ProjectNotifierStack(scope constructs.Construct, id string, props *LambdaSt
 			RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 		})
 
-		bucket = awss3.NewBucket(stack, jsii.String("MessageTemplates"), &awss3.BucketProps{
-			BucketName:        jsii.String(bucketName),
-			RemovalPolicy:     awscdk.RemovalPolicy_RETAIN,
-			Versioned:         jsii.Bool(true),
-			Encryption:        awss3.BucketEncryption_S3_MANAGED,
-			BlockPublicAccess: awss3.BlockPublicAccess_BLOCK_ALL(),
-		})
+		bucket = awss3.Bucket_FromBucketName(stack, jsii.String("MessageTemplates"), jsii.String(bucketName))
 
 	} else {
 		// Import pre-existing resources (LocalStack / production without suffix)
