@@ -44,7 +44,7 @@ var approvalRequestTmpl = template.Must(template.New("approval_request.html").Pa
 // WorkflowFailed returns the subject, plain text, and HTML body for a workflow step failure email.
 // errorMessage should be the human-readable error (already extracted from any JSON Cause blob).
 func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBody string, err error) {
-	subject = "nycares Project Welcomer \u2014 Workflow Step Failed"
+	subject = "NYCares Project Welcomer \u2014 Workflow Step Failed"
 
 	plainText = fmt.Sprintf("Workflow step failed.\nStep: %s\nError: %s", failedStep, errorMessage)
 
@@ -61,13 +61,13 @@ func WorkflowFailed(failedStep, errorMessage string) (subject, plainText, htmlBo
 }
 
 // ApprovalRequest returns the subject, plain text, and HTML body for a message approval email.
-// mockMode indicates whether send/pin requests will go to the mock server or the real nycares platform.
+// mockMode indicates whether send/pin requests will go to the mock server or the real NYCares platform.
 // regenerateLink triggers a fresh generation with no additional context (thankYou only).
 // refineFormBase is the callback URL (with token and secret) used as the HTML form action for refinement (thankYou only).
 func ApprovalRequest(projectName, projectDate, messageType, messageContent, approveLink, rejectLink, regenerateLink, refineFormBase, secret string, mockMode bool) (subject, plainText, htmlBody string, err error) {
 	subject = "Project Message Approval"
 
-	destination := "real nycares platform"
+	destination := "real NYCares platform"
 	if mockMode {
 		destination = "mock server"
 	}
@@ -112,7 +112,7 @@ func ApprovalRequest(projectName, projectDate, messageType, messageContent, appr
 func Completion(messageType, projectName, projectDate string, mockMode bool) (subject, plainText, htmlBody string, err error) {
 	subject = "Message Sent!"
 
-	destination := "real nycares platform"
+	destination := "real NYCares platform"
 	if mockMode {
 		destination = "mock server"
 	}

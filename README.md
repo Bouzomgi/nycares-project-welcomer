@@ -1,6 +1,6 @@
-# nycares Project Welcomer
+# NYCares Project Welcomer
 
-A serverless notification system that sends welcome, reminder, and thank-you messages to nycares project attendees. Built with Go, AWS Lambda, and Step Functions.
+A serverless notification system that sends welcome, reminder, and thank-you messages to NYCares project attendees. Built with Go, AWS Lambda, and Step Functions.
 
 ## How It Works
 
@@ -74,7 +74,7 @@ Each project (identified by name + date) receives at most one of each message ty
 │   ├── platform/            # AWS service integrations (DynamoDB, S3, SNS, HTTP)
 │   ├── config/              # YAML/env var config loader
 │   ├── endpoints/           # API URL constants
-│   └── mockserver/          # Local mock of nycares API
+│   └── mockserver/          # Local mock of NYCares API
 ├── infra/                   # AWS CDK stack (Go)
 ├── e2e/                     # E2E tests (run against LocalStack)
 ├── seed/                    # S3 seed data for local dev
@@ -99,7 +99,7 @@ make up
 
 This spins up:
 - **LocalStack** — local AWS (DynamoDB, S3, SNS, Step Functions, Lambda, API Gateway)
-- **Mock server** — simulates the nycares API
+- **Mock server** — simulates the NYCares API
 - **CDK deploy** — provisions all infrastructure in LocalStack
 - **S3 seeding** — uploads message templates
 
@@ -133,7 +133,7 @@ Locally, config loads from `config.yaml`. In Lambda, environment variables with 
 | Variable                | Description                                    |
 |-------------------------|------------------------------------------------|
 | `NYCARES_CURRENT_DATE`  | Override current date (YYYY-MM-DD) for testing |
-| `NYCARES_API_BASE_URL`  | Override nycares API base URL                  |
+| `NYCARES_API_BASE_URL`  | Override NYCares API base URL                  |
 
 ## DynamoDB Schema
 

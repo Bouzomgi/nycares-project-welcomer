@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-nycares Project Welcomer — a serverless notification system that sends welcome/reminder messages to nycares project attendees.
+NYCares Project Welcomer — a serverless notification system that sends welcome/reminder messages to NYCares project attendees.
 
 This is a Go/CDK project deployed to AWS. Primary languages: Go for Lambda functions, TypeScript for CDK infrastructure, YAML for CI/CD (GitHub Actions). Always consider deployment implications when making infrastructure changes.
 
@@ -34,7 +34,7 @@ cd infra && cdk deploy
 
 ### Run mock server (local dev)
 
-The mock server at [`internal/mockserver/`](internal/mockserver/CLAUDE.md) simulates the nycares API. Used alongside LocalStack for local AWS services (S3, DynamoDB, SNS).
+The mock server at [`internal/mockserver/`](internal/mockserver/CLAUDE.md) simulates the NYCares API. Used alongside LocalStack for local AWS services (S3, DynamoDB, SNS).
 
 ## Architecture
 
@@ -43,7 +43,7 @@ The mock server at [`internal/mockserver/`](internal/mockserver/CLAUDE.md) simul
 A Step Functions state machine orchestrates 11 Lambda functions. Two run once per execution at the top level; seven run per project inside a Map iterator:
 
 **Top-level (once per execution):**
-1. **Login** → authenticate with nycares API
+1. **Login** → authenticate with NYCares API
 2. **FetchProjects** → fetch upcoming and today's projects (merges `/upcoming` + `/today` endpoints, deduplicated by project ID)
 
 **Per-project (Map iterator):**
